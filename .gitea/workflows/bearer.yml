@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   rule_check:
@@ -19,3 +18,9 @@ jobs:
         with:
           format: sarif
           output: results.sarif
+      - name: Upload SARIF results
+        if: always()
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: bearer-sarif-results
+          path: results.sarif
