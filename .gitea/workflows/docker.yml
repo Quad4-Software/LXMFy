@@ -67,14 +67,45 @@ jobs:
 
   provenance:
     needs: build
-    uses: ./.gitea/workflows/provenance.yml
-    with:
-      subject: docker-image
-      source-ref: ${{ github.ref }}
-      commit-sha: ${{ github.sha }}
-      image-digest: ${{ needs.build.outputs.image_digest }}
-      image-tags: ${{ needs.build.outputs.image_tags }}
-      lock-paths: |
-        poetry.lock
-        pyproject.toml
-    secrets: inherit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744  # v3
+        with:
+          persist-credentials: false
+
+      - name: Collect dependency lock digests
+        env:
+          LOCK_PATHS: |
+            poetry.lock
+            pyproject.toml
+          OUTPUT_JSONL: provenance/locks.jsonl
+        run: bash .gitea/scripts/provenance_collect_locks.sh
+
+      - name: Build provenance document
+        env:
+          SUBJECT: docker-image
+          SOURCE_REF: ${{ github.ref }}
+          COMMIT_SHA: ${{ github.sha }}
+          IMAGE_DIGEST: ${{ needs.build.outputs.image_digest }}
+          IMAGE_TAGS: ${{ needs.build.outputs.image_tags }}
+          ARTIFACT_JSONL: provenance/artifacts.jsonl
+          LOCK_JSONL: provenance/locks.jsonl
+          OUTPUT_PATH: provenance/provenance.json
+        run: python .gitea/scripts/provenance_build.py
+
+      - name: Optional sign provenance with GPG
+        if: ${{ secrets.PROVENANCE_PRIVATE_KEY != '' }}
+        env:
+          PROVENANCE_PRIVATE_KEY: ${{ secrets.PROVENANCE_PRIVATE_KEY }}
+          PROVENANCE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.PROVENANCE_PRIVATE_KEY_PASSPHRASE }}
+          PROVENANCE_PATH: provenance/provenance.json
+        run: bash .gitea/scripts/provenance_sign.sh
+
+      - name: Upload provenance
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5  # v3
+        with:
+          name: provenance
+          path: provenance/
