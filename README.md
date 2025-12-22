@@ -1,11 +1,5 @@
 # LXMFy
 
-[![Socket Badge](https://socket.dev/api/badge/pypi/package/lxmfy/0.8.0?artifact_id=tar-gz)](https://socket.dev/pypi/package/lxmfy/overview/0.8.0/tar-gz)
-[![DeepSource](https://app.deepsource.com/gh/lxmfy/LXMFy.svg/?label=active+issues&show_trend=true&token=H2_dIwKdYo9BgJkKMdhIORRD)](https://app.deepsource.com/gh/lxmfy/LXMFy/)
-[![Build Test](https://github.com/lxmfy/LXMFy/actions/workflows/build-test.yml/badge.svg)](https://github.com/lxmfy/LXMFy/actions/workflows/build-test.yml)
-[![Publish Python distribution to PyPI](https://github.com/lxmfy/LXMFy/actions/workflows/publish.yml/badge.svg)](https://github.com/lxmfy/LXMFy/actions/workflows/publish.yml)
-[![Test](https://github.com/lxmfy/LXMFy/actions/workflows/test.yml/badge.svg)](https://github.com/lxmfy/LXMFy/actions/workflows/test.yml)
-
 Easily create LXMF bots for the Reticulum Network with this extensible framework.
 
 [Docs](https://lxmfy.quad4.io)
@@ -49,13 +43,13 @@ uv sync
 or via git
 
 ```bash
-pipx install git+https://github.com/lxmfy/LXMFy.git
+pipx install git+https://git.quad4.io/LXMFy/LXMFy.git
 ```
 
 or temporary environment with uv:
 
 ```bash
-uvx --from git+https://github.com/lxmfy/LXMFy.git lxmfy
+uvx --from git+https://git.quad4.io/LXMFy/LXMFy.git lxmfy
 ```
 
 ## Usage
@@ -302,10 +296,6 @@ uv run lxmfy run echo
 ## Contributing
 
 Pull requests are welcome.
-
-## Part of Quad4
-
-LXMFy is a [Quad4](https://github.com/Quad4-Software) project.
 
 ## License
 
