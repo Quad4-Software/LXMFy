@@ -1,0 +1,93 @@
+name: Provenance
+
+on:
+  workflow_call:
+    inputs:
+      subject:
+        required: true
+        type: string
+      source-ref:
+        required: false
+        type: string
+        default: ${{ github.ref }}
+      commit-sha:
+        required: false
+        type: string
+        default: ${{ github.sha }}
+      artifact-paths:
+        required: false
+        type: string
+        default: ""
+      artifact-name:
+        required: false
+        type: string
+        default: ""
+      image-digest:
+        required: false
+        type: string
+        default: ""
+      image-tags:
+        required: false
+        type: string
+        default: ""
+      lock-paths:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      PROVENANCE_PRIVATE_KEY:
+        required: false
+      PROVENANCE_PRIVATE_KEY_PASSPHRASE:
+        required: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      - name: Download artifacts (if provided)
+        if: ${{ inputs.artifact-name != '' }}
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: .
+
+      - name: Collect artifact digests
+        env:
+          ARTIFACT_PATHS: ${{ inputs.artifact-paths }}
+          OUTPUT_JSONL: provenance/artifacts.jsonl
+        run: bash .gitea/scripts/provenance_collect_artifacts.sh
+
+      - name: Collect dependency lock digests
+        env:
+          LOCK_PATHS: ${{ inputs.lock-paths }}
+          OUTPUT_JSONL: provenance/locks.jsonl
+        run: bash .gitea/scripts/provenance_collect_locks.sh
+
+      - name: Build provenance document
+        env:
+          SUBJECT: ${{ inputs.subject }}
+          SOURCE_REF: ${{ inputs.source-ref }}
+          COMMIT_SHA: ${{ inputs.commit-sha }}
+          IMAGE_DIGEST: ${{ inputs.image-digest }}
+          IMAGE_TAGS: ${{ inputs.image-tags }}
+          ARTIFACT_JSONL: provenance/artifacts.jsonl
+          LOCK_JSONL: provenance/locks.jsonl
+          OUTPUT_PATH: provenance/provenance.json
+        run: python .gitea/scripts/provenance_build.py
+
+      - name: Optional sign provenance with GPG
+        if: ${{ secrets.PROVENANCE_PRIVATE_KEY != '' }}
+        env:
+          PROVENANCE_PRIVATE_KEY: ${{ secrets.PROVENANCE_PRIVATE_KEY }}
+          PROVENANCE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.PROVENANCE_PRIVATE_KEY_PASSPHRASE }}
+          PROVENANCE_PATH: provenance/provenance.json
+        run: bash .gitea/scripts/provenance_sign.sh
+
+      - name: Upload provenance
+        uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
+        with:
+          name: provenance
+          path: provenance/

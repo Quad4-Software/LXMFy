@@ -17,6 +17,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      image_digest: ${{ steps.build.outputs.digest }}
+      image_tags: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout repository
@@ -51,6 +54,7 @@ jobs:
             type=sha,format=short
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25  # v5
         with:
           context: .
@@ -59,5 +63,18 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          provenance: false
+
+  provenance:
+    needs: build
+    uses: ./.gitea/workflows/provenance.yml
+    with:
+      subject: docker-image
+      source-ref: ${{ github.ref }}
+      commit-sha: ${{ github.sha }}
+      image-digest: ${{ needs.build.outputs.image_digest }}
+      image-tags: ${{ needs.build.outputs.image_tags }}
+      lock-paths: |
+        poetry.lock
+        pyproject.toml
+    secrets: inherit

@@ -83,9 +83,9 @@ jobs:
   #     run: python3 -m twine upload dist/*
 
   gitea-release:
-    name: Sign the Python 🐍 distribution 📦 and create Gitea Draft Release
+    name: Sign the Python distribution and create Gitea Draft Release
     needs:
-    - publish-to-pypi
+    - build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -108,27 +108,36 @@ jobs:
         GITEA_API: https://git.quad4.io/api/v1
         REPO: LXMFy/LXMFy
         TAG: ${{ github.ref_name }}
-      run: |
-        RELEASE_RESPONSE=$(curl -s -X POST \
-          -H "Authorization: token $GITEA_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "{\"tag_name\":\"$TAG\",\"name\":\"$TAG\",\"draft\":true,\"prerelease\":false}" \
-          "$GITEA_API/repos/$REPO/releases")
-        RELEASE_ID=$(echo "$RELEASE_RESPONSE" | jq -r '.id')
-        echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
+      run: bash .gitea/scripts/gitea_create_release.sh
+
     - name: Upload artifact signatures to Gitea Draft Release
       env:
         GITEA_TOKEN: ${{ github.token }}
         GITEA_API: https://git.quad4.io/api/v1
         REPO: LXMFy/LXMFy
         RELEASE_ID: ${{ env.RELEASE_ID }}
-      run: |
-        for file in dist/*.tar.gz dist/*.whl dist/*.tar.gz.asc dist/*.whl.asc dist/*.tar.gz.sigstore dist/*.whl.sigstore; do
-          if [ -f "$file" ]; then
-            filename=$(basename "$file")
-            curl -X POST \
-              -H "Authorization: token $GITEA_TOKEN" \
-              -F "attachment=@$file" \
-              "$GITEA_API/repos/$REPO/releases/$RELEASE_ID/assets?name=$filename"
-          fi
-        done
+        ASSET_PATHS: |
+          dist/*.tar.gz
+          dist/*.whl
+          dist/*.tar.gz.asc
+          dist/*.whl.asc
+          dist/*.tar.gz.sigstore
+          dist/*.whl.sigstore
+      run: bash .gitea/scripts/gitea_upload_assets.sh
+
+  provenance:
+    needs:
+    - build
+    uses: ./.gitea/workflows/provenance.yml
+    with:
+      subject: python-package
+      source-ref: ${{ github.ref }}
+      commit-sha: ${{ github.sha }}
+      artifact-name: python-package-distributions
+      artifact-paths: |
+        dist/*.tar.gz
+        dist/*.whl
+      lock-paths: |
+        poetry.lock
+        pyproject.toml
+    secrets: inherit
