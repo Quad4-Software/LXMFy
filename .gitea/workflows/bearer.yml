@@ -13,14 +13,9 @@ jobs:
   rule_check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Bearer
         uses: bearer/bearer-action@828eeb928ce2f4a7ca5ed57fb8b59508cb8c79bc # v2
         with:
           format: sarif
           output: results.sarif
-      - name: Upload SARIF file
-        if: always()
-        uses: github/codeql-action/upload-sarif@fdfb4d2750291e159f0156def62b853c2798ca2  # v4
-        with:
-          sarif_file: results.sarif
