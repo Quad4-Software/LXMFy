@@ -75,6 +75,7 @@ jobs:
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744  # v3
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Collect dependency lock digests
         env:
@@ -82,7 +83,8 @@ jobs:
             poetry.lock
             pyproject.toml
           OUTPUT_JSONL: provenance/locks.jsonl
-        run: bash .gitea/scripts/provenance_collect_locks.sh
+        working-directory: ${{ github.workspace }}
+        run: bash "${{ github.workspace }}/.gitea/scripts/provenance_collect_locks.sh"
 
       - name: Build provenance document
         env:
@@ -94,7 +96,8 @@ jobs:
           ARTIFACT_JSONL: provenance/artifacts.jsonl
           LOCK_JSONL: provenance/locks.jsonl
           OUTPUT_PATH: provenance/provenance.json
-        run: python .gitea/scripts/provenance_build.py
+        working-directory: ${{ github.workspace }}
+        run: python "${{ github.workspace }}/.gitea/scripts/provenance_build.py"
 
       - name: Optional sign provenance with GPG
         if: ${{ secrets.PROVENANCE_PRIVATE_KEY != '' }}
@@ -102,7 +105,8 @@ jobs:
           PROVENANCE_PRIVATE_KEY: ${{ secrets.PROVENANCE_PRIVATE_KEY }}
           PROVENANCE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.PROVENANCE_PRIVATE_KEY_PASSPHRASE }}
           PROVENANCE_PATH: provenance/provenance.json
-        run: bash .gitea/scripts/provenance_sign.sh
+        working-directory: ${{ github.workspace }}
+        run: bash "${{ github.workspace }}/.gitea/scripts/provenance_sign.sh"
 
       - name: Upload provenance
         uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5  # v3
