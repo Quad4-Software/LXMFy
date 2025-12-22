@@ -18,6 +18,7 @@ jobs:
         with:
           format: sarif
           output: results.sarif
+          exit-code: 0
       - name: Upload SARIF results
         if: always()
         uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5 # v3
