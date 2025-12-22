@@ -86,7 +86,6 @@ jobs:
     name: Sign the Python distribution and create Gitea Draft Release
     needs:
     - build
-    - provenance
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -103,11 +102,6 @@ jobs:
         inputs: >-
           ./dist/*.tar.gz
           ./dist/*.whl
-    - name: Download provenance artifact
-      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a  # v3
-      with:
-        name: provenance
-        path: provenance/
     - name: Create Gitea Draft Release
       env:
         GITEA_TOKEN: ${{ github.token }}
@@ -129,72 +123,7 @@ jobs:
           dist/*.whl.asc
           dist/*.tar.gz.sigstore
           dist/*.whl.sigstore
-          provenance/provenance.json
-          provenance/provenance.json.asc
       run: bash .gitea/scripts/gitea_upload_assets.sh
-
-  provenance:
-    needs:
-    - build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744  # v3
-      with:
-        persist-credentials: false
-        fetch-depth: 0
-
-    - name: Download all the dists
-      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a  # v3
-      with:
-        name: python-package-distributions
-        path: dist/
-
-    - name: Collect artifact digests
-      env:
-        ARTIFACT_PATHS: |
-          dist/*.tar.gz
-          dist/*.whl
-        OUTPUT_JSONL: provenance/artifacts.jsonl
-      working-directory: ${{ github.workspace }}
-      run: bash "${{ github.workspace }}/.gitea/scripts/provenance_collect_artifacts.sh"
-
-    - name: Collect dependency lock digests
-      env:
-        LOCK_PATHS: |
-          poetry.lock
-          pyproject.toml
-        OUTPUT_JSONL: provenance/locks.jsonl
-      working-directory: ${{ github.workspace }}
-      run: bash "${{ github.workspace }}/.gitea/scripts/provenance_collect_locks.sh"
-
-    - name: Build provenance document
-      env:
-        SUBJECT: python-package
-        SOURCE_REF: ${{ github.ref }}
-        COMMIT_SHA: ${{ github.sha }}
-        IMAGE_DIGEST: ""
-        IMAGE_TAGS: ""
-        ARTIFACT_JSONL: provenance/artifacts.jsonl
-        LOCK_JSONL: provenance/locks.jsonl
-        OUTPUT_PATH: provenance/provenance.json
-      working-directory: ${{ github.workspace }}
-      run: python "${{ github.workspace }}/.gitea/scripts/provenance_build.py"
-
-    - name: Optional sign provenance with GPG
-      if: ${{ secrets.PROVENANCE_PRIVATE_KEY != '' }}
-      env:
-        PROVENANCE_PRIVATE_KEY: ${{ secrets.PROVENANCE_PRIVATE_KEY }}
-        PROVENANCE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.PROVENANCE_PRIVATE_KEY_PASSPHRASE }}
-        PROVENANCE_PATH: provenance/provenance.json
-      working-directory: ${{ github.workspace }}
-      run: bash "${{ github.workspace }}/.gitea/scripts/provenance_sign.sh"
-
-    - name: Upload provenance
-      uses: actions/upload-artifact@ff15f0306b3f739f7b6fd43fb5d26cd321bd4de5  # v3
-      with:
-        name: provenance
-        path: provenance/
+      # provenance/provenance.json
+      # provenance/provenance.json.asc
+      # run: bash .gitea/scripts/gitea_upload_assets.sh
