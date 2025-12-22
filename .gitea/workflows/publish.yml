@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   build:
@@ -21,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744  # v3
       with:
@@ -40,27 +38,49 @@ jobs:
         name: python-package-distributions
         path: dist/
 
-  publish-to-pypi:
-    name: Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')
-    needs:
-    - build
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/lxmfy
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a  # v3
-      with:
-        name: python-package-distributions
-        path: dist/
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e  # v1.13.0
+  # publish-to-pypi:
+  #   name: Publish Python distribution to PyPI
+  #   if: startsWith(github.ref, 'refs/tags/')
+  #   needs:
+  #   - build
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: pypi
+  #     url: https://pypi.org/p/lxmfy
+  #   permissions:
+  #     contents: read
+  #
+  #   steps:
+  #   - name: Download all the dists
+  #     uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a  # v3
+  #     with:
+  #       name: python-package-distributions
+  #       path: dist/
+  #   - name: Import GPG key
+  #     if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
+  #     env:
+  #       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+  #       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+  #     run: |
+  #       echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+  #       echo "$GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback --sign-key $(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d'/' -f2)
+  #   - name: Sign distributions with GPG
+  #     if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
+  #     env:
+  #       GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+  #     run: |
+  #       for file in dist/*.tar.gz dist/*.whl; do
+  #         if [ -f "$file" ]; then
+  #           echo "$GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback --detach-sign --armor "$file"
+  #         fi
+  #       done
+  #   - name: Install twine
+  #     run: python3 -m pip install twine --user
+  #   - name: Publish distribution to PyPI
+  #     env:
+  #       TWINE_USERNAME: __token__
+  #       TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+  #     run: python3 -m twine upload dist/*
 
   gitea-release:
     name: Sign the Python 🐍 distribution 📦 and create Gitea Draft Release
@@ -69,7 +89,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      id-token: write
 
     steps:
     - name: Download all the dists
