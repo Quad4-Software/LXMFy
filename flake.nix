@@ -80,10 +80,6 @@
           doCheck = false;
         };
 
-        pythonEnv = pkgs.python3.withPackages (ps: with ps; [
-          poetry
-        ]);
-
         pythonWithLxmfy = pkgs.python3.withPackages (ps: with ps; [
           lxmfy
         ]);
@@ -91,13 +87,13 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = [ 
-            pythonEnv
-            pkgs.python3Packages.poetry
+            pkgs.python3
+            pkgs.poetry
           ];
 
           shellHook = ''
             echo "LXMFy development environment"
-            echo "Python: $(${pythonEnv}/bin/python --version)"
+            echo "Python: $(python3 --version)"
             echo "Poetry is available for dependency management"
             echo "Run: poetry install --with dev"
             echo "Run: task --list"
