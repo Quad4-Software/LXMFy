@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.0] - 2026-01-04
+
+### Features
+- **Added version to lxmfy help output**
+
+### Other Changes
+- **Updated publish workflow to use twine for Gitea PyPI package registry**
+- **Updated install commands in README with Gitea PyPI registry instructions**
+- **Added SHA256 checksums for release assets (SHA256SUMS file and in release notes)**
+- **Updated RNS to 1.1.0**
+
 ## [1.2.1] - 2025-11-30
 
 ### Fixes
