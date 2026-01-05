@@ -44,14 +44,14 @@ jobs:
       run: python3 -m build
 
     - name: Publish to Gitea PyPI registry
-      run: python3 -m twine upload --repository-url ${{ github.server_url }}/api/packages/${{ github.repository_owner }}/pypi -u ${{ github.repository_owner }} -p ${{ secrets.GITEA_TOKEN }} dist/*
+      run: python3 -m twine upload --repository-url ${{ github.server_url }}/api/packages/${{ github.repository_owner }}/pypi -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} dist/*
       continue-on-error: true
 
     - name: Create Gitea Release with artifacts
       uses: https://git.quad4.io/actions/gitea-release-action@4875285c0950474efb7ca2df55233c51333eeb74
       with:
-        tag_name: ${{ github.ref_name }}
-        name: Release ${{ github.ref_name }}
+        tag_name: ${{ inputs.version || github.ref_name }}
+        name: Release ${{ inputs.version || github.ref_name }}
         files: |
           dist/*.tar.gz
           dist/*.whl
