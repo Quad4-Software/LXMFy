@@ -194,6 +194,13 @@ tasks:
     cmds:
       - poetry publish --build --repository testpypi
 
+  publish-gitea:
+    desc: Publish to Gitea PyPI registry
+    deps:
+      - build
+    cmds:
+      - python3 -m twine upload --repository gitea dist/*
+
   all:
     desc: Run clean, lint, test, and build
     deps:
