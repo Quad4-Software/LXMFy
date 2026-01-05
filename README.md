@@ -24,19 +24,27 @@ Easily create LXMF bots for the Reticulum Network with this extensible framework
 
 ## Installation
 
-### Using pip
+There are many ways to install LXMFy, you pick:
+
+### PyPI Package on my Gitea
+
+```bash
+# pip
+pip install --index-url https://git.quad4.io/api/packages/LXMFy/pypi/simple/ --extra-index-url https://pypi.org/simple lxmfy
+
+# pipx
+pipx install --pip-args="--index-url https://git.quad4.io/api/packages/LXMFy/pypi/simple/ --extra-index-url https://pypi.org/simple" lxmfy
+```
+
+### Git
 
 ```bash
 pip install git+https://git.quad4.io/LXMFy/LXMFy.git
 ```
 
-### Using pipx
-
 ```bash
 pipx install git+https://git.quad4.io/LXMFy/LXMFy.git
 ```
-
-### Using uv
 
 ```bash
 uv pip install git+https://git.quad4.io/LXMFy/LXMFy.git
