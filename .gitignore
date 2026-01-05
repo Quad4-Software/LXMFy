@@ -33,6 +33,7 @@ config/
 
 # Secrets
 .env
+.pypirc
 
 .ruff_cache/
 
