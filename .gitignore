@@ -38,5 +38,3 @@ config/
 .ruff_cache/
 
 testing/
-
-scripts/
