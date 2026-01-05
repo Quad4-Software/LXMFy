@@ -20,6 +20,7 @@ from .colors import (
     print_warning,
 )
 from .templates import CogTestBot, EchoBot, NoteBot, ReminderBot
+from .__version__ import __version__
 
 
 def get_user_choice() -> str:
@@ -424,7 +425,7 @@ def main() -> None:
         print_header("LXMFy Bot Framework")
 
         parser = argparse.ArgumentParser(
-            description="LXMFy Bot Tool",
+            description=f"LXMFy Bot Tool (version {__version__})",
             formatter_class=argparse.RawDescriptionHelpFormatter,
             epilog="""
 Examples:
