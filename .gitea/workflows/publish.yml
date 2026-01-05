@@ -52,7 +52,7 @@ jobs:
         echo '```' >> release_notes.md
 
     - name: Publish to Gitea PyPI registry
-      run: python3 -m twine upload --repository-url ${{ github.server_url }}/api/packages/${{ github.repository_owner }}/pypi -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} dist/*
+      run: python3 -m twine upload --repository-url ${{ github.server_url }}/api/packages/${{ github.repository_owner }}/pypi -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} dist/*.tar.gz dist/*.whl
       continue-on-error: true
 
     - name: Create Gitea Release with artifacts
