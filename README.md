@@ -24,32 +24,47 @@ Easily create LXMF bots for the Reticulum Network with this extensible framework
 
 ## Installation
 
-```bash
-pip install lxmfy
-```
-
-or pipx:
+### Using pip
 
 ```bash
-pipx install lxmfy
+pip install git+https://git.quad4.io/LXMFy/LXMFy.git
 ```
 
-or uv:
-
-```bash
-uv sync
-```
-
-or via git
+### Using pipx
 
 ```bash
 pipx install git+https://git.quad4.io/LXMFy/LXMFy.git
 ```
 
-or temporary environment with uv:
+### Using uv
+
+```bash
+uv pip install git+https://git.quad4.io/LXMFy/LXMFy.git
+```
+
+or temporary environment:
 
 ```bash
 uvx --from git+https://git.quad4.io/LXMFy/LXMFy.git lxmfy
+```
+
+### Development Installation
+
+For development, clone the repository and install with poetry or uv:
+
+```bash
+git clone https://git.quad4.io/LXMFy/LXMFy.git
+cd LXMFy
+```
+
+With poetry:
+```bash
+poetry install
+```
+
+With uv:
+```bash
+uv sync
 ```
 
 ## Usage
@@ -161,32 +176,6 @@ def echo(ctx, message: str):
     ctx.reply(message)
 
 bot.run()
-```
-
-## Cryptographic Message Signing
-
-LXMFy supports cryptographic signing and verification of messages for enhanced security:
-
-```python
-bot = LXMFBot(
-    name="SecureBot",
-    signature_verification_enabled=True,  # Enable signature verification
-    require_message_signatures=False,     # Allow unsigned messages but log them
-    # ... other config
-)
-```
-
-### CLI Commands for Signatures
-
-```bash
-# Test signature functionality
-lxmfy signatures test
-
-# Get enable instructions
-lxmfy signatures enable
-
-# Get disable instructions
-lxmfy signatures disable
 ```
 
 ## Propagation Node Configuration
