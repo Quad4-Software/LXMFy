@@ -36,6 +36,25 @@ pip install --index-url https://git.quad4.io/api/packages/LXMFy/pypi/simple/ --e
 pipx install --pip-args="--index-url https://git.quad4.io/api/packages/LXMFy/pypi/simple/ --extra-index-url https://pypi.org/simple" lxmfy
 ```
 
+**Permanent Configuration:**
+
+To avoid typing the index URLs every time, add them to your `pip.conf`:
+
+```ini
+# ~/.config/pip/pip.conf
+[global]
+index-url = https://git.quad4.io/api/packages/LXMFy/pypi/simple/
+extra-index-url = https://pypi.org/simple
+```
+
+Then you can simply use:
+
+```bash
+pip install lxmfy
+# or
+pipx install lxmfy
+```
+
 ### Git
 
 ```bash
