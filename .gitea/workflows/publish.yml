@@ -20,44 +20,33 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build distribution 📦
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-    - name: Checkout
-      uses: https://git.quad4.io/actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      with:
-        persist-credentials: false
-    - name: Set up Python
-      uses: https://git.quad4.io/actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v5
-      with:
-        python-version: "3.13"
-    - name: Install pypa/build
-      run: python3 -m pip install build --user
-    - name: Build a binary wheel and a source tarball
-      run: python3 -m build
-    - name: Store the distribution packages
-      uses: https://git.quad4.io/actions/upload-artifact@8689daa8608e46baf41e4786cb83fbc0dea972cd # v4
-      with:
-        name: python-package-distributions
-        path: dist/
-
-  gitea-release:
-    name: Create Gitea Release
-    needs:
-    - build
+  release:
+    name: Build and Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-    - name: Download all the dists
-      uses: https://git.quad4.io/actions/download-artifact@10979da4ee3096dd7ca8d9a35c72871335fee704 # v5
+    - name: Checkout
+      uses: https://git.quad4.io/actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       with:
-        name: python-package-distributions
-        path: dist/
+        persist-credentials: false
+
+    - name: Set up Python
+      uses: https://git.quad4.io/actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v5
+      with:
+        python-version: "3.13"
+
+    - name: Install build and twine
+      run: python3 -m pip install build twine --user
+
+    - name: Build a binary wheel and a source tarball
+      run: python3 -m build
+
+    - name: Publish to Gitea PyPI registry
+      run: python3 -m twine upload --repository-url ${{ github.server_url }}/api/packages/${{ github.repository_owner }}/pypi -u ${{ github.repository_owner }} -p ${{ secrets.GITEA_TOKEN }} dist/*
+      continue-on-error: true
+
     - name: Create Gitea Release with artifacts
       uses: https://git.quad4.io/actions/gitea-release-action@4875285c0950474efb7ca2df55233c51333eeb74
       with:
@@ -65,4 +54,4 @@ jobs:
         name: Release ${{ github.ref_name }}
         files: |
           dist/*.tar.gz
-          dist/*.whl 
+          dist/*.whl
