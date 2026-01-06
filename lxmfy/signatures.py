@@ -24,6 +24,7 @@ class SignatureManager:
         bot,
         verification_enabled: bool = False,
         require_signatures: bool = False,
+        request_unknown_identities: bool = False,
     ):
         """Initialize the SignatureManager.
 
@@ -31,11 +32,14 @@ class SignatureManager:
             bot: The LXMFBot instance.
             verification_enabled: Whether signature verification is enabled.
             require_signatures: Whether to reject unsigned messages.
+            request_unknown_identities: Whether to request unknown identities.
 
         """
         self.bot = bot
         self.verification_enabled = verification_enabled
         self.require_signatures = require_signatures
+        self.request_unknown_identities = request_unknown_identities
+        self.requested_identities = set()
         self.logger = logging.getLogger(__name__)
 
     def sign_message(self, message: LXMF.LXMessage, identity: RNS.Identity) -> bytes:
@@ -222,6 +226,25 @@ def verify_incoming_message(bot, message: LXMF.LXMessage, sender: str) -> bool:
                 "Could not verify message from %s - source identity unknown",
                 sender,
             )
+
+            # Optionally request the identity from the network
+            if sig_manager.request_unknown_identities:
+                if sender not in sig_manager.requested_identities:
+                    try:
+                        sender_hash_bytes = bytes.fromhex(sender)
+                        RNS.Transport.request_path(sender_hash_bytes)
+                        sig_manager.requested_identities.add(sender)
+                        logger.info(
+                            "Requested unknown identity for %s from the network",
+                            sender,
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "Failed to request path for %s: %s",
+                            sender,
+                            str(e),
+                        )
+
             if sig_manager.require_signatures:
                 logger.warning("Rejected message from %s due to unknown source", sender)
                 return False
