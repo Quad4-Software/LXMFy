@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0] - 2026-01-05
+
+### Features
+- **Inbound stamp enforcement toggle**: Added `require_stamps` to `BotConfig`, wiring enforcement through `LXMRouter` initialization and propagation enablement.
+- **Optional identity fetch for unknown senders**: `SignatureManager` can request unknown identities (`request_unknown_identities`) by issuing `RNS.Transport.request_path` when a message arrives from an unknown source.
+- **Performance and memory stress tests**: Added `tests/test_performance.py` with throughput, signature verification, storage load, middleware stack, and long-run memory stability benchmarks.
+
+### Fixes
+- **Reticulum cleanup**: Ensure `LXMFBot.cleanup()` invokes `router.exit_handler()` and `RNS.Reticulum.exit_handler()` to prevent hanging background threads between tests.
+- **Propagation config robustness**: Adjusted propagation tests to use test-mode/mocked routers and ensured storage limits are set correctly, stabilizing propagation-node coverage.
+- **Signature path requests**: Corrected patch target for path requests on unknown identities in tests, aligning with `lxmfy.signatures` usage.
+
 ## [1.3.0] - 2026-01-04
 
 ### Features
