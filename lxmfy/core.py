@@ -62,13 +62,19 @@ class LXMFBot:
         self.receipts = []
         self.queue = Queue(maxsize=50)
         self.announce_time = 600
+        self.router = None
+        self.local = None
         self.logger = logging.getLogger(__name__)
         self.thread_pool = ThreadPoolExecutor(
             max_workers=5,
         )  # For offloading CPU-bound or blocking I/O tasks
         self.scheduler = TaskScheduler(self)  # Initialize the scheduler
 
-        self.config_path = os.path.join(os.getcwd(), "config")
+        if self.config.config_path:
+            self.config_path = self.config.config_path
+        else:
+            self.config_path = os.path.join(os.getcwd(), "config")
+
         os.makedirs(self.config_path, exist_ok=True)
 
         if self.config.storage_type == "json":
@@ -107,6 +113,16 @@ class LXMFBot:
         self._load_delivery_attempts()
 
         if not self.config.test_mode:
+            # Initialize Reticulum (will raise exception if already running)
+            try:
+                RNS.Reticulum(configdir=self.config_path, loglevel=RNS.LOG_VERBOSE)
+            except OSError as e:
+                if "reinitialise" in str(e).lower():
+                    # Reticulum already running, continue
+                    pass
+                else:
+                    raise
+
             identity_file = os.path.join(self.config_path, "identity")
             if not os.path.isfile(identity_file):
                 RNS.log("No Primary Identity file found, creating new...", RNS.LOG_INFO)
@@ -115,78 +131,74 @@ class LXMFBot:
             self.identity = RNS.Identity.from_file(identity_file)
             RNS.log("Loaded identity from file", RNS.LOG_INFO)
 
-            # Initialize Reticulum (will raise exception if already running)
-            try:
-                RNS.Reticulum(loglevel=RNS.LOG_VERBOSE)
-            except OSError as e:
-                if "reinitialise" in str(e).lower():
-                    # Reticulum already running, continue
-                    pass
-                else:
-                    raise
             self.router = LXMRouter(
                 identity=self.identity,
                 storagepath=self.config_path,
                 autopeer=self.config.autopeer_propagation,
                 autopeer_maxdepth=self.config.autopeer_maxdepth,
+                enforce_stamps=self.config.require_stamps,
             )
             self.local = self.router.register_delivery_identity(
                 self.identity,
                 display_name=self.config.name,
+                stamp_cost=self.config.stamp_cost,
             )
             self.router.register_delivery_callback(self._message_received)
 
-            if self.config.enable_propagation_node:
-                try:
-                    self.router.enable_propagation()
+        if self.router and self.config.enable_propagation_node:
+            try:
+                self.router.enable_propagation(
+                    enforce_stamps=self.config.require_stamps,
+                )
 
-                    if self.config.message_storage_limit_mb > 0:
-                        self.router.set_message_storage_limit(
-                            megabytes=self.config.message_storage_limit_mb,
-                        )
-                        RNS.log(
-                            f"Set propagation node message storage limit to {self.config.message_storage_limit_mb} MB",
-                            RNS.LOG_INFO,
-                        )
-
+                if self.config.message_storage_limit_mb > 0:
+                    self.router.set_message_storage_limit(
+                        megabytes=self.config.message_storage_limit_mb,
+                    )
                     RNS.log(
-                        f"Enabled propagation node mode on {RNS.prettyhexrep(self.local.hash)}",
+                        f"Set propagation node message storage limit to {self.config.message_storage_limit_mb} MB",
                         RNS.LOG_INFO,
                     )
-                except Exception as e:
-                    RNS.log(
-                        f"Failed to enable propagation node: {e}",
-                        RNS.LOG_ERROR,
-                    )
 
-            if self.config.propagation_node:
-                try:
-                    propagation_node_bytes = bytes.fromhex(self.config.propagation_node)
-                    self.router.set_outbound_propagation_node(propagation_node_bytes)
-                    RNS.log(
-                        f"Configured outbound propagation node: {RNS.prettyhexrep(propagation_node_bytes)}",
-                        RNS.LOG_INFO,
-                    )
-                except ValueError:
-                    RNS.log(
-                        f"Invalid propagation node hash format: {self.config.propagation_node}",
-                        RNS.LOG_ERROR,
-                    )
-            elif self.config.autopeer_propagation:
                 RNS.log(
-                    f"Auto-peering enabled for propagation nodes within {self.config.autopeer_maxdepth} hops",
+                    f"Enabled propagation node mode on {RNS.prettyhexrep(self.local.hash) if self.local else 'unknown'}",
                     RNS.LOG_INFO,
                 )
-            elif (
-                self.config.propagation_fallback_enabled
-                and not self.config.enable_propagation_node
-            ):
+            except Exception as e:
                 RNS.log(
-                    "Propagation fallback is enabled but no propagation_node configured and autopeer_propagation is disabled. "
-                    "Propagated delivery will fail. Set propagation_node, enable autopeer_propagation, or disable propagation_fallback_enabled.",
-                    RNS.LOG_WARNING,
+                    f"Failed to enable propagation node: {e}",
+                    RNS.LOG_ERROR,
                 )
 
+        if self.router and self.config.propagation_node:
+            try:
+                propagation_node_bytes = bytes.fromhex(self.config.propagation_node)
+                self.router.set_outbound_propagation_node(propagation_node_bytes)
+                RNS.log(
+                    f"Configured outbound propagation node: {RNS.prettyhexrep(propagation_node_bytes)}",
+                    RNS.LOG_INFO,
+                )
+            except ValueError:
+                RNS.log(
+                    f"Invalid propagation node hash format: {self.config.propagation_node}",
+                    RNS.LOG_ERROR,
+                )
+        elif self.router and self.config.autopeer_propagation:
+            RNS.log(
+                f"Auto-peering enabled for propagation nodes within {self.config.autopeer_maxdepth} hops",
+                RNS.LOG_INFO,
+            )
+        elif (
+            self.config.propagation_fallback_enabled
+            and not self.config.enable_propagation_node
+        ):
+            RNS.log(
+                "Propagation fallback is enabled but no propagation_node configured and autopeer_propagation is disabled. "
+                "Propagated delivery will fail. Set propagation_node, enable autopeer_propagation, or disable propagation_fallback_enabled.",
+                RNS.LOG_WARNING,
+            )
+
+        if self.local:
             RNS.log(
                 f"LXMF Router ready to receive on: {RNS.prettyhexrep(self.local.hash)}",
                 RNS.LOG_INFO,
@@ -222,6 +234,7 @@ class LXMFBot:
             self,
             verification_enabled=self.config.signature_verification_enabled,
             require_signatures=self.config.require_message_signatures,
+            request_unknown_identities=self.config.request_unknown_identities,
         )
 
         if self.config.cogs_enabled:
@@ -762,9 +775,23 @@ class LXMFBot:
 
     def cleanup(self):
         """Clean up resources."""
+        RNS.log("Cleaning up LXMFBot...", RNS.LOG_DEBUG)
         self.transport.cleanup()
-        self.thread_pool.shutdown(wait=True)
+        self.thread_pool.shutdown(wait=False)
         self.scheduler.stop()
+        if hasattr(self, "router") and self.router:
+            try:
+                self.router.exit_handler()
+            except Exception:
+                pass
+
+        # Ensure Reticulum exits cleanly
+        if not self.config.test_mode:
+            try:
+                RNS.Reticulum.exit_handler()
+            except Exception:
+                pass
+        RNS.log("LXMFBot cleanup complete", RNS.LOG_DEBUG)
 
     def get_propagation_node_status(self):
         """Get information about configured and discovered propagation nodes.
