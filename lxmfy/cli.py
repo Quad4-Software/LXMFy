@@ -9,6 +9,7 @@ import os
 import re
 import sys
 
+from .__version__ import __version__
 from .colors import (
     Colors,
     init_colors,
@@ -20,7 +21,6 @@ from .colors import (
     print_warning,
 )
 from .templates import CogTestBot, EchoBot, NoteBot, ReminderBot
-from .__version__ import __version__
 
 
 def get_user_choice() -> str:
@@ -698,13 +698,16 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                     )
                     print(
                         "require_message_signatures=False,      # Set to True to reject unsigned messages",
+                        "require_stamps=False,                  # Set to True to reject invalid stamps",
+                        "request_unknown_identities=False,      # Set to True to request unknown keys",
                     )
                     print()
                     print_info("Example:")
                     print("bot = LXMFBot(")
                     print("    name='MyBot',")
                     print("    signature_verification_enabled=True,")
-                    print("    require_message_signatures=False")
+                    print("    require_message_signatures=False,")
+                    print("    require_stamps=False")
                     print(")")
 
                 elif subcommand == "disable":
@@ -717,6 +720,7 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                     )
                     print(
                         "require_message_signatures=False,      # Not required when disabled",
+                        "require_stamps=False,                  # Set to True to still require stamps",
                     )
                     print()
                     print_info(
