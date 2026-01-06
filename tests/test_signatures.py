@@ -24,11 +24,13 @@ class TestSignatureManager:
             bot,
             verification_enabled=True,
             require_signatures=True,
+            request_unknown_identities=True,
         )
 
         assert sig_manager.bot == bot
         assert sig_manager.verification_enabled is True
         assert sig_manager.require_signatures is True
+        assert sig_manager.request_unknown_identities is True
 
     def test_init_defaults(self):
         """Test SignatureManager initialization with defaults."""
@@ -406,6 +408,27 @@ class TestSignatureFunctions:
 
         assert result is True
         bot.signature_manager.handle_unsigned_message.assert_called_once()
+
+    def test_verify_incoming_message_source_unknown_request_ident(self):
+        """Test verify_incoming_message when source is unknown and requesting is enabled."""
+        bot = MagicMock()
+        bot.signature_manager = MagicMock()
+        bot.signature_manager.should_verify_message.return_value = True
+        bot.signature_manager.request_unknown_identities = True
+        bot.signature_manager.requested_identities = set()
+        bot.signature_manager.require_signatures = False
+
+        mock_message = MagicMock()
+        mock_message.signature_validated = False
+        mock_message.unverified_reason = LXMF.LXMessage.SOURCE_UNKNOWN
+        mock_message.hash = b"message_hash"
+
+        with patch("lxmfy.signatures.RNS.Transport.request_path") as mock_request_path:
+            result = verify_incoming_message(bot, mock_message, "abcdef1234567890")
+
+            assert result is True
+            mock_request_path.assert_called_once()
+            assert "abcdef1234567890" in bot.signature_manager.requested_identities
 
     def test_verify_incoming_message_no_manager(self):
         """Test verify_incoming_message when no signature manager exists."""

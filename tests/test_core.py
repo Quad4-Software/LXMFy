@@ -25,11 +25,17 @@ class TestBotConfig:
             announce=300,
             signature_verification_enabled=True,
             require_message_signatures=True,
+            require_stamps=True,
+            request_unknown_identities=True,
+            stamp_cost=16,
         )
         assert config.name == "TestBot"
         assert config.announce == 300
         assert config.signature_verification_enabled is True
         assert config.require_message_signatures is True
+        assert config.require_stamps is True
+        assert config.request_unknown_identities is True
+        assert config.stamp_cost == 16
 
 
 class TestLXMFBot:

@@ -32,8 +32,13 @@ def reticulum_instance(test_config_dir):
         loglevel=RNS.LOG_CRITICAL,  # Minimize logging in tests
         verbosity=0,
     )
-    return reticulum
-    # Cleanup will happen automatically with temp directory
+    yield reticulum
+
+    # Cleanup
+    try:
+        RNS.Reticulum.exit_handler()
+    except Exception:
+        pass
 
 
 @pytest.fixture(scope="function")
@@ -104,6 +109,8 @@ def test_bot_config(test_config_dir):
         first_message_enabled=False,
         signature_verification_enabled=False,
         require_message_signatures=False,
+        require_stamps=False,
+        stamp_cost=None,
         test_mode=True,  # Enable test mode to skip RNS initialization
     )
 

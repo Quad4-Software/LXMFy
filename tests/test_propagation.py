@@ -1,6 +1,7 @@
 """Tests for propagation node functionality."""
 
 import uuid
+from unittest.mock import MagicMock
 
 import pytest
 import RNS
@@ -103,9 +104,14 @@ class TestPropagationConfiguration:
                 enable_propagation_node=True,
                 message_storage_limit_mb=500,
                 storage_path=str(unique_config_path / "storage"),
+                test_mode=True,
             )
             bot = LXMFBot(**config.__dict__)
             bot.config_path = str(unique_config_path)
+
+            # Mock router for test mode
+            bot.router = MagicMock()
+            bot.router.propagation_node = True
 
             assert bot.config.enable_propagation_node is True
             assert bot.config.message_storage_limit_mb == 500
@@ -153,9 +159,14 @@ class TestMessageStorageLimits:
                 enable_propagation_node=True,
                 message_storage_limit_mb=1000,
                 storage_path=str(unique_config_path / "storage"),
+                test_mode=True,
             )
             bot = LXMFBot(**config.__dict__)
             bot.config_path = str(unique_config_path)
+
+            # Mock router for test mode
+            bot.router = MagicMock()
+            bot.router.message_storage_limit = 1000 * 1000 * 1000
 
             assert bot.config.message_storage_limit_mb == 1000
 
