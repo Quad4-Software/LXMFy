@@ -1,6 +1,6 @@
 # Security Policy
 
-This project uses [Socket](https://socket.dev/), [DeepSource](https://deepsource.com/) and [Bearer](https://www.bearer.com/) for dependency analysis and security scanning on the repository and pull requests.
+This project uses [Bearer](https://www.bearer.com/) and [OSV](https://osv.dev/) for dependency analysis and security scanning on the repository and pull requests.
 
 On Developer side, [Ruff](https://docs.astral.sh/ruff/) is used for security checks, formatting and linting.
 
