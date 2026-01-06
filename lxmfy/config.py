@@ -30,7 +30,9 @@ class BotConfig:
         announce_enabled (bool): Whether to enable bot announcements. Defaults to True.
         signature_verification_enabled (bool): Whether to enable cryptographic signature verification for incoming messages. Defaults to False.
         require_message_signatures (bool): Whether to reject unsigned messages when signature verification is enabled. Defaults to False.
-        stamp_cost (int): The cost of stamps for outgoing messages. None disables stamps. Defaults to None.
+        require_stamps (bool): Whether to reject messages with invalid stamps. Defaults to False.
+        request_unknown_identities (bool): Whether to request unknown identities from the network when a message is received from an unknown source. Defaults to False.
+        stamp_cost (int): The cost of stamps for messages. If set, required for incoming and applied to outgoing. None disables stamps. Defaults to None.
         direct_delivery_retries (int): Number of times to retry direct delivery before falling back to propagation. Defaults to 3.
         propagation_fallback_enabled (bool): Whether to use propagation nodes as fallback after direct delivery fails. Defaults to True.
         propagation_node (str): The destination hash of the outbound propagation node. If None and autopeer_propagation is True, automatically discovers nodes. Defaults to None.
@@ -38,6 +40,7 @@ class BotConfig:
         autopeer_maxdepth (int): Maximum hop depth for auto-peering with propagation nodes. None = no limit. Defaults to 4.
         enable_propagation_node (bool): Whether to run this bot as a propagation node. Defaults to False.
         message_storage_limit_mb (float): Maximum storage for propagation node messages in megabytes. Only applies when enable_propagation_node is True. Defaults to 500 MB.
+        config_path (str): The path to the bot configuration directory. If None, defaults to "config" in the current working directory. Defaults to None.
         test_mode (bool): Whether to run in test mode (skips RNS initialization). Defaults to False.
 
     """
@@ -64,6 +67,8 @@ class BotConfig:
     announce_enabled: bool = True
     signature_verification_enabled: bool = False
     require_message_signatures: bool = False
+    require_stamps: bool = False
+    request_unknown_identities: bool = False
     stamp_cost: int = None
     direct_delivery_retries: int = 3
     propagation_fallback_enabled: bool = True
@@ -72,6 +77,7 @@ class BotConfig:
     autopeer_maxdepth: int = 4
     enable_propagation_node: bool = False
     message_storage_limit_mb: float = 500.0
+    config_path: str = None
     test_mode: bool = False
 
     def __post_init__(self):
@@ -81,4 +87,4 @@ class BotConfig:
 
     def __str__(self):
         """Return a string representation of the BotConfig object."""
-        return f"BotConfig(name={self.name}, announce={self.announce}, announce_immediately={self.announce_immediately}, admins={self.admins}, hot_reloading={self.hot_reloading}, rate_limit={self.rate_limit}, cooldown={self.cooldown}, max_warnings={self.max_warnings}, warning_timeout={self.warning_timeout}, command_prefix={self.command_prefix}, cogs_dir={self.cogs_dir}, cogs_enabled={self.cogs_enabled}, permissions_enabled={self.permissions_enabled}, storage_type={self.storage_type}, storage_path={self.storage_path}, first_message_enabled={self.first_message_enabled}, event_logging_enabled={self.event_logging_enabled}, max_logged_events={self.max_logged_events}, event_middleware_enabled={self.event_middleware_enabled}, announce_enabled={self.announce_enabled}, signature_verification_enabled={self.signature_verification_enabled}, require_message_signatures={self.require_message_signatures}, test_mode={self.test_mode})"
+        return f"BotConfig(name={self.name}, announce={self.announce}, announce_immediately={self.announce_immediately}, admins={self.admins}, hot_reloading={self.hot_reloading}, rate_limit={self.rate_limit}, cooldown={self.cooldown}, max_warnings={self.max_warnings}, warning_timeout={self.warning_timeout}, command_prefix={self.command_prefix}, cogs_dir={self.cogs_dir}, cogs_enabled={self.cogs_enabled}, permissions_enabled={self.permissions_enabled}, storage_type={self.storage_type}, storage_path={self.storage_path}, first_message_enabled={self.first_message_enabled}, event_logging_enabled={self.event_logging_enabled}, max_logged_events={self.max_logged_events}, event_middleware_enabled={self.event_middleware_enabled}, announce_enabled={self.announce_enabled}, signature_verification_enabled={self.signature_verification_enabled}, require_message_signatures={self.require_message_signatures}, require_stamps={self.require_stamps}, request_unknown_identities={self.request_unknown_identities}, stamp_cost={self.stamp_cost}, test_mode={self.test_mode})"
