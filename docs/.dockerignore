@@ -1,0 +1,7 @@
+.git
+.github
+*.md
+build/doctrees
+build/epub
+build/latex
+build/text
