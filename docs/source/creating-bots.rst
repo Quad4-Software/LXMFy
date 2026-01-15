@@ -216,6 +216,44 @@ Cogs allow you to organize your commands and event listeners into separate files
 
 When the bot starts, it will automatically find :code:`utility.py`, call its :code:`setup` function, which creates an instance of :code:`UtilityCog` and registers it using :code:`bot.add_cog()`. The commands defined in the cog (:code:`uptime`, :code:`info`) will then be available.
 
+External Script Cogs (Multi-Language Support)
+---------------------------------------------
+
+You can also write bot extensions in languages other than Python (e.g., Bash, Ruby, Perl, Go, C) using External Script Cogs.
+
+1.  **Create an executable script** in your :code:`cogs` directory.
+2.  **Add a shebang** at the top of the script (e.g., :code:`#!/bin/bash`).
+3.  **Ensure the script is executable** (:code:`chmod +x your_script`).
+
+When the bot starts, it will automatically register any executable file in the :code:`cogs` directory (that doesn't end in :code:`.py`) as a bot command.
+
+**Argument Protocol:**
+
+-   :code:`$1`: Sender's LXMF hash.
+-   :code:`$2`: Full message content.
+-   :code:`$3`, :code:`$4`, ...: Individual command arguments.
+
+**Environment Variables:**
+
+-   :code:`LXMFY_SENDER`: The sender's identity hash.
+-   :code:`LXMFY_CONTENT`: The full message content.
+-   :code:`LXMFY_HAS_ADMIN`: :code:`true` or :code:`false` depending on the sender's admin status.
+
+**Example Bash Cog (:code:`cogs/greet.sh`):**
+
+.. code-block:: bash
+
+    #!/bin/bash
+    echo "Hello from Bash! You sent: $2"
+
+When a user sends :code:`/greet hello`, the bot will execute this script and reply with its stdout: :code:`Hello from Bash! You sent: /greet hello`.
+
+**Safety & Sandboxing:**
+
+-   **Timeouts:** External cogs have a default timeout (30s) to prevent hanging. This is configurable via :code:`external_cogs_timeout`.
+-   **Threading:** All external cogs run in separate threads and do not block the bot.
+-   **Sandboxing (Linux only):** If :code:`bubblewrap` (:code:`bwrap`) or :code:`firejail` is installed, the bot can automatically run scripts in a restricted, read-only sandbox. This is enabled by default via :code:`external_cogs_sandbox_enabled`.
+
 Handling Messages
 -----------------
 

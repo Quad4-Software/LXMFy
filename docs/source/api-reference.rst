@@ -35,19 +35,24 @@ The main bot class that handles message routing, command processing, and bot lif
         require_message_signatures=False,
         identity_pinning_enabled=False,
         message_persistence_enabled=False,
-        dynamic_cogs_enabled=True
+        dynamic_cogs_enabled=True,
+        external_cogs_enabled=True,
+        external_cogs_sandbox_enabled=True,
+        external_cogs_sandbox_type="auto",
+        external_cogs_timeout=30
     )
 
 Key Methods
 ^^^^^^^^^^^
 
 - :code:`run(delay=10)`: Start the bot's main loop
-- :code:`send(destination, message, title="Reply", lxmf_fields=None, propagation_node=None, max_retries=3)`: Send a message to a destination, optionally with custom LXMF fields, specific propagation node, and retry configuration.
-- :code:`send_with_attachment(destination, message, attachment, title="Reply")`: Send a message with an attachment
+- :code:`send(destination, message, title="Reply", lxmf_fields=None, stamp_cost=None)`: Send a message to a destination, optionally with custom LXMF fields and stamp cost override.
+- :code:`send_with_attachment(destination, message, attachment, title="Reply", stamp_cost=None)`: Send a message with an attachment
 - :code:`command(name, description="No description provided", admin_only=False, threaded=False)`: Decorator for registering commands. Set :code:`threaded=True` to run the command's callback in a separate thread. Commands support type-hinted arguments for automatic conversion.
-- :code:`load_extension(name)`: Load a cog extension.
-- :code:`unload_extension(name)`: Unload a cog extension.
-- :code:`reload_extension(name)`: Reload a cog extension.
+- :code:`load_extension(name)`: Load a cog extension module by name (e.g., "cogs.utility").
+- :code:`reload_extension(name)`: Reload a cog extension module.
+- :code:`add_cog(cog_instance)`: Add a cog class instance to the bot.
+- :code:`remove_cog(cog_name)`: Remove a cog from the bot by its class name.
 - :code:`on_first_message()`: Decorator for handling first messages from users
 - :code:`on_message()`: Decorator for handling all messages (called before command processing)
 - :code:`validate()`: Run validation checks on the bot configuration
