@@ -14,10 +14,11 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
+from typing import Callable
 from types import SimpleNamespace
 
 import RNS
-from LXMF import LXMRouter, LXMessage
+from LXMF import LXMessage, LXMRouter
 
 from .attachments import Attachment, pack_attachment
 from .cogs_core import load_cogs_from_directory
@@ -27,10 +28,11 @@ from .events import Event, EventManager, EventPriority
 from .help import HelpSystem
 from .middleware import MiddlewareContext, MiddlewareManager, MiddlewareType
 from .moderation import SpamProtection
+from .nlp import IntentClassifier
 from .permissions import DefaultPerms, PermissionManager
 from .scheduler import TaskScheduler
 from .signatures import SignatureManager, sign_outgoing_message, verify_incoming_message
-from .storage import JSONStorage, SQLiteStorage
+from .storage import JSONStorage, SQLiteStorage, Storage
 from .transport import Transport
 from .validation import format_validation_results, validate_bot
 
@@ -78,9 +80,9 @@ class LXMFBot:
         os.makedirs(self.config_path, exist_ok=True)
 
         if self.config.storage_type == "json":
-            self.storage = JSONStorage(self.config.storage_path)
+            self.storage = Storage(JSONStorage(self.config.storage_path))
         elif self.config.storage_type == "sqlite":
-            self.storage = SQLiteStorage(self.config.storage_path)
+            self.storage = Storage(SQLiteStorage(self.config.storage_path))
 
         self.permissions = PermissionManager(
             storage=self.storage,
@@ -100,7 +102,7 @@ class LXMFBot:
         if not os.path.exists(init_file):
             open(init_file, "w", encoding="utf-8").close()
 
-        self.transport = Transport(self.storage)
+        self.transport = Transport(self, self.storage)
         self.spam_protection = SpamProtection(
             storage=self.storage,
             bot=self,
@@ -145,6 +147,7 @@ class LXMFBot:
                 stamp_cost=self.config.stamp_cost,
             )
             self.router.register_delivery_callback(self._message_received)
+            self.local.set_link_established_callback(self._link_established)
 
         if self.router and self.config.enable_propagation_node:
             try:
@@ -236,6 +239,12 @@ class LXMFBot:
         self.command_prefix = self.config.command_prefix
 
         self.help_system = HelpSystem(self)
+
+        self.nlp = IntentClassifier(threshold=self.config.nlp_threshold)
+        self.intents = {}  # {intent_name: callback}
+
+        self.link_handlers = []
+        self.links = {}  # {dest_hash: Link}
 
         self.signature_manager = SignatureManager(
             self,
@@ -352,6 +361,7 @@ class LXMFBot:
 
         Args:
             cog_name: The name of the cog class to remove.
+
         """
         if cog_name in self.cogs:
             cog = self.cogs.pop(cog_name)
@@ -525,6 +535,23 @@ class LXMFBot:
                         self.send(sender, "Error executing command: %s", str(e))
                         return
 
+            # NLP Intent matching
+            if self.config.nlp_enabled:
+                intent_name, score = self.nlp.predict(content)
+                if intent_name and intent_name in self.intents:
+                    self.logger.debug(
+                        "NLP Intent Matched: %s (score: %.2f)", intent_name, score,
+                    )
+                    msg.intent = intent_name
+                    msg.intent_score = score
+                    try:
+                        self.intents[intent_name](msg)
+                        return
+                    except Exception as e:
+                        self.logger.error(
+                            "Error executing intent %s: %s", intent_name, e,
+                        )
+
             for callback in self.delivery_callbacks:
                 callback(msg)
 
@@ -635,6 +662,7 @@ class LXMFBot:
         title: str = "Reply",
         lxmf_fields: dict | None = None,
         stamp_cost: int | None = None,
+        opportunistic: bool | None = None,
     ):
         """Send a message to a destination, optionally with custom LXMF fields.
 
@@ -644,6 +672,8 @@ class LXMFBot:
             title: The message title (optional, will be utf-8 encoded).
             lxmf_fields: Optional dictionary of LXMF fields.
             stamp_cost: Optional stamp cost override. If None, uses config.stamp_cost.
+            opportunistic: Whether to use opportunistic sending (try direct, then prop).
+                           If None, uses config.opportunistic_sending.
 
         """
         if self.config.test_mode:
@@ -694,14 +724,25 @@ class LXMFBot:
         attempts = self.delivery_attempts.get(destination, 0)
         max_retries = self.config.direct_delivery_retries
 
-        if attempts >= max_retries and self.config.propagation_fallback_enabled:
-            has_propagation = (
-                self.config.propagation_node
-                or self.config.autopeer_propagation
-                or (self.router.get_outbound_propagation_node() is not None)
+        # Check if we should prefer propagation
+        has_prop_node = (
+            self.config.propagation_node
+            or self.config.autopeer_propagation
+            or (
+                self.router.get_outbound_propagation_node() is not None
+                if self.router
+                else False
             )
+        )
 
-            if not has_propagation and not self.config.enable_propagation_node:
+        is_opportunistic = (
+            opportunistic
+            if opportunistic is not None
+            else self.config.opportunistic_sending
+        )
+
+        if attempts >= max_retries and self.config.propagation_fallback_enabled:
+            if not has_prop_node and not self.config.enable_propagation_node:
                 RNS.log(
                     f"Propagation fallback triggered for {destination}, but no propagation_node configured, "
                     "autopeer disabled, and bot is not a propagation node. Message will likely fail. "
@@ -764,17 +805,18 @@ class LXMFBot:
         # Sign the message (pass-through for LXMF's built-in signing)
         lxm = sign_outgoing_message(self, lxm)
 
-        # Set propagation fallback if enabled and we're trying direct first
+        # Set propagation fallback if enabled
         if (
             desired_method == LXMessage.DIRECT
-            and self.config.propagation_fallback_enabled
+            and (self.config.propagation_fallback_enabled or is_opportunistic)
+            and has_prop_node
         ):
             lxm.try_propagation_on_fail = True
 
         self.queue.put(lxm)
         self._persist_queue()
         RNS.log(
-            f"Message queued for {destination} (method: {desired_method})",
+            f"Message queued for {destination} (method: {desired_method}, opportunistic: {is_opportunistic})",
             RNS.LOG_DEBUG,
         )
 
@@ -840,6 +882,7 @@ class LXMFBot:
         attachment: Attachment,
         title: str = "Reply",
         stamp_cost: int | None = None,
+        opportunistic: bool | None = None,
     ):
         """Send a message with an attachment to a destination.
 
@@ -849,6 +892,7 @@ class LXMFBot:
             attachment: The attachment to send.
             title: The message title.
             stamp_cost: Optional stamp cost override.
+            opportunistic: Whether to use opportunistic sending.
 
         """
         attachment_specific_fields = pack_attachment(attachment)
@@ -858,6 +902,7 @@ class LXMFBot:
             title=title,
             lxmf_fields=attachment_specific_fields,
             stamp_cost=stamp_cost,
+            opportunistic=opportunistic,
         )
 
     def run(self, delay=10):
@@ -865,9 +910,15 @@ class LXMFBot:
         self.scheduler.start()  # Start the scheduler
         try:
             while True:
-                for _i in list(self.queue.queue):
-                    lxm = self.queue.get()
-                    self.router.handle_outbound(lxm)
+                # Process outgoing queue with a timeout to prevent hanging
+                while not self.queue.empty():
+                    try:
+                        # Non-blocking get with a small timeout for safety
+                        lxm = self.queue.get(block=False)
+                        if self.router:
+                            self.router.handle_outbound(lxm)
+                    except Exception:
+                        break
 
                 time.sleep(delay)
 
@@ -917,14 +968,14 @@ class LXMFBot:
         if hasattr(self, "router") and self.router:
             try:
                 self.router.exit_handler()
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
         # Ensure Reticulum exits cleanly
         if not self.config.test_mode:
             try:
                 RNS.Reticulum.exit_handler()
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
         RNS.log("LXMFBot cleanup complete", RNS.LOG_DEBUG)
 
@@ -1067,6 +1118,81 @@ class LXMFBot:
             return stats
         except Exception as e:
             return {"error": f"Failed to get stats: {e}"}  # Stop the scheduler
+
+    def intent(self, name: str, examples: list[str]):
+        """Decorator for registering intent handlers.
+
+        Args:
+            name: The name of the intent.
+            examples: A list of example phrases for this intent.
+
+        """
+
+        def decorator(func):
+            self.nlp.add_intent(name, examples)
+            self.intents[name] = func
+            return func
+
+        return decorator
+
+    def request_link(
+        self,
+        destination_hash: str,
+        callback: Callable = None,
+        app_name: str = "lxmf",
+        *aspects: str,
+    ):
+        """Request an RNS link to a destination.
+
+        Args:
+            destination_hash: The destination hash string.
+            callback: Optional callback when link is established.
+            app_name: The app name for the destination (default: "lxmf").
+            *aspects: Additional aspects for the destination (default: "delivery" if none provided).
+
+        """
+        if not self.config.link_support_enabled:
+            raise Exception("Link support is disabled in config")
+
+        if not aspects:
+            aspects = ("delivery",)
+
+        dest_bytes = bytes.fromhex(destination_hash)
+        identity = RNS.Identity.recall(dest_bytes)
+        if not identity:
+            RNS.Transport.request_path(dest_bytes)
+            raise Exception(
+                f"Identity for {destination_hash} not known, requesting path",
+            )
+
+        dest = RNS.Destination(
+            identity, RNS.Destination.OUT, RNS.Destination.SINGLE, app_name, *aspects,
+        )
+        link = RNS.Link(dest)
+
+        if callback:
+
+            def _link_established(link):
+                callback(link)
+
+            link.set_link_established_callback(_link_established)
+
+        self.links[destination_hash] = link
+        return link
+
+    def on_link(self, callback: Callable):
+        """Register a handler for incoming links."""
+        self.link_handlers.append(callback)
+
+    def _link_established(self, link):
+        """Handle an established RNS link."""
+        sender = RNS.hexrep(link.destination.hash, delimit=False)
+        self.links[sender] = link
+        for handler in self.link_handlers:
+            try:
+                handler(link)
+            except Exception as e:
+                self.logger.error("Error in link handler: %s", e)
 
     def on_first_message(self):
         """Decorator for registering first message handlers"""

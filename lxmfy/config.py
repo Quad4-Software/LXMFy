@@ -86,6 +86,10 @@ class BotConfig:
     external_cogs_sandbox_enabled: bool = True
     external_cogs_sandbox_type: str = "auto"  # 'auto', 'bwrap', 'firejail', 'none'
     external_cogs_timeout: int = 30
+    nlp_enabled: bool = False
+    nlp_threshold: float = 0.5
+    link_support_enabled: bool = False
+    opportunistic_sending: bool = True
 
     def __post_init__(self):
         """Post-initialization to ensure admins is a set."""

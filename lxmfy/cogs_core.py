@@ -39,12 +39,12 @@ def _get_sandbox_command(bot, script_path):
                 "--dev",
                 "/dev",
                 "--tmpfs",
-                "/tmp",
+                "/tmp",  # noqa: S108
                 "--ro-bind",
                 "/usr",
                 "/usr",
             ]
-            
+
             # Handle merged-usr systems by creating symlinks if they are symlinks on host
             for path in ["/bin", "/lib", "/lib64", "/sbin"]:
                 if os.path.islink(path):
@@ -117,7 +117,7 @@ def load_cogs_from_directory(bot, directory="cogs"):
                             env["LXMFY_SENDER"] = msg.sender
                             env["LXMFY_CONTENT"] = msg.content
                             env["LXMFY_HAS_ADMIN"] = str(
-                                getattr(msg, "is_admin", False)
+                                getattr(msg, "is_admin", False),
                             ).lower()
 
                             # Prepare arguments: sender, content, and any existing args
@@ -137,7 +137,7 @@ def load_cogs_from_directory(bot, directory="cogs"):
                             if timeout <= 0:
                                 timeout = None
 
-                            result = subprocess.run(
+                            result = subprocess.run(  # noqa: S603
                                 full_cmd,
                                 capture_output=True,
                                 text=True,

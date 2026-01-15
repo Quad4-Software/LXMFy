@@ -36,13 +36,15 @@ class PathInfo:
 class Transport:
     """Manages network transport for LXMFy, handling links and paths."""
 
-    def __init__(self, storage):
+    def __init__(self, bot, storage):
         """Initializes the Transport instance.
 
         Args:
+            bot: The LXMFBot instance.
             storage: The storage backend to use for caching paths.
 
         """
+        self.bot = bot
         self.storage = storage
         self.logger = logging.getLogger(__name__)
         self.cached_links = {}
@@ -96,12 +98,20 @@ class Transport:
         """Saves cached paths to storage."""
         self.storage.set("transport:paths", self.paths)
 
-    def establish_link(self, destination_hash: bytes, timeout: int = 15) -> RNS.Link:
+    def establish_link(
+        self,
+        destination_hash: bytes,
+        timeout: int = 15,
+        app_name: str = "lxmf",
+        *aspects: str,
+    ) -> RNS.Link:
         """Establish a link with path discovery.
 
         Args:
             destination_hash (bytes): The destination hash to establish a link with.
             timeout (int): The timeout in seconds for path discovery.
+            app_name: The app name for the destination (default: "lxmf").
+            *aspects: Additional aspects for the destination (default: "delivery" if none provided).
 
         Returns:
             RNS.Link: The established RNS link.
@@ -110,6 +120,9 @@ class Transport:
             Exception: If the user does not have permission to establish links or if path lookup times out.
 
         """
+        if not aspects:
+            aspects = ("delivery",)
+
         sender = RNS.hexrep(destination_hash, delimit=False)
         if not self.bot.permissions.has_permission(sender, DefaultPerms.USE_BOT):
             raise Exception("User does not have permission to establish links")
@@ -117,14 +130,16 @@ class Transport:
         self.load_paths()
         try:
             if RNS.Transport.has_path(destination_hash):
-                return self._create_link(destination_hash, timeout)
+                return self._create_link(destination_hash, timeout, app_name, *aspects)
 
             RNS.Transport.request_path(destination_hash)
 
             path_timeout = time.time() + timeout
             while time.time() < path_timeout:
                 if RNS.Transport.has_path(destination_hash):
-                    return self._create_link(destination_hash, timeout)
+                    return self._create_link(
+                        destination_hash, timeout, app_name, *aspects,
+                    )
                 time.sleep(0.1)
 
             raise Exception("Path lookup timed out")
@@ -135,12 +150,20 @@ class Transport:
         finally:
             self.save_paths()
 
-    def _create_link(self, destination_hash: bytes, timeout: int) -> RNS.Link:
+    def _create_link(
+        self,
+        destination_hash: bytes,
+        timeout: int,
+        app_name: str = "lxmf",
+        *aspects: str,
+    ) -> RNS.Link:
         """Create and establish a link.
 
         Args:
             destination_hash (bytes): The destination hash for the link.
             timeout (int): The timeout in seconds for link establishment.
+            app_name: The app name for the destination.
+            *aspects: Additional aspects for the destination.
 
         Returns:
             RNS.Link: The established RNS link.
@@ -149,6 +172,9 @@ class Transport:
             Exception: If the identity is not found or if link establishment times out.
 
         """
+        if not aspects:
+            aspects = ("delivery",)
+
         try:
             identity = RNS.Identity.recall(destination_hash)
             if not identity:
@@ -158,8 +184,8 @@ class Transport:
                 identity,
                 RNS.Destination.OUT,
                 RNS.Destination.SINGLE,
-                "nomadnetwork",
-                "node",
+                app_name,
+                *aspects,
             )
 
             link = RNS.Link(destination)

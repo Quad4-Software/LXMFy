@@ -99,11 +99,18 @@ class SignatureManager:
                 current_pub_key = identity_to_use.get_public_key()
 
                 # Check if pinned_pub_key or current_pub_key are Mock objects (happens in tests)
-                from unittest.mock import Mock
+                is_mock = False
+                try:
+                    from unittest.mock import Mock
 
-                if isinstance(pinned_pub_key, Mock) or isinstance(
-                    current_pub_key, Mock
-                ):
+                    if isinstance(pinned_pub_key, Mock) or isinstance(
+                        current_pub_key, Mock,
+                    ):
+                        is_mock = True
+                except ImportError:
+                    pass
+
+                if is_mock:
                     # In tests with mocks, bypass pinning check
                     pass
                 elif pinned_pub_key:

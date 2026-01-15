@@ -27,7 +27,7 @@ class HelpFormatter:
 
         if command.help.aliases:
             help_text.append(
-                f"**Aliases**: {', '.join(f'`{a}`' for a in command.help.aliases)}"
+                f"**Aliases**: {', '.join(f'`{a}`' for a in command.help.aliases)}",
             )
 
         if command.help.usage:
@@ -71,8 +71,10 @@ class HelpFormatter:
             unique_cmds[cmd.name] = cmd
 
         help_text = [f"\n**{category}**"]
-        for cmd in sorted(unique_cmds.values(), key=lambda x: x.name):
-            help_text.append(f"  * `{cmd.name}`: {cmd.help.description}")
+        help_text.extend(
+            f"  * `{cmd.name}`: {cmd.help.description}"
+            for cmd in sorted(unique_cmds.values(), key=lambda x: x.name)
+        )
         return "\n".join(help_text)
 
     @staticmethod
@@ -88,10 +90,10 @@ class HelpFormatter:
         """
         help_text = ["**Bot Help Menu**", "Use `help <command>` for more details."]
 
-        for category in sorted(categories.keys()):
-            help_text.append(
-                HelpFormatter.format_category(category, categories[category])
-            )
+        help_text.extend(
+            HelpFormatter.format_category(category, categories[category])
+            for category in sorted(categories.keys())
+        )
 
         return "\n".join(help_text)
 
