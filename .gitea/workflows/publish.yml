@@ -55,6 +55,13 @@ jobs:
       run: python3 -m twine upload --repository-url ${{ github.server_url }}/api/packages/${{ github.repository_owner }}/pypi -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} dist/*.tar.gz dist/*.whl
       continue-on-error: true
 
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      run: python3 -m twine upload dist/*.tar.gz dist/*.whl
+      continue-on-error: true
+
     - name: Create Gitea Release with artifacts
       uses: https://git.quad4.io/actions/gitea-release-action@4875285c0950474efb7ca2df55233c51333eeb74
       with:

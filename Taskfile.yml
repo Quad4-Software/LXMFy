@@ -184,22 +184,21 @@ tasks:
       - docker rmi {{.DOCKER_IMAGE}} || true
       - docker rmi {{.WHEEL_BUILDER_IMAGE}} || true
 
-  publish:
-    desc: Publish to PyPI
-    cmds:
-      - poetry publish --build
-
-  publish-test:
-    desc: Publish to TestPyPI
-    cmds:
-      - poetry publish --build --repository testpypi
-
   publish-gitea:
-    desc: Publish to Gitea PyPI registry
-    deps:
-      - build
+    desc: Publish package to Gitea registry
+    deps: [build]
     cmds:
-      - python3 -m twine upload --repository gitea dist/*
+      - twine upload --repository-url https://git.quad4.io/api/packages/LXMFy/pypi dist/*
+
+  publish-pypi:
+    desc: Publish package to PyPI
+    deps: [build]
+    cmds:
+      - twine upload dist/*
+
+  publish:
+    desc: Publish package to both Gitea and PyPI
+    deps: [publish-gitea, publish-pypi]
 
   all:
     desc: Run clean, lint, test, and build
