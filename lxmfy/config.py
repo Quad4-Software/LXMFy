@@ -82,6 +82,10 @@ class BotConfig:
     identity_pinning_enabled: bool = False
     message_persistence_enabled: bool = False
     dynamic_cogs_enabled: bool = True
+    external_cogs_enabled: bool = True
+    external_cogs_sandbox_enabled: bool = True
+    external_cogs_sandbox_type: str = "auto"  # 'auto', 'bwrap', 'firejail', 'none'
+    external_cogs_timeout: int = 30
 
     def __post_init__(self):
         """Post-initialization to ensure admins is a set."""
