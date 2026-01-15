@@ -38,3 +38,4 @@ config/
 .ruff_cache/
 
 testing/
+.hypothesis/
