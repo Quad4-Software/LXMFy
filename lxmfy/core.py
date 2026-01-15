@@ -32,7 +32,7 @@ from .nlp import IntentClassifier
 from .permissions import DefaultPerms, PermissionManager
 from .scheduler import TaskScheduler
 from .signatures import SignatureManager, sign_outgoing_message, verify_incoming_message
-from .storage import JSONStorage, SQLiteStorage, Storage
+from .storage import JSONStorage, MemoryStorage, SQLiteStorage, Storage
 from .transport import Transport
 from .validation import format_validation_results, validate_bot
 
@@ -83,6 +83,8 @@ class LXMFBot:
             self.storage = Storage(JSONStorage(self.config.storage_path))
         elif self.config.storage_type == "sqlite":
             self.storage = Storage(SQLiteStorage(self.config.storage_path))
+        elif self.config.storage_type == "memory":
+            self.storage = Storage(MemoryStorage())
 
         self.permissions = PermissionManager(
             storage=self.storage,

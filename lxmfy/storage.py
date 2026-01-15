@@ -446,6 +446,35 @@ class SQLiteStorage(StorageBackend):
             return []
 
 
+class MemoryStorage(StorageBackend):
+    """In-memory storage backend."""
+
+    def __init__(self):
+        """Initialize a new MemoryStorage instance."""
+        self.data: dict[str, Any] = {}
+        self.logger = logging.getLogger(__name__)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Retrieve a value from storage."""
+        return self.data.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        """Store a value in storage."""
+        self.data[key] = value
+
+    def delete(self, key: str) -> None:
+        """Delete a value from storage."""
+        self.data.pop(key, None)
+
+    def exists(self, key: str) -> bool:
+        """Check if a key exists in storage."""
+        return key in self.data
+
+    def scan(self, prefix: str) -> list:
+        """Scan for keys with a given prefix."""
+        return [k for k in self.data if k.startswith(prefix)]
+
+
 class Storage:
     """Facade for the underlying storage backend."""
 
