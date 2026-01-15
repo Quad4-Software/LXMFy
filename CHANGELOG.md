@@ -3,6 +3,12 @@
 ## [1.5.0] - 2026-01-15
 
 ### Features
+- **In-Memory Storage**: Added `MemoryStorage` backend. Bots can now run entirely in RAM (excluding RNS/LXMF internal state) by setting `storage_type="memory"`.
+- **Reliability Suite**: Added a comprehensive suite of mathematical and reliability tests:
+    - **Manifold Testing**: NLP vector space orthogonality verification.
+    - **Chaos Engineering**: Storage fault injection and bit-rot simulation.
+    - **Temporal Drift**: Clock skew resilience testing (±1 year jumps).
+    - **Leak Detection**: Resource tracking for FDs, threads, and memory over long runs.
 - **Message Persistence**: Added `message_persistence_enabled` to `BotConfig`. Outgoing messages in the queue are now persisted to storage and restored on startup (in case of a crash or unexpected restart).
 - **Identity Pinning**: Added `identity_pinning_enabled` to `BotConfig`. An extra paranoid measure that remembers the full public key of a sender to protect against theoretical hash collisions.
 - **Dynamic Cog Management**: Added `remove_cog()` and `reload_extension()` methods to `LXMFBot`, allowing for runtime loading and unloading of extensions.
