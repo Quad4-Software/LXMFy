@@ -6,21 +6,15 @@ Easily create LXMF bots for the Reticulum Network with this extensible framework
 
 ## Features
 
-- Interactive CLI
-- Spam protection (rate limiting, command cooldown, warnings, banning)
-- Command prefix (set to None to process all messages as commands)
-- Announcements (announce in seconds, set to 0 to disable)
-- Extensible Storage Backend (JSON, SQLite)
-- Permission System (Role-based)
-- Middleware System
-- Task Scheduler (Cron-style)
-- Event System
-- Help on first message
-- LXMF Attachments (File, Image, Audio)
-- Customizable Bot Icon (via LXMF Icon Appearance field)
-- Direct Delivery & Propagation Fallback
-- Threading support for commands.
-- Cryptographic Message Signing & Verification (LXMF)
+| Category | Key Capabilities |
+| :--- | :--- |
+| **Core** | Interactive CLI, Command Prefixes, Cron-style Task Scheduler, Middleware & Event Systems |
+| **Connectivity** | Direct Delivery & Propagation Fallback, Auto-Peering, RNS Link Support, Opportunistic Sending |
+| **Security** | Spam Protection, Role-based Permissions, Identity Pinning, Message Signing/Verification |
+| **Intelligence** | Local NLP Intent Classification (Offline/Private), Type-hinted Argument Parsing |
+| **Extensions** | Python Cogs, External Script Cogs (Bash, Go, C, etc.), Linux Sandboxing (`bwrap`/`firejail`) |
+| **Storage** | Extensible Backends (JSON, SQLite), Message Persistence (Crash Recovery) |
+| **UX** | Help on First Message, Auto-generated Help Menus, Customizable Bot Icons, Attachments |
 
 ## Installation
 
@@ -321,7 +315,7 @@ uv run lxmfy run echo
 
 ## Contributing
 
-Pull requests are welcome.
+For now send ideas and issues to LXMF: `7cc8d66b4f6a0e0e49d34af7f6077b5a`
 
 ## License
 

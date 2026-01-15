@@ -7,6 +7,8 @@
 - **Identity Pinning**: Added `identity_pinning_enabled` to `BotConfig`. An extra paranoid measure that remembers the full public key of a sender to protect against theoretical hash collisions.
 - **Dynamic Cog Management**: Added `remove_cog()` and `reload_extension()` methods to `LXMFBot`, allowing for runtime loading and unloading of extensions.
 - **Cross-Language Script Cogs**: Added support for non-Python cogs. Any executable file in the `cogs/` directory is now automatically registered as a bot command. Includes optional sandboxing via `bubblewrap` or `firejail` and mandatory timeouts/threading for safety.
+- **NLP**: Integrated a very basic, lightweight, local intent classification engine (Tiny-NLP). Bots can now understand "intents" using mathematical vector similarity (TF-IDF/Cosine) instead of just exact string matches, all processed locally and offline without external APIs or dependencies.
+- **RNS Link Support**: Bots can now request and respond to direct RNS Links, enabling stateful, link-oriented communication alongside standard LXMF messages.
 - **Type-hinted Argument Parsing**: Bot commands now automatically parse and convert arguments based on type hints in the callback function signature.
 - **Property-based Testing**: Integrated Hypothesis for extensive property-based testing of middleware, parsing, permissions, signatures, storage, and validation modules.
 
