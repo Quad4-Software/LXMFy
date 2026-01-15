@@ -39,16 +39,24 @@ The main bot class that handles message routing, command processing, and bot lif
         external_cogs_enabled=True,
         external_cogs_sandbox_enabled=True,
         external_cogs_sandbox_type="auto",
-        external_cogs_timeout=30
+        external_cogs_timeout=30,
+        nlp_enabled=False,
+        nlp_threshold=0.5,
+        link_support_enabled=False
     )
 
 Key Methods
 ^^^^^^^^^^^
 
 - :code:`run(delay=10)`: Start the bot's main loop
-- :code:`send(destination, message, title="Reply", lxmf_fields=None, stamp_cost=None)`: Send a message to a destination, optionally with custom LXMF fields and stamp cost override.
-- :code:`send_with_attachment(destination, message, attachment, title="Reply", stamp_cost=None)`: Send a message with an attachment
+- :code:`send(destination, message, title="Reply", lxmf_fields=None, stamp_cost=None, opportunistic=None)`: Send a message to a destination, optionally with custom LXMF fields, stamp cost override, and opportunistic sending (tries direct, falls back to propagation immediately if configured).
+- :code:`send_with_attachment(destination, message, attachment, title="Reply", stamp_cost=None, opportunistic=None)`: Send a message with an attachment
 - :code:`command(name, description="No description provided", admin_only=False, threaded=False)`: Decorator for registering commands. Set :code:`threaded=True` to run the command's callback in a separate thread. Commands support type-hinted arguments for automatic conversion.
+- :code:`intent(name, examples)`: Decorator for registering NLP intent handlers.
+- :code:`nlp.export_model()`: Export trained NLP model data.
+- :code:`nlp.import_model(model_data)`: Import previously exported NLP model data.
+- :code:`request_link(destination_hash, callback=None, app_name="lxmf", *aspects)`: Request an RNS link to a destination. Allows custom :code:`app_name` and :code:`aspects` (defaults to "lxmf" and "delivery").
+- :code:`on_link(callback)`: Register a handler for incoming RNS links.
 - :code:`load_extension(name)`: Load a cog extension module by name (e.g., "cogs.utility").
 - :code:`reload_extension(name)`: Reload a cog extension module.
 - :code:`add_cog(cog_instance)`: Add a cog class instance to the bot.

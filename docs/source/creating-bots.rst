@@ -248,6 +248,51 @@ When the bot starts, it will automatically register any executable file in the :
 
 When a user sends :code:`/greet hello`, the bot will execute this script and reply with its stdout: :code:`Hello from Bash! You sent: /greet hello`.
 
+Sovereign NLP (Local Intent Classification)
+-------------------------------------------
+
+LXMFy includes a built-in, lightweight NLP engine for intent classification. This allows your bot to understand the "intent" of a message even if it doesn't match a command exactly.
+
+1.  **Enable NLP** in your bot configuration: :code:`nlp_enabled=True`.
+2.  **Define intents** using the :code:`@bot.intent` decorator.
+
+.. code-block:: python
+
+    @bot.intent("help", examples=["how do I use this?", "show me commands", "help me please"])
+    def help_intent(msg):
+        msg.reply("I can help! Try typing /help to see a list of commands.")
+
+The NLP engine uses mathematical vector similarity (TF-IDF and Cosine Similarity) to match incoming text against your example phrases. This processing happens entirely locally on your machine, ensuring full privacy.
+
+**Persistence and Extensibility:**
+
+For larger bots, you can export and import the trained intent model to avoid retraining on every startup:
+
+.. code-block:: python
+
+    # Export the model
+    model_data = bot.nlp.export_model()
+    # Save model_data to a file or database
+    
+    # Later, import it back
+    bot.nlp.import_model(model_data)
+
+RNS Link Support
+----------------
+
+Bots can now establish and respond to direct RNS Links. This is useful for stateful, streaming, or high-bandwidth communication that goes beyond simple message packets.
+
+1.  **Enable Link Support** in configuration: :code:`link_support_enabled=True`.
+2.  **Request a link**: :code:`bot.request_link(destination_hash)`. You can also specify a custom app name and aspects: :code:`bot.request_link(dest, callback, "my_app", "aspect1")`.
+3.  **Handle incoming links**: Use the :code:`@bot.on_link` decorator.
+
+.. code-block:: python
+
+    @bot.on_link
+    def handle_link(link):
+        print(f"Link established with {RNS.hexrep(link.destination.hash)}")
+        # You can now use the link for direct RNS communication
+
 **Safety & Sandboxing:**
 
 -   **Timeouts:** External cogs have a default timeout (30s) to prevent hanging. This is configurable via :code:`external_cogs_timeout`.
