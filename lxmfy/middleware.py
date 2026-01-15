@@ -43,17 +43,22 @@ class MessageTracker:
     """Tracks processed messages to prevent duplicates"""
 
     def __init__(self, max_size=1000):
-        self.processed = set()
+        self.processed_set = set()
+        self.processed_list = []
         self.max_size = max_size
 
     def is_processed(self, msg_hash: str) -> bool:
         """Check if message was already processed"""
-        if msg_hash in self.processed:
+        if msg_hash in self.processed_set:
             return True
 
-        self.processed.add(msg_hash)
-        if len(self.processed) > self.max_size:
-            self.processed = set(list(self.processed)[-self.max_size :])
+        self.processed_set.add(msg_hash)
+        self.processed_list.append(msg_hash)
+
+        if len(self.processed_list) > self.max_size:
+            oldest = self.processed_list.pop(0)
+            self.processed_set.discard(oldest)
+
         return False
 
 

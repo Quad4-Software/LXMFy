@@ -79,6 +79,9 @@ class BotConfig:
     message_storage_limit_mb: float = 500.0
     config_path: str = None
     test_mode: bool = False
+    identity_pinning_enabled: bool = False
+    message_persistence_enabled: bool = False
+    dynamic_cogs_enabled: bool = True
 
     def __post_init__(self):
         """Post-initialization to ensure admins is a set."""
@@ -87,4 +90,4 @@ class BotConfig:
 
     def __str__(self):
         """Return a string representation of the BotConfig object."""
-        return f"BotConfig(name={self.name}, announce={self.announce}, announce_immediately={self.announce_immediately}, admins={self.admins}, hot_reloading={self.hot_reloading}, rate_limit={self.rate_limit}, cooldown={self.cooldown}, max_warnings={self.max_warnings}, warning_timeout={self.warning_timeout}, command_prefix={self.command_prefix}, cogs_dir={self.cogs_dir}, cogs_enabled={self.cogs_enabled}, permissions_enabled={self.permissions_enabled}, storage_type={self.storage_type}, storage_path={self.storage_path}, first_message_enabled={self.first_message_enabled}, event_logging_enabled={self.event_logging_enabled}, max_logged_events={self.max_logged_events}, event_middleware_enabled={self.event_middleware_enabled}, announce_enabled={self.announce_enabled}, signature_verification_enabled={self.signature_verification_enabled}, require_message_signatures={self.require_message_signatures}, require_stamps={self.require_stamps}, request_unknown_identities={self.request_unknown_identities}, stamp_cost={self.stamp_cost}, test_mode={self.test_mode})"
+        return f"BotConfig(name={self.name}, announce={self.announce}, announce_immediately={self.announce_immediately}, admins={self.admins}, hot_reloading={self.hot_reloading}, rate_limit={self.rate_limit}, cooldown={self.cooldown}, max_warnings={self.max_warnings}, warning_timeout={self.warning_timeout}, command_prefix={self.command_prefix}, cogs_dir={self.cogs_dir}, cogs_enabled={self.cogs_enabled}, permissions_enabled={self.permissions_enabled}, storage_type={self.storage_type}, storage_path={self.storage_path}, first_message_enabled={self.first_message_enabled}, event_logging_enabled={self.event_logging_enabled}, max_logged_events={self.max_logged_events}, event_middleware_enabled={self.event_middleware_enabled}, announce_enabled={self.announce_enabled}, signature_verification_enabled={self.signature_verification_enabled}, require_message_signatures={self.require_message_signatures}, require_stamps={self.require_stamps}, request_unknown_identities={self.request_unknown_identities}, stamp_cost={self.stamp_cost}, test_mode={self.test_mode}, identity_pinning_enabled={self.identity_pinning_enabled}, message_persistence_enabled={self.message_persistence_enabled}, dynamic_cogs_enabled={self.dynamic_cogs_enabled})"

@@ -87,9 +87,14 @@ def pack_attachment(attachment: Attachment) -> dict:
             ),
         }
     if attachment.type == AttachmentType.AUDIO:
+        try:
+            mode = int(attachment.format) if attachment.format is not None else 0
+        except (ValueError, TypeError):
+            mode = 0
+
         return {
             LXMF.FIELD_AUDIO: create_audio_attachment(
-                int(attachment.format or 0),
+                mode,
                 attachment.data,
             ),
         }

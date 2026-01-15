@@ -666,7 +666,7 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
 
                         signature = sig_manager.sign_message(test_msg, identity1)
                         print_success(
-                            f"✓ Message signed successfully (signature length: {len(signature)} bytes)",
+                            f"OK Message signed successfully (signature length: {len(signature)} bytes)",
                         )
 
                         # Test verification
@@ -677,9 +677,9 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                             RNS.hexrep(identity1.hash, delimit=False),
                         )
                         if is_valid:
-                            print_success("✓ Signature verification successful")
+                            print_success("OK Signature verification successful")
                         else:
-                            print_error("✗ Signature verification failed")
+                            print_error("FAIL Signature verification failed")
 
                         print_info("Signature test completed successfully!")
 

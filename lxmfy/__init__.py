@@ -20,17 +20,10 @@ from .help import HelpFormatter, HelpSystem
 from .middleware import MiddlewareContext, MiddlewareManager, MiddlewareType
 from .permissions import DefaultPerms, PermissionManager, Role
 from .scheduler import ScheduledTask, TaskScheduler
-from .signatures import (
-    FIELD_SIGNATURE,
-    SignatureManager,
-    sign_outgoing_message,
-    verify_incoming_message,
-)
 from .storage import JSONStorage, SQLiteStorage, Storage
 from .validation import format_validation_results, validate_bot
 
 __all__ = [
-    "FIELD_SIGNATURE",
     "Attachment",
     "AttachmentType",
     "BotConfig",
@@ -51,7 +44,6 @@ __all__ = [
     "Role",
     "SQLiteStorage",
     "ScheduledTask",
-    "SignatureManager",
     "Storage",
     "TaskScheduler",
     "__version__",
@@ -60,9 +52,7 @@ __all__ = [
     "load_cogs_from_directory",
     "pack_attachment",
     "pack_icon_appearance_field",
-    "sign_outgoing_message",
     "validate_bot",
-    "verify_incoming_message",
 ]
 
 from .__version__ import __version__

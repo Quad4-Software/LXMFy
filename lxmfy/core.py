@@ -17,7 +17,7 @@ from queue import Queue
 from types import SimpleNamespace
 
 import RNS
-from LXMF import LXMessage, LXMRouter
+from LXMF import LXMRouter, LXMessage
 
 from .attachments import Attachment, pack_attachment
 from .cogs_core import load_cogs_from_directory
@@ -112,6 +112,8 @@ class LXMFBot:
 
         self._load_delivery_attempts()
 
+        identity_file = os.path.join(self.config_path, "identity")
+
         if not self.config.test_mode:
             # Initialize Reticulum (will raise exception if already running)
             try:
@@ -123,7 +125,6 @@ class LXMFBot:
                 else:
                     raise
 
-            identity_file = os.path.join(self.config_path, "identity")
             if not os.path.isfile(identity_file):
                 RNS.log("No Primary Identity file found, creating new...", RNS.LOG_INFO)
                 identity = RNS.Identity(True)
@@ -205,7 +206,13 @@ class LXMFBot:
             )
         else:
             # Test mode - create mock components
-            self.identity = RNS.Identity()  # Create a basic identity for testing
+            if os.path.isfile(identity_file):
+                self.identity = RNS.Identity.from_file(identity_file)
+            else:
+                self.identity = RNS.Identity()  # Create a basic identity for testing
+                if self.config.config_path:
+                    self.identity.to_file(identity_file)
+
             self.router = None
             self.local = None
 
@@ -236,6 +243,9 @@ class LXMFBot:
             require_signatures=self.config.require_message_signatures,
             request_unknown_identities=self.config.request_unknown_identities,
         )
+
+        self._load_delivery_attempts()
+        self._load_persisted_queue()
 
         if self.config.cogs_enabled:
             load_cogs_from_directory(self)
@@ -337,6 +347,45 @@ class LXMFBot:
                 )
                 continue
 
+    def remove_cog(self, cog_name: str) -> None:
+        """Remove a cog from the bot by its class name.
+
+        Args:
+            cog_name: The name of the cog class to remove.
+        """
+        if cog_name in self.cogs:
+            cog = self.cogs.pop(cog_name)
+            # Remove associated commands
+            commands_to_remove = [
+                name
+                for name, cmd in self.commands.items()
+                if hasattr(cmd, "callback")
+                and (
+                    getattr(cmd.callback, "__self__", None) == cog
+                    or (
+                        hasattr(cmd.callback, "__func__")
+                        and getattr(cmd.callback, "__self__", None) == cog
+                    )
+                )
+            ]
+            for name in commands_to_remove:
+                del self.commands[name]
+
+    def reload_extension(self, name: str) -> None:
+        """Reload an extension (cog) by name."""
+        if not name.startswith("cogs."):
+            ext_name = f"cogs.{name}"
+        else:
+            ext_name = name
+
+        # Find the cog associated with this extension to remove it first
+        for cname, cog in list(self.cogs.items()):
+            if cog.__module__ == ext_name:
+                self.remove_cog(cname)
+                break
+
+        self.load_extension(name)
+
     def is_admin(self, sender):
         """Check if a sender is an admin.
 
@@ -424,7 +473,37 @@ class LXMFBot:
 
                     try:
                         args = content.split()[1:] if len(content.split()) > 1 else []
-                        msg.args = args
+
+                        # Type-hinted argument parsing
+                        sig = inspect.signature(cmd.callback)
+                        params = list(sig.parameters.values())
+
+                        # First param is usually 'msg' (or 'self', then 'msg')
+                        # If it's a bound method, 'self' is already handled by the binding.
+                        # So the first parameter in the signature we see should be 'msg'.
+
+                        converted_args = []
+                        for i, arg_val in enumerate(args):
+                            # Skip the 'msg' parameter at index 0
+                            param_idx = i + 1
+                            if param_idx < len(params):
+                                param = params[param_idx]
+                                annotation = param.annotation
+                                if (
+                                    annotation != inspect.Parameter.empty
+                                    and hasattr(annotation, "__call__")
+                                    and not isinstance(annotation, str)
+                                ):
+                                    try:
+                                        converted_args.append(annotation(arg_val))
+                                    except (ValueError, TypeError):
+                                        converted_args.append(arg_val)
+                                else:
+                                    converted_args.append(arg_val)
+                            else:
+                                converted_args.append(arg_val)
+
+                        msg.args = converted_args
                         msg.is_admin = sender in self.admins
 
                         if cmd.threaded:
@@ -693,10 +772,66 @@ class LXMFBot:
             lxm.try_propagation_on_fail = True
 
         self.queue.put(lxm)
+        self._persist_queue()
         RNS.log(
             f"Message queued for {destination} (method: {desired_method})",
             RNS.LOG_DEBUG,
         )
+
+    def _persist_queue(self):
+        """Persist the outgoing message queue to storage."""
+        if getattr(self.config, "message_persistence_enabled", False) is not True:
+            return
+
+        # LXMessage objects are not easily serializable directly due to RNS dependencies.
+        # We store the raw pack if possible, or enough metadata to reconstruct.
+        # For simplicity, we'll store the packed bytes if available.
+        # However, the queue contains LXMessage objects before they are necessarily packed.
+        # Let's store metadata.
+
+        queued_messages = []
+        for lxm in list(self.queue.queue):
+            try:
+                msg_data = {
+                    "destination": RNS.hexrep(lxm.destination_hash, delimit=False),
+                    "content": lxm.content.decode("utf-8")
+                    if isinstance(lxm.content, bytes)
+                    else lxm.content,
+                    "title": lxm.title.decode("utf-8")
+                    if isinstance(lxm.title, bytes)
+                    else lxm.title,
+                    "fields": lxm.fields,
+                    "method": lxm.desired_method,
+                }
+                queued_messages.append(msg_data)
+            except Exception as e:
+                self.logger.error("Failed to serialize message for persistence: %s", e)
+
+        self.storage.set("persisted_queue", queued_messages)
+
+    def _load_persisted_queue(self):
+        """Load persisted messages back into the queue."""
+        if getattr(self.config, "message_persistence_enabled", False) is not True:
+            return
+
+        persisted = self.storage.get("persisted_queue", [])
+        if not persisted:
+            return
+
+        RNS.log(f"Restoring {len(persisted)} messages from persistence", RNS.LOG_INFO)
+        for msg_data in persisted:
+            try:
+                self.send(
+                    msg_data["destination"],
+                    msg_data["content"],
+                    title=msg_data.get("title"),
+                    lxmf_fields=msg_data.get("fields"),
+                )
+            except Exception as e:
+                self.logger.error("Failed to restore message from persistence: %s", e)
+
+        # Clear after loading to avoid duplicates if send() fails again
+        self.storage.set("persisted_queue", [])
 
     def send_with_attachment(
         self,

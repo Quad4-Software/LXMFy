@@ -21,27 +21,35 @@ class HelpFormatter:
 
         """
         help_text = [
-            f"Command: {command.name}",
-            f"Description: {command.help.description}",
+            f"**Command**: `{command.name}`",
+            f"**Description**: {command.help.description}",
         ]
 
-        if command.help.usage:
-            help_text.append(f"Usage: {command.help.usage}")
-
-        if command.help.examples:
-            help_text.append("Examples:")
-            help_text.extend(f"  {ex}" for ex in command.help.examples)
-
-        if command.permissions != DefaultPerms.USE_COMMANDS:
-            help_text.append("Required Permissions:")
-            help_text.extend(
-                f"  - {perm.name}"
-                for perm in DefaultPerms
-                if perm.value & command.permissions
+        if command.help.aliases:
+            help_text.append(
+                f"**Aliases**: {', '.join(f'`{a}`' for a in command.help.aliases)}"
             )
 
+        if command.help.usage:
+            help_text.append(f"**Usage**: `{command.help.usage}`")
+
+        if command.help.examples:
+            help_text.append("**Examples**:")
+            help_text.extend(f"  - `{ex}`" for ex in command.help.examples)
+
+        if command.permissions != DefaultPerms.USE_COMMANDS:
+            perms = [
+                perm.name
+                for perm in DefaultPerms
+                if (perm.value & command.permissions.value)
+                and perm != DefaultPerms.NONE
+            ]
+            if perms:
+                help_text.append("**Required Permissions**:")
+                help_text.extend(f"  - {p}" for p in perms)
+
         if command.admin_only:
-            help_text.append("Note: Admin only command")
+            help_text.append("*(Admin only)*")
 
         return "\n".join(help_text)
 
@@ -57,8 +65,14 @@ class HelpFormatter:
             str: A formatted string containing the category's help information.
 
         """
-        help_text = [f"\n=== {category} ==="]
-        help_text.extend(f"{cmd.name}: {cmd.help.description}" for cmd in commands)
+        # Deduplicate commands (aliases point to same command)
+        unique_cmds = {}
+        for cmd in commands:
+            unique_cmds[cmd.name] = cmd
+
+        help_text = [f"\n**{category}**"]
+        for cmd in sorted(unique_cmds.values(), key=lambda x: x.name):
+            help_text.append(f"  * `{cmd.name}`: {cmd.help.description}")
         return "\n".join(help_text)
 
     @staticmethod
@@ -72,10 +86,12 @@ class HelpFormatter:
             str: A formatted string containing help information for all commands.
 
         """
-        help_text = ["Available Commands:"]
+        help_text = ["**Bot Help Menu**", "Use `help <command>` for more details."]
 
-        for category, commands in categories.items():
-            help_text.append(HelpFormatter.format_category(category, commands))
+        for category in sorted(categories.keys()):
+            help_text.append(
+                HelpFormatter.format_category(category, categories[category])
+            )
 
         return "\n".join(help_text)
 
