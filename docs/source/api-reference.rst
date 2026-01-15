@@ -32,7 +32,10 @@ The main bot class that handles message routing, command processing, and bot lif
         event_middleware_enabled=True,
         announce_enabled=True,
         signature_verification_enabled=False,
-        require_message_signatures=False
+        require_message_signatures=False,
+        identity_pinning_enabled=False,
+        message_persistence_enabled=False,
+        dynamic_cogs_enabled=True
     )
 
 Key Methods
@@ -41,7 +44,10 @@ Key Methods
 - :code:`run(delay=10)`: Start the bot's main loop
 - :code:`send(destination, message, title="Reply", lxmf_fields=None, propagation_node=None, max_retries=3)`: Send a message to a destination, optionally with custom LXMF fields, specific propagation node, and retry configuration.
 - :code:`send_with_attachment(destination, message, attachment, title="Reply")`: Send a message with an attachment
-- :code:`command(name, description="No description provided", admin_only=False, threaded=False)`: Decorator for registering commands. Set :code:`threaded=True` to run the command's callback in a separate thread.
+- :code:`command(name, description="No description provided", admin_only=False, threaded=False)`: Decorator for registering commands. Set :code:`threaded=True` to run the command's callback in a separate thread. Commands support type-hinted arguments for automatic conversion.
+- :code:`load_extension(name)`: Load a cog extension.
+- :code:`unload_extension(name)`: Unload a cog extension.
+- :code:`reload_extension(name)`: Reload a cog extension.
 - :code:`on_first_message()`: Decorator for handling first messages from users
 - :code:`on_message()`: Decorator for handling all messages (called before command processing)
 - :code:`validate()`: Run validation checks on the bot configuration
@@ -80,6 +86,28 @@ Command registration and handling:
     def hello(ctx):
         ctx.reply(f"Hello {ctx.sender}!")
 
+Type-Hinted Arguments
+^^^^^^^^^^^^^^^^^^^^^
+
+Commands automatically parse and convert arguments based on type hints in the callback function.
+
+.. code-block:: python
+
+    @bot.command(name="add", description="Adds two numbers")
+    def add(ctx, a: int, b: int):
+        result = a + b
+        ctx.reply(f"The result is {result}")
+
+Help System
+-----------
+
+The framework includes an interactive help generator that provides beautiful, categorized help menus based on Cog and Command metadata.
+
+.. code-block:: python
+
+    # The help command is automatically registered.
+    # Users can use '/help' or '/help <command>'
+
 Threaded Commands
 ^^^^^^^^^^^^^^^^^
 
@@ -108,6 +136,24 @@ Event system for handling various bot events:
     def handle_message(event):
         # Handle message event
         pass
+
+Testing & Simulation
+--------------------
+
+LXMFy includes a test harness for simulating network conditions.
+
+.. code-block:: python
+
+    from lxmfy.testing import NetworkSimulator
+
+    sim = NetworkSimulator()
+    sim.set_latency(500)  # 500ms latency
+    sim.set_packet_loss(0.1)  # 10% packet loss
+    sim.patch_rns()
+    
+    # Run tests...
+    
+    sim.unpatch_rns()
 
 Permissions
 -----------
@@ -220,6 +266,17 @@ LXMFy provides configuration options for LXMF's built-in cryptographic message s
 
 The actual cryptographic operations are performed by LXMF/RNS, not by LXMFy.
 
+Identity Pinning
+^^^^^^^^^^^^^^^^
+
+LXMFy supports optional identity pinning to prevent impersonation if an identity is rotated or compromised. When enabled, the bot "pins" an LXMF address to its first-seen public key.
+
+.. code-block:: python
+
+    bot = LXMFBot(
+        identity_pinning_enabled=True
+    )
+
 SignatureManager Methods
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -278,6 +335,17 @@ Configure automatic retry attempts for failed message deliveries:
     # Retry logic automatically handles delivery callbacks
 
 The retry system tracks delivery attempts per destination and automatically retries failed deliveries. Successful deliveries reset the retry counter for that destination.
+
+Message Persistence
+^^^^^^^^^^^^^^^^^^^
+
+Outgoing messages can be persisted to disk to ensure they are delivered even after a bot restart.
+
+.. code-block:: python
+
+    bot = LXMFBot(
+        message_persistence_enabled=True
+    )
 
 Message Handlers
 ----------------
