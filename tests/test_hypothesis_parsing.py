@@ -1,4 +1,5 @@
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 
 # We want to test the parsing logic found in core.py _process_message
@@ -30,14 +31,14 @@ class TestParsingPropertyBased:
 
     @given(
         prefix=st.text(min_size=1, max_size=5).filter(
-            lambda x: not any(s.isspace() for s in x)
+            lambda x: not any(s.isspace() for s in x),
         ),
         cmd=st.text(min_size=1, max_size=20).filter(
-            lambda x: not any(s.isspace() for s in x)
+            lambda x: not any(s.isspace() for s in x),
         ),
         args=st.lists(
             st.text(min_size=1, max_size=20).filter(
-                lambda x: not any(s.isspace() for s in x)
+                lambda x: not any(s.isspace() for s in x),
             ),
             min_size=0,
             max_size=10,
@@ -52,7 +53,7 @@ class TestParsingPropertyBased:
         assert parsed_args == args
 
     @given(
-        prefix=st.one_of(st.none(), st.text(max_size=5)), content=st.text(max_size=200)
+        prefix=st.one_of(st.none(), st.text(max_size=5)), content=st.text(max_size=200),
     )
     def test_parsing_never_crashes(self, prefix, content):
         """Test that the parsing logic is robust against any string input."""
@@ -61,7 +62,7 @@ class TestParsingPropertyBased:
     @given(
         cmd=st.text(min_size=1).filter(lambda x: not any(s.isspace() for s in x)),
         args=st.lists(
-            st.text(min_size=1).filter(lambda x: not any(s.isspace() for s in x))
+            st.text(min_size=1).filter(lambda x: not any(s.isspace() for s in x)),
         ),
     )
     def test_no_prefix_parsing(self, cmd, args):

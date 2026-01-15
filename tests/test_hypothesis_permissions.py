@@ -1,13 +1,16 @@
-from hypothesis import given, strategies as st
+from unittest import mock
+
+from hypothesis import given
+from hypothesis import strategies as st
+
 from lxmfy.permissions import DefaultPerms, PermissionManager, Role
-import unittest.mock as mock
 
 
 class TestPermissionsPropertyBased:
     """Property-based tests for the permissions system."""
 
     @given(
-        p1=st.sampled_from(list(DefaultPerms)), p2=st.sampled_from(list(DefaultPerms))
+        p1=st.sampled_from(list(DefaultPerms)), p2=st.sampled_from(list(DefaultPerms)),
     )
     def test_perms_bitwise_commutative(self, p1, p2):
         """Test that ORing permissions is commutative."""
@@ -41,7 +44,7 @@ class TestPermissionsPropertyBased:
         user_id=st.text(min_size=1),
         roles_data=st.dictionaries(
             st.text(min_size=1, max_size=10).filter(
-                lambda x: x not in ["user", "admin"]
+                lambda x: x not in ["user", "admin"],
             ),
             perms_strategy(),
         ),

@@ -6,10 +6,10 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-import RNS
 
 from lxmfy import BotConfig, LXMFBot
 from lxmfy.cogs_core import load_cogs_from_directory
+
 
 def is_bwrap_functional():
     """Check if bwrap can actually run a simple command in this environment."""
@@ -22,11 +22,12 @@ def is_bwrap_functional():
             elif os.path.exists(p):
                 cmd.extend(["--ro-bind", p, p])
         cmd.extend(["/usr/bin/true"])
-        
+
         result = subprocess.run(cmd, capture_output=True, text=True)
         return result.returncode == 0
     except Exception:
         return False
+
 
 @pytest.fixture
 def realistic_cogs_setup():
@@ -38,12 +39,12 @@ def realistic_cogs_setup():
 
         # 1. Bash Cog
         bash_path = cogs_dir / "bash_hello"
-        bash_path.write_text("#!/bin/bash\necho \"Bash: Hello $1\"")
+        bash_path.write_text('#!/bin/bash\necho "Bash: Hello $1"')
         os.chmod(bash_path, os.stat(bash_path).st_mode | stat.S_IEXEC)
 
         # 2. Perl Cog
         perl_path = cogs_dir / "perl_hello"
-        perl_path.write_text("#!/usr/bin/perl\nprint \"Perl: Hello $ARGV[0]\\n\";")
+        perl_path.write_text('#!/usr/bin/perl\nprint "Perl: Hello $ARGV[0]\\n";')
         os.chmod(perl_path, os.stat(perl_path).st_mode | stat.S_IEXEC)
 
         # 3. C Cog
@@ -80,9 +81,12 @@ func main() {
         # Compile with CGO_ENABLED=0 for a static binary (easier for sandbox)
         env = os.environ.copy()
         env["CGO_ENABLED"] = "0"
-        subprocess.run(["go", "build", "-o", str(go_bin), str(go_src)], env=env, check=True)
+        subprocess.run(
+            ["go", "build", "-o", str(go_bin), str(go_src)], env=env, check=True,
+        )
 
         yield temp_path
+
 
 def test_multilang_cogs_execution(realistic_cogs_setup):
     """Test that cogs in different languages execute correctly without sandbox."""
@@ -96,39 +100,42 @@ def test_multilang_cogs_execution(realistic_cogs_setup):
     )
     bot = LXMFBot(**config.__dict__)
     bot.config_path = str(realistic_cogs_setup)
-    
+
     load_cogs_from_directory(bot)
-    
+
     languages = {
         "bash_hello": "Bash: Hello test_sender",
         "perl_hello": "Perl: Hello test_sender",
         "c_hello": "C: Hello test_sender",
         "go_hello": "Go: Hello test_sender",
     }
-    
+
     for cmd_name, expected_output in languages.items():
         assert cmd_name in bot.commands
         msg = MagicMock()
         msg.sender = "test_sender"
         msg.content = f"/{cmd_name}"
         msg.args = []
-        
+
         bot.commands[cmd_name].callback(msg)
         msg.reply.assert_called_with(expected_output)
 
-@pytest.mark.skipif(not is_bwrap_functional(), reason="bwrap is not functional in this environment")
+
+@pytest.mark.skipif(
+    not is_bwrap_functional(), reason="bwrap is not functional in this environment",
+)
 def test_bwrap_sandbox_isolation(realistic_cogs_setup):
     """Test that bwrap sandbox actually isolates the process."""
     # Create a script that tries to read a file outside the sandbox
     secret_file = realistic_cogs_setup / "host_secret.txt"
     secret_file.write_text("HOST_SECRET_DATA")
-    
+
     cogs_dir = realistic_cogs_setup / "cogs"
     leak_script = cogs_dir / "leak_test"
     # Try to cat a file that isn't bound in bwrap
     leak_script.write_text(f"#!/bin/bash\ncat {secret_file} 2>&1")
     os.chmod(leak_script, os.stat(leak_script).st_mode | stat.S_IEXEC)
-    
+
     config = BotConfig(
         name="TestBot",
         test_mode=True,
@@ -140,13 +147,13 @@ def test_bwrap_sandbox_isolation(realistic_cogs_setup):
     )
     bot = LXMFBot(**config.__dict__)
     bot.config_path = str(realistic_cogs_setup)
-    
+
     load_cogs_from_directory(bot)
-    
+
     msg = MagicMock()
     msg.sender = "test_sender"
     bot.commands["leak_test"].callback(msg)
-    
+
     # It should fail to read the file
     args, _ = msg.reply.call_args
     output = args[0]

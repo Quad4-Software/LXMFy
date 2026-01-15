@@ -1,6 +1,9 @@
-import unittest.mock as mock
-from hypothesis import given, strategies as st
+from unittest import mock
+
 import RNS
+from hypothesis import given
+from hypothesis import strategies as st
+
 from lxmfy.signatures import SignatureManager
 
 FIELD_SIGNATURE = 0xFA
@@ -16,11 +19,11 @@ class TestSignaturePropertyBased:
         title=st.one_of(st.binary(min_size=0, max_size=200), st.none()),
         timestamp=st.one_of(st.integers(min_value=0, max_value=2**32 - 1), st.none()),
         fields=st.dictionaries(
-            st.integers(min_value=1, max_value=255), st.binary(min_size=0, max_size=100)
+            st.integers(min_value=1, max_value=255), st.binary(min_size=0, max_size=100),
         ),
     )
     def test_canonicalize_roundtrip_consistency(
-        self, source_hash, dest_hash, content, title, timestamp, fields
+        self, source_hash, dest_hash, content, title, timestamp, fields,
     ):
         """Test that canonicalization is consistent and handles arbitrary data."""
         bot = mock.MagicMock()
@@ -67,7 +70,7 @@ class TestSignaturePropertyBased:
         sender_hash = RNS.hexrep(identity.hash, delimit=False)
         assert (
             sig_manager.verify_message_signature(
-                mock_message, signature, sender_hash, identity
+                mock_message, signature, sender_hash, identity,
             )
             is True
         )

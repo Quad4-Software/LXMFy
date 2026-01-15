@@ -250,14 +250,14 @@ class TestClientBotInteraction:
         # Mock send to capture attachment data
         sent_attachments = []
 
-        def mock_send(dest, msg, title=None, lxmf_fields=None, stamp_cost=None):
+        def mock_send(dest, msg, title=None, lxmf_fields=None, **kwargs):
             sent_attachments.append(
                 {
                     "destination": dest,
                     "message": msg,
                     "title": title,
                     "fields": lxmf_fields,
-                    "stamp_cost": stamp_cost,
+                    "stamp_cost": kwargs.get("stamp_cost"),
                 },
             )
 

@@ -1,6 +1,8 @@
-from hypothesis import given, strategies as st
-from lxmfy.attachments import Attachment, AttachmentType, pack_attachment
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+
+from lxmfy.attachments import Attachment, AttachmentType, pack_attachment
 
 
 class TestAttachmentFuzzing:
