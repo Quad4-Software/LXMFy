@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0] - 2026-01-15
+
+### Features
+- **Message Persistence**: Added `message_persistence_enabled` to `BotConfig`. Outgoing messages in the queue are now persisted to storage and restored on startup (in case of a crash or unexpected restart).
+- **Identity Pinning**: Added `identity_pinning_enabled` to `BotConfig`. An extra paranoid measure that remembers the full public key of a sender to protect against theoretical hash collisions.
+- **Dynamic Cog Management**: Added `remove_cog()` and `reload_extension()` methods to `LXMFBot`, allowing for runtime loading and unloading of extensions.
+- **Type-hinted Argument Parsing**: Bot commands now automatically parse and convert arguments based on type hints in the callback function signature.
+- **Property-based Testing**: Integrated Hypothesis for extensive property-based testing of middleware, parsing, permissions, signatures, storage, and validation modules.
+
+### Fixes
+- **Identity Persistence in Test Mode**: Improved identity handling to allow persistence and recall of identities even when `test_mode` is enabled.
+
 ## [1.4.0] - 2026-01-05
 
 ### Features
@@ -529,3 +541,6 @@ bot = LXMFBot(
 [1.1.0]: https://github.com/lxmfy/lxmfy/releases/tag/v1.1.0
 [1.2.0]: https://github.com/lxmfy/lxmfy/releases/tag/v1.2.0
 [1.2.1]: https://github.com/lxmfy/lxmfy/releases/tag/v1.2.1
+[1.3.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.3.0
+[1.4.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.4.0
+[1.5.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.5.0
