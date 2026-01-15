@@ -30,6 +30,8 @@ ENV/
 
 # Bot specific
 config/
+data/
+cogs/
 
 # Secrets
 .env

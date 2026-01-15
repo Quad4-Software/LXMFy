@@ -6,3 +6,5 @@ docs
 tests
 .deepsource.toml
 .hypothesis/
+data/
+cogs/
