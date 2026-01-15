@@ -6,6 +6,7 @@
 - **Message Persistence**: Added `message_persistence_enabled` to `BotConfig`. Outgoing messages in the queue are now persisted to storage and restored on startup (in case of a crash or unexpected restart).
 - **Identity Pinning**: Added `identity_pinning_enabled` to `BotConfig`. An extra paranoid measure that remembers the full public key of a sender to protect against theoretical hash collisions.
 - **Dynamic Cog Management**: Added `remove_cog()` and `reload_extension()` methods to `LXMFBot`, allowing for runtime loading and unloading of extensions.
+- **Cross-Language Script Cogs**: Added support for non-Python cogs. Any executable file in the `cogs/` directory is now automatically registered as a bot command. Includes optional sandboxing via `bubblewrap` or `firejail` and mandatory timeouts/threading for safety.
 - **Type-hinted Argument Parsing**: Bot commands now automatically parse and convert arguments based on type hints in the callback function signature.
 - **Property-based Testing**: Integrated Hypothesis for extensive property-based testing of middleware, parsing, permissions, signatures, storage, and validation modules.
 
