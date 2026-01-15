@@ -168,6 +168,7 @@ class TestSignatureSystem:
                 signature_verification_enabled=True,
                 permissions_enabled=True,  # Enable permissions for this test
                 storage_path=str(unique_config_path / "storage"),
+                test_mode=True,  # USE TEST MODE TO AVOID CRASH
             )
             bot = LXMFBot(**config.__dict__)
             bot.config_path = str(unique_config_path)
@@ -290,6 +291,7 @@ class TestPermissionSystem:
             config = BotConfig(
                 permissions_enabled=True,
                 storage_path=str(unique_config_path / "storage"),
+                test_mode=True,  # USE TEST MODE TO AVOID CRASH
             )
             bot = LXMFBot(**config.__dict__)
             bot.config_path = str(unique_config_path)

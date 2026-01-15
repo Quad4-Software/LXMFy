@@ -47,7 +47,13 @@ discover_interfaces = No
 
 
 def bot_process(
-    name, config_dir, port, target_port, ready_event, stop_event, results_queue,
+    name,
+    config_dir,
+    port,
+    target_port,
+    ready_event,
+    stop_event,
+    results_queue,
 ):
     """Run a bot in a separate process."""
     os.environ["RNS_CONFIG_DIR"] = str(config_dir)

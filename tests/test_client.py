@@ -326,16 +326,22 @@ class TestReticulumIntegration:
             mock.patch("lxmfy.core.RNS.Transport.register_destination"),
         ):
             # Create first bot instance
-            config1 = BotConfig(storage_path=str(config_dir / "storage1"))
+            config1 = BotConfig(
+                storage_path=str(config_dir / "storage1"),
+                test_mode=True,
+                config_path=str(config_dir),
+            )
             bot1 = LXMFBot(**config1.__dict__)
-            bot1.config_path = str(config_dir)
 
             identity_hash = RNS.hexrep(bot1.identity.hash, delimit=False)
 
             # Create second bot instance (should recall same identity)
-            config2 = BotConfig(storage_path=str(config_dir / "storage2"))
+            config2 = BotConfig(
+                storage_path=str(config_dir / "storage2"),
+                test_mode=True,
+                config_path=str(config_dir),
+            )
             bot2 = LXMFBot(**config2.__dict__)
-            bot2.config_path = str(config_dir)
 
             identity_hash2 = RNS.hexrep(bot2.identity.hash, delimit=False)
 

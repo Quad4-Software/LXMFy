@@ -13,12 +13,19 @@ class TestCLIE2E:
 
     def test_cli_create_basic_bot(self, test_config_dir):
         """Test CLI bot creation."""
+        import sys
+
         with tempfile.TemporaryDirectory() as temp_dir:
             bot_path = Path(temp_dir) / "test_bot.py"
 
             # Run CLI create command
+            import os
+
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(Path.cwd())
+
             cmd = [
-                "python",
+                sys.executable,
                 "-m",
                 "lxmfy.cli",
                 "create",
@@ -33,6 +40,7 @@ class TestCLIE2E:
                 capture_output=True,
                 text=True,
                 cwd=test_config_dir,
+                env=env,
             )
 
             assert result.returncode == 0
@@ -50,8 +58,14 @@ class TestCLIE2E:
         """Test CLI running echo bot template."""
         # This test would start a bot process, but for CI we just verify
         # the command doesn't fail immediately
+        import os
+        import sys
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(Path.cwd())
+
         cmd = [
-            "python",
+            sys.executable,
             "-m",
             "lxmfy.cli",
             "run",
@@ -67,6 +81,7 @@ class TestCLIE2E:
             stderr=subprocess.PIPE,
             cwd=test_config_dir,
             text=True,
+            env=env,
         )
 
         # Let it run for a few seconds
@@ -74,15 +89,29 @@ class TestCLIE2E:
 
         # Terminate the process
         process.terminate()
-        process.wait(timeout=5)
+        try:
+            stdout, stderr = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
+
+        if process.returncode != 0 and process.returncode != -15:
+            print(f"STDOUT: {stdout}")
+            print(f"STDERR: {stderr}")
 
         # Should have started without immediate errors
         assert process.returncode == 0 or process.returncode == -15  # SIGTERM
 
     def test_cli_signatures_test(self, test_config_dir):
         """Test CLI signatures functionality."""
+        import os
+        import sys
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(Path.cwd())
+
         cmd = [
-            "python",
+            sys.executable,
             "-m",
             "lxmfy.cli",
             "signatures",
@@ -95,6 +124,7 @@ class TestCLIE2E:
             capture_output=True,
             text=True,
             cwd=test_config_dir,
+            env=env,
         )
 
         # Should complete successfully
@@ -103,9 +133,15 @@ class TestCLIE2E:
 
     def test_cli_signatures_enable_disable(self, test_config_dir):
         """Test CLI signatures enable/disable instructions."""
+        import os
+        import sys
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(Path.cwd())
+
         # Test enable command
         cmd_enable = [
-            "python",
+            sys.executable,
             "-m",
             "lxmfy.cli",
             "signatures",
@@ -118,6 +154,7 @@ class TestCLIE2E:
             capture_output=True,
             text=True,
             cwd=test_config_dir,
+            env=env,
         )
 
         assert result.returncode == 0
@@ -138,6 +175,7 @@ class TestCLIE2E:
             capture_output=True,
             text=True,
             cwd=test_config_dir,
+            env=env,
         )
 
         assert result.returncode == 0
