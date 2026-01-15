@@ -422,10 +422,11 @@ See :code:`lxmfy/events.py` for more details on the :code:`Event` structure and 
 Storage
 -------
 
-LXMFy provides JSON and SQLite storage backends.
+LXMFy provides JSON, SQLite, and In-Memory storage backends.
 
 *   **JSON:** Simple, human-readable. Good for small datasets. Configure with :code:`storage_type="json"` and :code:`storage_path="your_data_dir"`.
 *   **SQLite:** More efficient for larger datasets or frequent writes. Configure with :code:`storage_type="sqlite"` and :code:`storage_path="your_db_file.db"`.
+*   **Memory:** Entirely in-RAM storage. State is lost on shutdown. Configure with :code:`storage_type="memory"`.
 
 You can access the storage interface via :code:`bot.storage`:
 

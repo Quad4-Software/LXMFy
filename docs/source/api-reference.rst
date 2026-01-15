@@ -24,7 +24,7 @@ The main bot class that handles message routing, command processing, and bot lif
         cogs_dir="cogs",
         cogs_enabled=True,
         permissions_enabled=False,
-        storage_type="json",
+        storage_type="json", # "json", "sqlite", or "memory"
         storage_path="data",
         first_message_enabled=True,
         event_logging_enabled=True,
@@ -68,7 +68,7 @@ Key Methods
 Storage
 -------
 
-The framework provides two storage backends:
+The framework provides three storage backends:
 
 JSONStorage
 ^^^^^^^^^^^
@@ -87,6 +87,15 @@ SQLiteStorage
     from lxmfy import SQLiteStorage
 
     storage = SQLiteStorage("data/bot.db")
+
+MemoryStorage
+^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    from lxmfy import MemoryStorage
+
+    storage = MemoryStorage() # Entirely in-memory
 
 Commands
 --------
@@ -153,7 +162,7 @@ Event system for handling various bot events:
 Testing & Simulation
 --------------------
 
-LXMFy includes a test harness for simulating network conditions.
+LXMFy includes a test harness for simulating network conditions and advanced reliability testing.
 
 .. code-block:: python
 
@@ -167,6 +176,16 @@ LXMFy includes a test harness for simulating network conditions.
     # Run tests...
     
     sim.unpatch_rns()
+
+Advanced Reliability Suite
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The framework includes an extensive suite of automated tests for harsh environments:
+
+- **Manifold Testing**: Validates the mathematical topology of NLP intent vector space.
+- **Chaos Engineering**: Simulates bit-rot, SD card failure, and storage corruption.
+- **Temporal Drift**: Verifies resilience against system clock jumps (±1 year).
+- **Leak Detection**: Long-term tracking of memory, file descriptors, and threads.
 
 Permissions
 -----------
