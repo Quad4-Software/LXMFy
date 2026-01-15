@@ -26,7 +26,17 @@ Easily create LXMF bots for the Reticulum Network with this extensible framework
 
 There are many ways to install LXMFy, you pick:
 
-### PyPI Package on my Gitea
+### From PyPI
+
+```bash
+# pip
+pip install lxmfy
+
+# pipx
+pipx install lxmfy
+```
+
+### From Gitea Packages
 
 ```bash
 # pip
