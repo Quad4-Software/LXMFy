@@ -1,4 +1,5 @@
 import os
+import shutil
 import stat
 import subprocess
 import tempfile
@@ -48,42 +49,46 @@ def realistic_cogs_setup():
         os.chmod(perl_path, os.stat(perl_path).st_mode | stat.S_IEXEC)
 
         # 3. C Cog
-        c_src = temp_path / "hello.c"
-        c_src.write_text("""
-#include <stdio.h>
-int main(int argc, char *argv[]) {
-    if (argc > 1) {
-        printf("C: Hello %s\\n", argv[1]);
+        c_bin = None
+        if shutil.which("gcc"):
+            c_src = temp_path / "hello.c"
+            c_src.write_text("""
+    #include <stdio.h>
+    int main(int argc, char *argv[]) {
+        if (argc > 1) {
+            printf("C: Hello %s\\n", argv[1]);
+        }
+        return 0;
     }
-    return 0;
-}
-""")
-        c_bin = cogs_dir / "c_hello"
-        subprocess.run(["gcc", str(c_src), "-o", str(c_bin)], check=True)
-        # os.chmod is usually set by gcc, but let's be sure
-        os.chmod(c_bin, os.stat(c_bin).st_mode | stat.S_IEXEC)
+    """)
+            c_bin = cogs_dir / "c_hello"
+            subprocess.run(["gcc", str(c_src), "-o", str(c_bin)], check=True)
+            # os.chmod is usually set by gcc, but let's be sure
+            os.chmod(c_bin, os.stat(c_bin).st_mode | stat.S_IEXEC)
 
         # 4. Go Cog
-        go_src = temp_path / "hello.go"
-        go_src.write_text("""
-package main
-import (
-    "fmt"
-    "os"
-)
-func main() {
-    if len(os.Args) > 1 {
-        fmt.Printf("Go: Hello %s\\n", os.Args[1])
+        go_bin = None
+        if shutil.which("go"):
+            go_src = temp_path / "hello.go"
+            go_src.write_text("""
+    package main
+    import (
+        "fmt"
+        "os"
+    )
+    func main() {
+        if len(os.Args) > 1 {
+            fmt.Printf("Go: Hello %s\\n", os.Args[1])
+        }
     }
-}
-""")
-        go_bin = cogs_dir / "go_hello"
-        # Compile with CGO_ENABLED=0 for a static binary (easier for sandbox)
-        env = os.environ.copy()
-        env["CGO_ENABLED"] = "0"
-        subprocess.run(
-            ["go", "build", "-o", str(go_bin), str(go_src)], env=env, check=True,
-        )
+    """)
+            go_bin = cogs_dir / "go_hello"
+            # Compile with CGO_ENABLED=0 for a static binary (easier for sandbox)
+            env = os.environ.copy()
+            env["CGO_ENABLED"] = "0"
+            subprocess.run(
+                ["go", "build", "-o", str(go_bin), str(go_src)], env=env, check=True,
+            )
 
         yield temp_path
 
@@ -106,9 +111,11 @@ def test_multilang_cogs_execution(realistic_cogs_setup):
     languages = {
         "bash_hello": "Bash: Hello test_sender",
         "perl_hello": "Perl: Hello test_sender",
-        "c_hello": "C: Hello test_sender",
-        "go_hello": "Go: Hello test_sender",
     }
+    if shutil.which("gcc"):
+        languages["c_hello"] = "C: Hello test_sender"
+    if shutil.which("go"):
+        languages["go_hello"] = "Go: Hello test_sender"
 
     for cmd_name, expected_output in languages.items():
         assert cmd_name in bot.commands

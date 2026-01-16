@@ -45,7 +45,7 @@ def test_intent_routing_message_flow():
 
     intent_called = False
 
-    @bot.intent("greet", examples=["hello bot", "hi there", "greetings"])
+    @bot.intent("greet", examples=["hello bot", "hi there", "greetings", "hi bot"])
     def greet_intent(msg):
         nonlocal intent_called
         intent_called = True
