@@ -441,10 +441,13 @@ class LXMFBot:
                 if sender not in first_messages:
                     first_messages[sender] = True
                     self.storage.set("first_messages", first_messages)
+                    handled = False
                     for handler in self.first_message_handlers:
                         if handler(sender, message):
+                            handled = True
                             break
-                    return
+                    if handled:
+                        return
 
             if not self.permissions.has_permission(sender, DefaultPerms.USE_BOT):
                 return
