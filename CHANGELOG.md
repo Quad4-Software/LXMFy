@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.0] - 2026-02-27
+
+Updated dependencies:
+- RNS to 1.1.3
+- Cryptography to 46.0.5
+
 ## [1.5.0] - 2026-01-15
 
 ### Features
