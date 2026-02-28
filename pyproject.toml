@@ -1,6 +1,6 @@
 [project]
 name = "lxmfy"
-version = "1.5.0"
+version = "1.6.0"
 description = "LXMF bot framework for creating bots for the Reticulum Network"
 authors = [{name = "Quad4", email = "rns@quad4.io"}]
 readme = "README.md"
@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "lxmf>=0.9.4",
-    "rns>=1.1.2"
+    "rns>=1.1.3"
 ]
 
 [project.urls]
