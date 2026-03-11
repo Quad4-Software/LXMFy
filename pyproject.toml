@@ -1,10 +1,10 @@
 [project]
 name = "lxmfy"
-version = "1.6.0"
+version = "1.6.1"
 description = "LXMF bot framework for creating bots for the Reticulum Network"
-authors = [{name = "Quad4", email = "rns@quad4.io"}]
+authors = [{name = "Quad4", email = "team@quad4.io"}]
 readme = "README.md"
-license = "MIT"
+license = "BSD-0-Clause"
 requires-python = ">=3.11"
 keywords = ["lxmf", "reticulum", "bot", "framework", "rns"]
 classifiers = [
