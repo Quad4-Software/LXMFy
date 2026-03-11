@@ -48,7 +48,7 @@ The easiest way to start is using the LXMFy command-line tool.
             cogs_dir="cogs",      # Directory to load cogs from
             cogs_enabled=True,    # Enable/disable loading cogs
             permissions_enabled=False, # Enable/disable the role-based permission system
-            storage_type="json",  # Storage backend ("json" or "sqlite")
+            storage_type="json",  # Storage backend ("json", "sqlite", or "memory")
             storage_path="data",  # Path for storage files/database
             first_message_enabled=True, # Enable special handling for first messages
             event_logging_enabled=True, # Log events to storage?
@@ -109,8 +109,8 @@ Once you're comfortable with the basics, explore these advanced features:
 
 **Reliable Delivery:**
 
-*   Configure :code:`max_retries` parameter in :code:`bot.send()` for automatic retry on delivery failure
-*   Use :code:`propagation_node` parameter to route messages through specific LXMF propagation nodes
+*   Configure :code:`direct_delivery_retries` in :code:`LXMFBot(...)` for automatic retry before propagation fallback
+*   Configure :code:`propagation_node` in bot config (or use :code:`bot.set_propagation_node(...)`) to route through a specific LXMF propagation node
 
 **Security:**
 

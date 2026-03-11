@@ -72,21 +72,21 @@ LXMFy provides several templates for common bot types. You can use the CLI to ge
     # Create a note-taking bot (uses JSON storage)
     lxmfy create --template note my_note_bot
 
-    # Create a meme bot (fetches memes from an API)
-    lxmfy create --template meme my_meme_bot
+    # Create a cog test bot (tests cog loading features)
+    lxmfy create --template cogtest my_cog_test_bot
 
 Running these commands creates a Python file (e.g., :code:`my_echo_bot.py`) that imports and runs the chosen template. You can then modify the generated file or the template code itself (:code:`lxmfy/templates/...`).
 
-**Example generated file (:code:`my_meme_bot.py`):**
+**Example generated file (:code:`my_cog_test_bot.py`):**
 
 .. code-block:: python
 
-    from lxmfy.templates import MemeBot
+    from lxmfy.templates import CogTestBot
 
     if __name__ == "__main__":
-        bot = MemeBot() # Creates an instance of the MemeBot template
+        bot = CogTestBot() # Creates an instance of the CogTestBot template
         # You can optionally override the default name:
-        # bot.bot.name = "My Awesome Meme Bot"
+        # bot.bot.name = "My Cog Test Bot"
         bot.run()
 
 Bot Configuration
@@ -163,7 +163,8 @@ Cogs allow you to organize your commands and event listeners into separate files
 
 .. code-block:: python
 
-    from lxmfy import Command, Cog # Import Cog if inheriting
+    from lxmfy import Command
+    from lxmfy.commands import Cog  # Import Cog if inheriting
     import time
 
     class UtilityCog: # Or class UtilityCog(Cog):
@@ -284,14 +285,15 @@ Bots can now establish and respond to direct RNS Links. This is useful for state
 
 1.  **Enable Link Support** in configuration: :code:`link_support_enabled=True`.
 2.  **Request a link**: :code:`bot.request_link(destination_hash)`. You can also specify a custom app name and aspects: :code:`bot.request_link(dest, callback, "my_app", "aspect1")`.
-3.  **Handle incoming links**: Use the :code:`@bot.on_link` decorator.
+3.  **Handle incoming links**: Register a callback with :code:`bot.on_link(handler)`.
 
 .. code-block:: python
 
-    @bot.on_link
     def handle_link(link):
         print(f"Link established with {RNS.hexrep(link.destination.hash)}")
         # You can now use the link for direct RNS communication
+
+    bot.on_link(handle_link)
 
 **Safety & Sandboxing:**
 
@@ -535,11 +537,13 @@ Send messages through specific LXMF propagation nodes:
 
     @bot.command(name="send", description="Send via propagation node")
     def send_command(ctx):
-        # Send through a specific propagation node
+        # Set a specific propagation node once (config-level)
+        bot.set_propagation_node("<propagation_node_hash_here>")
+
+        # Send using configured delivery strategy
         bot.send(
             ctx.sender,
-            "This message was routed through a propagation node",
-            propagation_node="<propagation_node_hash_here>"
+            "This message will use direct delivery with propagation fallback as configured"
         )
 
 Propagation nodes are useful when direct delivery is not possible or when you want to ensure message delivery through the Reticulum mesh network.
@@ -547,7 +551,7 @@ Propagation nodes are useful when direct delivery is not possible or when you wa
 Configuring Retries
 ^^^^^^^^^^^^^^^^^^^
 
-Configure automatic retry attempts for failed message deliveries:
+Configure automatic retry attempts for failed message deliveries via bot config:
 
 .. code-block:: python
 
@@ -555,23 +559,24 @@ Configure automatic retry attempts for failed message deliveries:
 
     bot = LXMFBot(name="ReliableBot")
 
+    bot = LXMFBot(
+        name="ReliableBot",
+        direct_delivery_retries=5,  # Retry direct delivery up to 5 times
+        propagation_fallback_enabled=True
+    )
+
     @bot.command(name="important", description="Send important message with retries")
     def important_command(ctx):
-        # Send with custom retry count
-        bot.send(
-            ctx.sender,
-            "This is an important message that will retry up to 5 times on failure",
-            max_retries=5
-        )
+        bot.send(ctx.sender, "This is an important message")
 
     @bot.command(name="normal", description="Send with default retries")
     def normal_command(ctx):
-        # Default max_retries is 3
+        # Default direct_delivery_retries is 3
         bot.send(ctx.sender, "This message uses default retry settings")
 
 The retry system:
 
 - Automatically tracks delivery attempts per destination
-- Retries failed deliveries up to the specified :code:`max_retries`
+- Retries failed direct deliveries up to :code:`direct_delivery_retries`
 - Resets the retry counter on successful delivery
 - Logs retry attempts and failures for debugging

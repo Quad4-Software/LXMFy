@@ -93,7 +93,7 @@ MemoryStorage
 
 .. code-block:: python
 
-    from lxmfy import MemoryStorage
+    from lxmfy.storage import MemoryStorage
 
     storage = MemoryStorage() # Entirely in-memory
 
@@ -159,23 +159,11 @@ Event system for handling various bot events:
         # Handle message event
         pass
 
-Testing & Simulation
---------------------
+Testing
+-------
 
-LXMFy includes a test harness for simulating network conditions and advanced reliability testing.
-
-.. code-block:: python
-
-    from lxmfy.testing import NetworkSimulator
-
-    sim = NetworkSimulator()
-    sim.set_latency(500)  # 500ms latency
-    sim.set_packet_loss(0.1)  # 10% packet loss
-    sim.patch_rns()
-    
-    # Run tests...
-    
-    sim.unpatch_rns()
+Project tests include reliability and stress scenarios in the repository test suite.
+Use the repository's test runner to execute them.
 
 Advanced Reliability Suite
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -339,11 +327,13 @@ Send messages through specific propagation nodes for improved reliability on the
 
 .. code-block:: python
 
-    # Send via a specific propagation node
+    # Configure the propagation node once at config/runtime level
+    bot.set_propagation_node("<propagation_node_hash>")
+
+    # Send using configured delivery behavior
     bot.send(
         destination_hash,
-        "Message content",
-        propagation_node="<propagation_node_hash>"
+        "Message content"
     )
 
     # The propagation node hash should be a valid LXMF propagation node
@@ -352,18 +342,19 @@ Send messages through specific propagation nodes for improved reliability on the
 Automatic Retries
 ^^^^^^^^^^^^^^^^^
 
-Configure automatic retry attempts for failed message deliveries:
+Configure automatic retry attempts for failed direct deliveries:
 
 .. code-block:: python
 
-    # Send with custom retry count
-    bot.send(
-        destination_hash,
-        "Important message",
-        max_retries=5  # Will retry up to 5 times on delivery failure
+    bot = LXMFBot(
+        name="ReliableBot",
+        direct_delivery_retries=5,  # Retry direct delivery up to 5 times
+        propagation_fallback_enabled=True
     )
 
-    # Default max_retries is 3
+    bot.send(destination_hash, "Important message")
+
+    # Default direct_delivery_retries is 3
     # Retry logic automatically handles delivery callbacks
 
 The retry system tracks delivery attempts per destination and automatically retries failed deliveries. Successful deliveries reset the retry counter for that destination.
@@ -437,18 +428,6 @@ Simple echo bot that repeats messages:
     bot = EchoBot()
     bot.run()
 
-MemeBot
--------
-
-Bot for sending random memes:
-
-.. code-block:: python
-
-    from lxmfy.templates import MemeBot
-
-    bot = MemeBot()
-    bot.run()
-
 NoteBot
 -------
 
@@ -488,12 +467,6 @@ The framework provides command-line tools for bot management:
 
     # Run a template bot
     lxmfy run echo
-
-    # Analyze bot configuration
-    lxmfy analyze bot.py
-
-    # Verify package signature
-    lxmfy verify package.whl sigstore.json
 
     # Test signature verification with a message
     lxmfy signatures test
