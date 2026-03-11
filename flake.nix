@@ -15,7 +15,7 @@
 
         rns = pkgs.python3Packages.buildPythonPackage rec {
           pname = "rns";
-          version = "1.0.4";
+          version = "1.1.3";
           format = "pyproject";
 
           src = pkgs.python3Packages.fetchPypi {
@@ -61,7 +61,7 @@
 
         lxmfy = pkgs.python3Packages.buildPythonPackage rec {
           pname = "lxmfy";
-          version = "1.2.1";
+          version = "1.6.1";
           format = "pyproject";
 
           src = ./.;
