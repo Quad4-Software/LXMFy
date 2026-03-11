@@ -70,45 +70,23 @@ pip install git+https://git.quad4.io/LXMFy/LXMFy.git
 pipx install git+https://git.quad4.io/LXMFy/LXMFy.git
 ```
 
-```bash
-uv pip install git+https://git.quad4.io/LXMFy/LXMFy.git
-```
-
-or temporary environment:
-
-```bash
-uvx --from git+https://git.quad4.io/LXMFy/LXMFy.git lxmfy
-```
-
 ### Development Installation
 
-For development, clone the repository and install with poetry or uv:
+For development, clone the repository and install with poetry:
 
 ```bash
 git clone https://git.quad4.io/LXMFy/LXMFy.git
 cd LXMFy
 ```
 
-With poetry:
 ```bash
 poetry install
-```
-
-With uv:
-```bash
-uv sync
 ```
 
 ## Usage
 
 ```bash
 lxmfy
-```
-
-or with uv:
-
-```bash
-uv run lxmfy
 ```
 
 **Create bots:**
@@ -299,19 +277,12 @@ bot.set_message_storage_limit(megabytes=1000)  # Set to 1 GB
 
 ## Development
 
-- poetry or uv
+- poetry
 - python 3.11 or higher
 
-With poetry:
 ```
 poetry install
 poetry run lxmfy run echo
-```
-
-With uv:
-```
-uv sync
-uv run lxmfy run echo
 ```
 
 ## Contributing
@@ -320,4 +291,4 @@ For now send ideas and issues to LXMF: `7cc8d66b4f6a0e0e49d34af7f6077b5a`
 
 ## License
 
-[MIT](LICENSE)
+[BSD-0-Clause](LICENSE)
