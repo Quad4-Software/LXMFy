@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.6.1] - 2026-03-11
+
+### Other Changes
+- **License**: Switched from MIT to BSD-0-Clause.
+
 ## [1.6.0] - 2026-02-27
 
 Updated dependencies:
@@ -98,10 +103,6 @@ Updated dependencies:
 - **Project Structure Cleanup**
   - Moved docker files to docker directory
   - Updated Makefile and README with new paths.
-
-- **UV Support**
-  - Added uv.lock
-  - Updated README with uv commands.
 
 ## [1.0.1] - 2025-09-28
 
