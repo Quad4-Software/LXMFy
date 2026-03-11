@@ -11,7 +11,7 @@ Easily create LXMF bots for the Reticulum Network with this extensible framework
 | **Core** | Interactive CLI, Command Prefixes, Cron-style Task Scheduler, Middleware & Event Systems |
 | **Connectivity** | Direct Delivery & Propagation Fallback, Auto-Peering, RNS Link Support, Opportunistic Sending |
 | **Security** | Spam Protection, Role-based Permissions, Identity Pinning, Message Signing/Verification |
-| **Intelligence** | Local NLP Intent Classification (Offline/Private), Type-hinted Argument Parsing |
+| **NLP** | Local NLP Intent Classification (Offline/Private), Type-hinted Argument Parsing |
 | **Extensions** | Python Cogs, External Script Cogs (Bash, Go, C, etc.), Linux Sandboxing (`bwrap`/`firejail`) |
 | **Storage** | Extensible Backends (JSON, SQLite, In-Memory RAM), Message Persistence (Crash Recovery) |
 | **Reliability** | Extensive Stability & Mathematical Stress Testing, Chaos Engineering, Resource Leak Detection |
