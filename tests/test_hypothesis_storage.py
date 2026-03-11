@@ -23,11 +23,13 @@ class TestStoragePropertyBased:
                     st.text(),
                     st.binary(),
                     st.datetimes(
-                        max_value=datetime(2100, 1, 1), min_value=datetime(1970, 1, 1),
+                        max_value=datetime(2100, 1, 1),
+                        min_value=datetime(1970, 1, 1),
                     ),
                 ),
                 lambda children: st.one_of(
-                    st.lists(children), st.dictionaries(st.text(), children),
+                    st.lists(children),
+                    st.dictionaries(st.text(), children),
                 ),
             ),
         )

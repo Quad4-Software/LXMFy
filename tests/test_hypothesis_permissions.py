@@ -10,7 +10,8 @@ class TestPermissionsPropertyBased:
     """Property-based tests for the permissions system."""
 
     @given(
-        p1=st.sampled_from(list(DefaultPerms)), p2=st.sampled_from(list(DefaultPerms)),
+        p1=st.sampled_from(list(DefaultPerms)),
+        p2=st.sampled_from(list(DefaultPerms)),
     )
     def test_perms_bitwise_commutative(self, p1, p2):
         """Test that ORing permissions is commutative."""

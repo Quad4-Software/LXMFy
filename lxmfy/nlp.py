@@ -163,7 +163,10 @@ class IntentClassifier:
 
     @staticmethod
     def _cosine_similarity(
-        v1: dict[str, float], mag1: float, v2: dict[str, float], mag2: float,
+        v1: dict[str, float],
+        mag1: float,
+        v2: dict[str, float],
+        mag2: float,
     ) -> float:
         """Calculate cosine similarity between two sparse vectors."""
         # Intersection of keys for sparse dot product
@@ -238,7 +241,10 @@ class IntentClassifier:
         for name, examples in self._processed_examples.items():
             for example_vector, magnitude in examples:
                 score = self._cosine_similarity(
-                    query_vector, query_magnitude, example_vector, magnitude,
+                    query_vector,
+                    query_magnitude,
+                    example_vector,
+                    magnitude,
                 )
                 if score > max_score:
                     max_score = score

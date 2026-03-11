@@ -39,7 +39,10 @@ def test_intent_classification_basic():
 def test_intent_routing_message_flow():
     """Test that the bot correctly routes messages to intent handlers."""
     config = BotConfig(
-        nlp_enabled=True, nlp_threshold=0.4, test_mode=True, command_prefix="/",
+        nlp_enabled=True,
+        nlp_threshold=0.4,
+        test_mode=True,
+        command_prefix="/",
     )
     bot = LXMFBot(**config.__dict__)
 

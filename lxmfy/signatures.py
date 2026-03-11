@@ -104,7 +104,8 @@ class SignatureManager:
                     from unittest.mock import Mock
 
                     if isinstance(pinned_pub_key, Mock) or isinstance(
-                        current_pub_key, Mock,
+                        current_pub_key,
+                        Mock,
                     ):
                         is_mock = True
                 except ImportError:

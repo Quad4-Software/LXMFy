@@ -53,7 +53,8 @@ class TestParsingPropertyBased:
         assert parsed_args == args
 
     @given(
-        prefix=st.one_of(st.none(), st.text(max_size=5)), content=st.text(max_size=200),
+        prefix=st.one_of(st.none(), st.text(max_size=5)),
+        content=st.text(max_size=200),
     )
     def test_parsing_never_crashes(self, prefix, content):
         """Test that the parsing logic is robust against any string input."""

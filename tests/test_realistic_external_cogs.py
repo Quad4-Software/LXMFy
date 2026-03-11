@@ -87,7 +87,9 @@ def realistic_cogs_setup():
             env = os.environ.copy()
             env["CGO_ENABLED"] = "0"
             subprocess.run(
-                ["go", "build", "-o", str(go_bin), str(go_src)], env=env, check=True,
+                ["go", "build", "-o", str(go_bin), str(go_src)],
+                env=env,
+                check=True,
             )
 
         yield temp_path
@@ -129,7 +131,8 @@ def test_multilang_cogs_execution(realistic_cogs_setup):
 
 
 @pytest.mark.skipif(
-    not is_bwrap_functional(), reason="bwrap is not functional in this environment",
+    not is_bwrap_functional(),
+    reason="bwrap is not functional in this environment",
 )
 def test_bwrap_sandbox_isolation(realistic_cogs_setup):
     """Test that bwrap sandbox actually isolates the process."""

@@ -545,7 +545,9 @@ class LXMFBot:
                 intent_name, score = self.nlp.predict(content)
                 if intent_name and intent_name in self.intents:
                     self.logger.debug(
-                        "NLP Intent Matched: %s (score: %.2f)", intent_name, score,
+                        "NLP Intent Matched: %s (score: %.2f)",
+                        intent_name,
+                        score,
                     )
                     msg.intent = intent_name
                     msg.intent_score = score
@@ -554,7 +556,9 @@ class LXMFBot:
                         return
                     except Exception as e:
                         self.logger.error(
-                            "Error executing intent %s: %s", intent_name, e,
+                            "Error executing intent %s: %s",
+                            intent_name,
+                            e,
                         )
 
             for callback in self.delivery_callbacks:
@@ -1171,7 +1175,11 @@ class LXMFBot:
             )
 
         dest = RNS.Destination(
-            identity, RNS.Destination.OUT, RNS.Destination.SINGLE, app_name, *aspects,
+            identity,
+            RNS.Destination.OUT,
+            RNS.Destination.SINGLE,
+            app_name,
+            *aspects,
         )
         link = RNS.Link(dest)
 

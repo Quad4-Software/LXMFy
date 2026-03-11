@@ -138,7 +138,10 @@ class Transport:
             while time.time() < path_timeout:
                 if RNS.Transport.has_path(destination_hash):
                     return self._create_link(
-                        destination_hash, timeout, app_name, *aspects,
+                        destination_hash,
+                        timeout,
+                        app_name,
+                        *aspects,
                     )
                 time.sleep(0.1)
 

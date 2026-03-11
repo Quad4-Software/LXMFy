@@ -28,7 +28,10 @@ def test_identity_pinning_collision_resilience(test_config_dir):
 
     # Simulate first message verification (pins the identity)
     bot.signature_manager.verify_message_signature(
-        MagicMock(), b"valid_sig", sender_hash, sender_identity=owner_identity,
+        MagicMock(),
+        b"valid_sig",
+        sender_hash,
+        sender_identity=owner_identity,
     )
 
     # Verify it was pinned
@@ -42,7 +45,10 @@ def test_identity_pinning_collision_resilience(test_config_dir):
     # Try to verify with attacker key for the same hash
     # Our pinning layer should reject it
     is_valid = bot.signature_manager.verify_message_signature(
-        MagicMock(), b"attacker_sig", sender_hash, sender_identity=attacker_identity,
+        MagicMock(),
+        b"attacker_sig",
+        sender_hash,
+        sender_identity=attacker_identity,
     )
 
     assert is_valid is False, (
@@ -62,7 +68,10 @@ def test_signature_malleability_hypothesis(mutated_sig):
     # Any random mutation of a signature should fail validation
     # (Assuming the canonical message data is held constant)
     is_valid = bot.signature_manager.verify_message_signature(
-        MagicMock(), mutated_sig, sender_hash, sender_identity=identity,
+        MagicMock(),
+        mutated_sig,
+        sender_hash,
+        sender_identity=identity,
     )
 
     # Valid validation is statistically impossible with random bytes
