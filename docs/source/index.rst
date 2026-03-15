@@ -1,12 +1,12 @@
 lxmfy documentation
 ========================
 
-A framework for creating `LXMF <https://github.com/markqvist/LXMF>`_ bots on the `Reticulum Network <https://reticulum.network/>`_.
+A framework for creating `LXMF <https://git.quad4.io/LXMFy/LXMFy>`_ bots on the `Reticulum Network <https://reticulum.network/>`_.
 
 Download
 --------
 
-Get the latest version of LXMFy docs (PDF, EPUB, HTML and Text) from our `GitHub Releases <https://github.com/lxmfy/docs/releases>`_.
+Get the latest version of LXMFy docs (PDF, EPUB, HTML and Text) from our `Gitea repository <https://git.quad4.io/LXMFy/LXMFy>`_.
 
 Languages
 ---------

@@ -27,10 +27,10 @@ msgstr "Документация lxmfy"
 
 #: ../../source/index.rst:4
 msgid ""
-"A framework for creating `LXMF <https://github.com/markqvist/LXMF>`_ bots on "
+"A framework for creating `LXMF <https://git.quad4.io/LXMFy/LXMFy>`_ bots on "
 "the `Reticulum Network <https://reticulum.network/>`_."
 msgstr ""
-"Фреймворк для создания ботов `LXMF <https://github.com/markqvist/LXMF>`_ в "
+"Фреймворк для создания ботов `LXMF <https://git.quad4.io/LXMFy/LXMFy>`_ в "
 "сети `Reticulum <https://reticulum.network/>`_."
 
 #: ../../source/index.rst:7
@@ -40,10 +40,10 @@ msgstr "Скачать"
 #: ../../source/index.rst:9
 msgid ""
 "Get the latest version of LXMFy docs (PDF, EPUB, HTML and Text) from our "
-"`GitHub Releases <https://github.com/lxmfy/docs/releases>`_."
+"`Gitea repository <https://git.quad4.io/LXMFy/LXMFy>`_."
 msgstr ""
 "Получите последнюю версию документации LXMFy (PDF, EPUB, HTML и Text) из "
-"наших `релизов на GitHub <https://github.com/lxmfy/docs/releases>`_."
+"нашего `репозитория на Gitea <https://git.quad4.io/LXMFy/LXMFy>`_."
 
 #: ../../source/index.rst:12
 msgid "Languages"
