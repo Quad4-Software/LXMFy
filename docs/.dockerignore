@@ -1,5 +1,5 @@
 .git
-.github
+.gitea
 *.md
 build/doctrees
 build/epub
