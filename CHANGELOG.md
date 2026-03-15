@@ -58,7 +58,7 @@ Updated dependencies:
 ## [1.2.1] - 2025-11-30
 
 ### Fixes
-- **Fix Github actions setting on project repo (forced pinned SHA actions broke stuff, oops)**
+- **Fix Gitea actions setting on project repo (forced pinned SHA actions broke stuff, oops)**
 
 ## [1.2.0] - 2025-11-30
 
@@ -71,7 +71,7 @@ Updated dependencies:
 ### Other Changes
 - **Updated dependencies in poetry.lock (rns 1.0.4 and ruff 0.14.7)**
 - **Moved from safety to bearer for security scanning (safety was no longer working)**
-- **Updated rest of github actions to use full-length commit SHAs for better supply chain security**
+- **Updated rest of Gitea actions to use full-length commit SHAs for better supply chain security**
 
 ## [1.1.0] - 2025-11-21
 
@@ -120,7 +120,7 @@ Updated dependencies:
 
 ### Testing & CI/CD
 - Added pytest framework with comprehensive test suite
-- Implemented GitHub Actions CI/CD pipeline with automated testing
+- Implemented Gitea Actions CI/CD pipeline with automated testing
 - Updated DeepSource configuration to exclude test files from analysis
 - Added pytest-related development dependencies
 
@@ -520,43 +520,43 @@ bot = LXMFBot(
 - Enhanced responsive layout for feature cards
 - Fixed documentation link accessibility
 
-[0.3.3]: https://github.com/lxmfy/lxmfy/releases/tag/v0.3.3
-[0.4.0]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.0
-[0.4.1]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.1
-[0.4.2]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.2
-[0.4.3]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.3
-[0.4.4]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.4
-[0.4.5]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.5
-[0.4.6]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.6
-[0.4.7]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.7
-[0.4.8]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.8
-[0.4.9]: https://github.com/lxmfy/lxmfy/releases/tag/v0.4.9
-[0.5.0]: https://github.com/lxmfy/lxmfy/releases/tag/v0.5.0
-[0.5.1]: https://github.com/lxmfy/lxmfy/releases/tag/v0.5.1
-[0.6.0]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.0
-[0.6.3]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.3
-[0.6.4]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.4
-[0.6.5]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.5
-[0.6.6]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.6
-[0.6.7]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.7
-[0.6.8]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.8
-[0.6.9]: https://github.com/lxmfy/lxmfy/releases/tag/v0.6.9
-[0.7.0]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.0
-[0.7.1]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.1
-[0.7.2]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.2
-[0.7.3]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.3
-[0.7.4]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.4
-[0.7.5]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.5
-[0.7.6]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.6
-[0.7.7]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.7
-[0.7.8]: https://github.com/lxmfy/lxmfy/releases/tag/v0.7.8
-[1.0.0]: https://github.com/lxmfy/lxmfy/releases/tag/v1.0.0
-[1.0.1]: https://github.com/lxmfy/lxmfy/releases/tag/v1.0.1
-[1.0.2]: https://github.com/lxmfy/lxmfy/releases/tag/v1.0.2
-[1.0.3]: https://github.com/lxmfy/lxmfy/releases/tag/v1.0.3
-[1.1.0]: https://github.com/lxmfy/lxmfy/releases/tag/v1.1.0
-[1.2.0]: https://github.com/lxmfy/lxmfy/releases/tag/v1.2.0
-[1.2.1]: https://github.com/lxmfy/lxmfy/releases/tag/v1.2.1
+[0.3.3]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.3.3
+[0.4.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.0
+[0.4.1]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.1
+[0.4.2]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.2
+[0.4.3]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.3
+[0.4.4]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.4
+[0.4.5]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.5
+[0.4.6]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.6
+[0.4.7]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.7
+[0.4.8]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.8
+[0.4.9]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.4.9
+[0.5.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.5.0
+[0.5.1]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.5.1
+[0.6.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.0
+[0.6.3]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.3
+[0.6.4]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.4
+[0.6.5]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.5
+[0.6.6]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.6
+[0.6.7]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.7
+[0.6.8]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.8
+[0.6.9]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.6.9
+[0.7.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.0
+[0.7.1]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.1
+[0.7.2]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.2
+[0.7.3]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.3
+[0.7.4]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.4
+[0.7.5]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.5
+[0.7.6]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.6
+[0.7.7]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.7
+[0.7.8]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v0.7.8
+[1.0.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.0.0
+[1.0.1]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.0.1
+[1.0.2]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.0.2
+[1.0.3]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.0.3
+[1.1.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.1.0
+[1.2.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.2.0
+[1.2.1]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.2.1
 [1.3.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.3.0
 [1.4.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.4.0
 [1.5.0]: https://git.quad4.io/LXMFy/LXMFy/releases/tag/v1.5.0
