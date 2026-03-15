@@ -291,4 +291,4 @@ For now send ideas and issues to LXMF: `7cc8d66b4f6a0e0e49d34af7f6077b5a`
 
 ## License
 
-[BSD-0-Clause](LICENSE)
+[0BSD](LICENSE)
