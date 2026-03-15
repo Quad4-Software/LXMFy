@@ -23,7 +23,7 @@ make text-ru
 make html-XX epub-XX latexpdf-XX text-XX
 
 # Build all formats for all languages (English + all in locales/)
-# The GitHub Actions CI does this automatically
+# The Gitea Actions CI does this automatically
 ```
 
 ## Running
@@ -81,7 +81,7 @@ If using Podman, replace `docker` with `podman`.
     # Build all formats for your language (replace XX with language code)
     make html-XX epub-XX latexpdf-XX text-XX
 
-    # GitHub Actions automatically builds all languages and formats
+    # Gitea Actions automatically builds all languages and formats
     ```
 
 **Note:** The system automatically detects all languages in `locales/` and builds all formats for them. Adding a new language requires only creating the translation files - no workflow changes needed!
