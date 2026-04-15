@@ -614,16 +614,13 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                 if subcommand == "test":
                     print_info("Testing signature functionality...")
                     try:
-                        # Test signature creation and verification
                         import RNS
 
                         from lxmfy.signatures import FIELD_SIGNATURE, SignatureManager
 
-                        # Create test identities
                         identity1 = RNS.Identity()
                         identity2 = RNS.Identity()
 
-                        # Create a mock bot-like object
                         class MockBot:
                             def __init__(self):
                                 self.permissions = MockPermissions()
@@ -640,7 +637,6 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                             require_signatures=False,
                         )
 
-                        # Create mock LXMF message
                         class MockMessage:
                             def __init__(
                                 self,
@@ -656,7 +652,6 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                                 self.title = title or b"Test"
                                 self.fields = fields or {}
 
-                        # Test signing
                         test_msg = MockMessage(
                             identity1.hash,
                             identity2.hash,
@@ -669,7 +664,6 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                             f"OK Message signed successfully (signature length: {len(signature)} bytes)",
                         )
 
-                        # Test verification
                         test_msg.fields[FIELD_SIGNATURE] = signature
                         is_valid = sig_manager.verify_message_signature(
                             test_msg,

@@ -78,6 +78,13 @@ class LXMFBot:
             self.config_path = os.path.join(os.getcwd(), "config")
 
         os.makedirs(self.config_path, exist_ok=True)
+        if self.config.reticulum_config_dir:
+            self.reticulum_config_dir = os.path.abspath(
+                os.path.expanduser(self.config.reticulum_config_dir),
+            )
+        else:
+            self.reticulum_config_dir = self.config_path
+        os.makedirs(self.reticulum_config_dir, exist_ok=True)
 
         if self.config.storage_type == "json":
             self.storage = Storage(JSONStorage(self.config.storage_path))
@@ -121,7 +128,10 @@ class LXMFBot:
         if not self.config.test_mode:
             # Initialize Reticulum (will raise exception if already running)
             try:
-                RNS.Reticulum(configdir=self.config_path, loglevel=RNS.LOG_VERBOSE)
+                RNS.Reticulum(
+                    configdir=self.reticulum_config_dir,
+                    loglevel=RNS.LOG_VERBOSE,
+                )
             except OSError as e:
                 if "reinitialise" in str(e).lower():
                     # Reticulum already running, continue
@@ -489,17 +499,11 @@ class LXMFBot:
                     try:
                         args = content.split()[1:] if len(content.split()) > 1 else []
 
-                        # Type-hinted argument parsing
                         sig = inspect.signature(cmd.callback)
                         params = list(sig.parameters.values())
 
-                        # First param is usually 'msg' (or 'self', then 'msg')
-                        # If it's a bound method, 'self' is already handled by the binding.
-                        # So the first parameter in the signature we see should be 'msg'.
-
                         converted_args = []
                         for i, arg_val in enumerate(args):
-                            # Skip the 'msg' parameter at index 0
                             param_idx = i + 1
                             if param_idx < len(params):
                                 param = params[param_idx]
@@ -523,8 +527,6 @@ class LXMFBot:
 
                         if cmd.threaded:
                             self.thread_pool.submit(cmd.callback, msg)
-                            # Optionally, send an immediate "processing..." message to the user
-                            # msg.reply("Processing your request in the background...")
                         else:
                             cmd.callback(msg)
 
@@ -834,11 +836,7 @@ class LXMFBot:
         if getattr(self.config, "message_persistence_enabled", False) is not True:
             return
 
-        # LXMessage objects are not easily serializable directly due to RNS dependencies.
-        # We store the raw pack if possible, or enough metadata to reconstruct.
-        # For simplicity, we'll store the packed bytes if available.
-        # However, the queue contains LXMessage objects before they are necessarily packed.
-        # Let's store metadata.
+        # Persist destination/content/title/fields/method; LXMessage is not trivially serializable.
 
         queued_messages = []
         for lxm in list(self.queue.queue):

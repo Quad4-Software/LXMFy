@@ -1,5 +1,6 @@
 """Configuration module for LXMFy."""
 
+import os
 from dataclasses import dataclass
 
 
@@ -41,6 +42,7 @@ class BotConfig:
         enable_propagation_node (bool): Whether to run this bot as a propagation node. Defaults to False.
         message_storage_limit_mb (float): Maximum storage for propagation node messages in megabytes. Only applies when enable_propagation_node is True. Defaults to 500 MB.
         config_path (str): The path to the bot configuration directory. If None, defaults to "config" in the current working directory. Defaults to None.
+        reticulum_config_dir (str): The Reticulum config directory used for RNS shared instance/auth state. If None, falls back to config_path. Can also be set via LXMFY_RETICULUM_CONFIG_DIR.
         test_mode (bool): Whether to run in test mode (skips RNS initialization). Defaults to False.
 
     """
@@ -78,6 +80,7 @@ class BotConfig:
     enable_propagation_node: bool = False
     message_storage_limit_mb: float = 500.0
     config_path: str = None
+    reticulum_config_dir: str = None
     test_mode: bool = False
     identity_pinning_enabled: bool = False
     message_persistence_enabled: bool = False
@@ -95,6 +98,8 @@ class BotConfig:
         """Post-initialization to ensure admins is a set."""
         if self.admins is None:
             self.admins = set()
+        if self.reticulum_config_dir is None:
+            self.reticulum_config_dir = os.environ.get("LXMFY_RETICULUM_CONFIG_DIR")
 
     def __str__(self):
         """Return a string representation of the BotConfig object."""

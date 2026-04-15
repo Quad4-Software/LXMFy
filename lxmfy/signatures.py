@@ -92,13 +92,11 @@ class SignatureManager:
                     )
                     return False
 
-            # Identity Pinning check
             if getattr(self.bot.config, "identity_pinning_enabled", False) is True:
                 pin_key = f"pin:{sender_hash}"
                 pinned_pub_key = self.bot.storage.get(pin_key)
                 current_pub_key = identity_to_use.get_public_key()
 
-                # Check if pinned_pub_key or current_pub_key are Mock objects (happens in tests)
                 is_mock = False
                 try:
                     from unittest.mock import Mock
@@ -112,7 +110,6 @@ class SignatureManager:
                     pass
 
                 if is_mock:
-                    # In tests with mocks, bypass pinning check
                     pass
                 elif pinned_pub_key:
                     if pinned_pub_key != current_pub_key:
