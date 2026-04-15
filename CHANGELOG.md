@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.2] - 2026-04-15
+
+### 
+
+### Updates
+- **Dependencies**: Updated RNS to 1.1.5
+
 ## [1.6.1] - 2026-03-11
 
 ### Other Changes

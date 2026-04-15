@@ -12,6 +12,6 @@ except PackageNotFoundError:
                 pyproject = tomllib.load(f)
             __version__ = pyproject["project"]["version"]
         else:
-            __version__ = "1.6.1"
+            __version__ = "1.6.2"
     except Exception:
-        __version__ = "1.6.1"
+        __version__ = "1.6.2"
