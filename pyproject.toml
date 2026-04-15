@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "lxmf>=0.9.4",
-    "rns>=1.1.4"
+    "rns>=1.1.5"
 ]
 
 [project.urls]
@@ -37,6 +37,18 @@ pytest-cov = "^7.0.0"
 twine = "^6.2.0"
 psutil = "^7.2.1"
 hypothesis = "^6.150.2"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "e2e: marks tests as end-to-end tests",
+    "reliability: marks tests for long-term stability and crash resistance",
+]
 
 [build-system]
 requires = ["poetry-core"]
