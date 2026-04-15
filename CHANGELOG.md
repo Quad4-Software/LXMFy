@@ -2,10 +2,11 @@
 
 ## [1.6.2] - 2026-04-15
 
-### 
+### Features
+- **Reticulum config directory**: Added `reticulum_config_dir` to `BotConfig` (and `LXMFY_RETICULUM_CONFIG_DIR`). `LXMFBot` passes this path to `RNS.Reticulum` for shared instance and auth state; when unset, behavior matches the previous default of using the bot config directory.
 
 ### Updates
-- **Dependencies**: Updated RNS to 1.1.5
+- **Dependencies**: Updated RNS requirement to 1.1.5 and regenerated poetry.lock
 
 ## [1.6.1] - 2026-03-11
 
