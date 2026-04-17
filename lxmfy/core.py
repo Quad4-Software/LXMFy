@@ -36,6 +36,8 @@ from .storage import JSONStorage, MemoryStorage, SQLiteStorage, Storage
 from .transport import Transport
 from .validation import format_validation_results, validate_bot
 
+BOT_DISPLAY_NAME_FILE = "bot_display_name.txt"
+
 
 class LXMFBot:
     """Main bot class for handling LXMF messages and commands.
@@ -158,6 +160,7 @@ class LXMFBot:
                 display_name=self.config.name,
                 stamp_cost=self.config.stamp_cost,
             )
+            self._sync_delivery_display_name()
             self.router.register_delivery_callback(self._message_received)
             self.local.set_link_established_callback(self._link_established)
 
@@ -238,12 +241,11 @@ class LXMFBot:
             # Schedule the announce task
             self.scheduler.add_task(
                 "announce_task",
-                self._announce,
+                self.announce_now,
                 f"*/{self.announce_time // 60} * * * *",  # Convert seconds to minutes for cron
             )
             if self.config.announce_immediately:
-                # Force an immediate announce if configured
-                self._announce()
+                self.announce_now(force=True)
                 RNS.log("Initial announce sent", RNS.LOG_INFO)
 
         self.admins = set(self.config.admins or [])
@@ -270,6 +272,49 @@ class LXMFBot:
 
         if self.config.cogs_enabled:
             load_cogs_from_directory(self)
+
+    @property
+    def name(self) -> str:
+        """Bot display name used for LXMF when no file override applies."""
+        return self.config.name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        self.config.name = value
+        self._sync_delivery_display_name()
+
+    def _effective_announce_display_name(self) -> str:
+        """Resolve the display name for lxmf/delivery announce app_data."""
+        if self.config.announce_display_name_file:
+            path = os.path.join(
+                self.config_path,
+                self.config.announce_display_name_file,
+            )
+            if os.path.isfile(path):
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        text = f.read().strip()
+                    if text:
+                        return text
+                except OSError:
+                    pass
+
+        default_path = os.path.join(self.config_path, BOT_DISPLAY_NAME_FILE)
+        if os.path.isfile(default_path):
+            try:
+                with open(default_path, encoding="utf-8") as f:
+                    text = f.read().strip()
+                if text:
+                    return text
+            except OSError:
+                pass
+
+        return self.config.name if self.config.name else "LXMFBot"
+
+    def _sync_delivery_display_name(self) -> None:
+        if not self.local:
+            return
+        self.local.display_name = self._effective_announce_display_name()
 
     def command(self, *args, **kwargs):
         """Decorator for registering commands.
@@ -608,37 +653,57 @@ class LXMFBot:
         except Exception as e:
             self.logger.error("Error handling received message: %s", str(e))
 
-    def _announce(self):
-        """Send an announce if the configured interval has passed."""
-        if (
-            self.announce_time == 0
-            or not self.announce_enabled
-            or self.config.test_mode
-        ):
+    def announce_now(self, force: bool = False) -> None:
+        """Send an LXMF delivery announce using the current display name.
+
+        LXMF builds delivery announce app_data from the destination display name
+        at announce time; this method refreshes that from :attr:`name`, optional
+        ``announce_display_name_file``, or ``bot_display_name.txt`` before
+        sending.
+
+        Args:
+            force: If True, send now and skip the on-disk announce interval
+                throttle (still respects ``announce_enabled`` and requires a
+                running router). If False, behave like the periodic announce
+                task (honours ``announce_time`` and the throttle file).
+
+        """
+        if self.config.test_mode or not self.local:
+            RNS.log("Announce skipped (test mode or no router)", RNS.LOG_DEBUG)
+            return
+        if not self.announce_enabled:
+            RNS.log("Announcements disabled", RNS.LOG_DEBUG)
+            return
+        if not force and self.announce_time == 0:
             RNS.log("Announcements disabled", RNS.LOG_DEBUG)
             return
 
         announce_path = os.path.join(self.config_path, "announce")
-        if os.path.isfile(announce_path):
-            with open(announce_path) as f:
-                try:
-                    announce = int(f.readline())
-                except ValueError:
-                    announce = 0
-        else:
-            announce = 0
+        if not force:
+            if os.path.isfile(announce_path):
+                with open(announce_path) as f:
+                    try:
+                        announce = int(f.readline())
+                    except ValueError:
+                        announce = 0
+            else:
+                announce = 0
 
-        if announce > int(time.time()):
-            RNS.log("Recent announcement", RNS.LOG_DEBUG)
-        else:
-            with open(announce_path, "w+") as af:
-                next_announce = int(time.time()) + self.announce_time
-                af.write(str(next_announce))
-            self.local.announce()
-            RNS.log(
-                f"Announcement sent, next announce in {self.announce_time} seconds",
-                RNS.LOG_INFO,
-            )
+            if announce > int(time.time()):
+                RNS.log("Recent announcement", RNS.LOG_DEBUG)
+                return
+
+        with open(announce_path, "w+") as af:
+            interval = self.announce_time if self.announce_time > 0 else 0
+            next_announce = int(time.time()) + interval
+            af.write(str(next_announce))
+
+        self._sync_delivery_display_name()
+        self.local.announce()
+        RNS.log(
+            f"Announcement sent, next announce in {self.announce_time} seconds",
+            RNS.LOG_INFO,
+        )
 
     def _load_delivery_attempts(self):
         """Load delivery attempts from storage."""

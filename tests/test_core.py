@@ -1,8 +1,10 @@
 """Tests for LXMFy core functionality."""
 
+from pathlib import Path
+
 import RNS
 
-from lxmfy import BotConfig, LXMFBot
+from lxmfy import BOT_DISPLAY_NAME_FILE, BotConfig, LXMFBot
 from lxmfy.commands import Command
 
 
@@ -82,6 +84,45 @@ class TestLXMFBot:
         # Should return a string with validation results
         assert isinstance(results, str)
         assert len(results) > 0
+
+    def test_name_property_aliases_config(self, test_bot):
+        assert test_bot.name == test_bot.config.name
+        test_bot.name = "RenamedBot"
+        assert test_bot.config.name == "RenamedBot"
+        assert test_bot.name == "RenamedBot"
+
+    def test_effective_announce_display_name_file_priority(
+        self,
+        test_bot_config,
+        test_config_dir,
+    ):
+        import uuid
+
+        unique = test_config_dir / f"bot_name_{uuid.uuid4().hex[:8]}"
+        unique.mkdir(exist_ok=True)
+        config = test_bot_config.__dict__.copy()
+        config["storage_path"] = str(unique / "storage")
+        config["announce_display_name_file"] = "custom_title.txt"
+        bot = LXMFBot(**config)
+        bot.config_path = str(unique)
+
+        (Path(bot.config_path) / BOT_DISPLAY_NAME_FILE).write_text(
+            "FromFile\n",
+            encoding="utf-8",
+        )
+        (Path(bot.config_path) / "custom_title.txt").write_text(
+            "FromCustom\n",
+            encoding="utf-8",
+        )
+        assert bot._effective_announce_display_name() == "FromCustom"
+
+        bot.config.announce_display_name_file = None
+        assert bot._effective_announce_display_name() == "FromFile"
+
+        (Path(bot.config_path) / BOT_DISPLAY_NAME_FILE).unlink()
+        assert bot._effective_announce_display_name() == bot.config.name
+
+        bot.cleanup()
 
 
 class TestCommandSystem:

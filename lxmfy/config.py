@@ -44,6 +44,7 @@ class BotConfig:
         config_path (str): The path to the bot configuration directory. If None, defaults to "config" in the current working directory. Defaults to None.
         reticulum_config_dir (str): The Reticulum config directory used for RNS shared instance/auth state. If None, falls back to config_path. Can also be set via LXMFY_RETICULUM_CONFIG_DIR.
         test_mode (bool): Whether to run in test mode (skips RNS initialization). Defaults to False.
+        announce_display_name_file (str): Optional filename under config_path whose UTF-8 contents override the bot display name for LXMF delivery announces. If unset, ``bot_display_name.txt`` is read when present. Otherwise ``name`` is used.
 
     """
 
@@ -81,6 +82,7 @@ class BotConfig:
     message_storage_limit_mb: float = 500.0
     config_path: str = None
     reticulum_config_dir: str = None
+    announce_display_name_file: str = None
     test_mode: bool = False
     identity_pinning_enabled: bool = False
     message_persistence_enabled: bool = False

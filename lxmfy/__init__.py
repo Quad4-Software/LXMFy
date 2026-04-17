@@ -14,7 +14,7 @@ from .attachments import (
 from .cogs_core import load_cogs_from_directory
 from .commands import Command, command
 from .config import BotConfig
-from .core import LXMFBot
+from .core import LXMFBot, BOT_DISPLAY_NAME_FILE
 from .events import Event, EventManager, EventPriority
 from .help import HelpFormatter, HelpSystem
 from .middleware import MiddlewareContext, MiddlewareManager, MiddlewareType
@@ -37,6 +37,7 @@ __all__ = [
     "IconAppearance",
     "JSONStorage",
     "LXMFBot",
+    "BOT_DISPLAY_NAME_FILE",
     "MiddlewareContext",
     "MiddlewareManager",
     "MiddlewareType",
