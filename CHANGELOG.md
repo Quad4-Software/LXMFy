@@ -4,6 +4,8 @@
 
 ### Features
 - **Reticulum config directory**: Added `reticulum_config_dir` to `BotConfig` (and `LXMFY_RETICULUM_CONFIG_DIR`). `LXMFBot` passes this path to `RNS.Reticulum` for shared instance and auth state; when unset, behavior matches the previous default of using the bot config directory.
+- **Announce display name**: Before each delivery announce, the bot refreshes the LXMF destination display name from the current `LXMFBot.name` / `BotConfig.name`, an optional `announce_display_name_file` under the config directory, or `bot_display_name.txt` when present. This keeps announce app_data aligned when the title changes on disk without restarting the process.
+- **Public announce API**: Added `LXMFBot.announce_now(force=False)` for library callers; use `force=True` to bypass the on-disk announce interval throttle. The `name` property reads and writes `BotConfig.name` and updates the delivery destination when the router is up.
 
 ### Updates
 - **Dependencies**: Updated RNS requirement to 1.1.5 and regenerated poetry.lock
