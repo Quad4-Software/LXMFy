@@ -15,8 +15,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "lxmf>=0.9.4",
-    "rns>=1.1.5"
+    "lxmf>=0.9.6",
+    "rns>=1.2.0"
 ]
 
 [project.urls]
