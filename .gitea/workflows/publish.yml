@@ -63,7 +63,7 @@ jobs:
       continue-on-error: true
 
     - name: Create Gitea Release with artifacts
-      uses: https://git.quad4.io/actions/gitea-release-action@4875285c0950474efb7ca2df55233c51333eeb74
+      uses: https://gitea.com/actions/gitea-release-action@b8d9144f302c68610911db1aaf722708d5c02d94 # v1
       with:
         tag_name: ${{ inputs.version || github.ref_name }}
         name: Release ${{ inputs.version || github.ref_name }}
