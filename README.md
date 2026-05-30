@@ -31,45 +31,6 @@ pip install lxmfy
 pipx install lxmfy
 ```
 
-### From Gitea Packages
-
-```bash
-# pip
-pip install --index-url https://git.quad4.io/api/packages/LXMFy/pypi/simple/ --extra-index-url https://pypi.org/simple lxmfy
-
-# pipx
-pipx install --pip-args="--index-url https://git.quad4.io/api/packages/LXMFy/pypi/simple/ --extra-index-url https://pypi.org/simple" lxmfy
-```
-
-**Permanent Configuration:**
-
-To avoid typing the index URLs every time, add them to your `pip.conf`:
-
-```ini
-# ~/.config/pip/pip.conf
-[global]
-index-url = https://git.quad4.io/api/packages/LXMFy/pypi/simple/
-extra-index-url = https://pypi.org/simple
-```
-
-Then you can simply use:
-
-```bash
-pip install lxmfy
-# or
-pipx install lxmfy
-```
-
-### Git
-
-```bash
-pip install git+https://git.quad4.io/LXMFy/LXMFy.git
-```
-
-```bash
-pipx install git+https://git.quad4.io/LXMFy/LXMFy.git
-```
-
 ### Development Installation
 
 For development, clone the repository and install with poetry:
