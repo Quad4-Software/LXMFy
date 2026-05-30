@@ -15,8 +15,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "lxmf>=0.9.6",
-    "rns>=1.2.0"
+    "lxmf>=1.0.0",
+    "rns>=1.3.4"
 ]
 
 [project.urls]
@@ -30,7 +30,7 @@ lxmfy = "lxmfy.cli:main"
 packages = [{include = "lxmfy"}]
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.14.3"
+ruff = "^0.15.0"
 pytest = "^8.4.2"
 pytest-asyncio = "^1.2.0"
 pytest-cov = "^7.0.0"
