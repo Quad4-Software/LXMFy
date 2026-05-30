@@ -8,7 +8,7 @@ WHEEL_BUILDER_IMAGE ?= lxmfy-wheel-builder
 
 RNGIT ?= rngit
 RNGIT_CONFIG ?= $(HOME)/.rngit
-RNS_CONFIG ?= $(HOME)/.rngit/reticulum
+RNS_CONFIG ?= $(HOME)/.reticulum
 RNGIT_REMOTE ?= $(shell git config --get remote.origin.url)
 RNGIT_IDENTITY ?=
 RNGIT_SIGNER ?=
