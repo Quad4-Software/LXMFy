@@ -1,6 +1,11 @@
 # Changelog
 
-## [1.6.3] - 2026-05-06
+## [1.6.4] - 2026-05-30
+
+### Updates
+- **Dependencies**: LXMF 1.0.0, RNS 1.3.4
+
+## [1.6.3] - 2026-05-08
 
 ### Features
 - **LXMF FIELD_COMMANDS / FIELD_RESULTS support**: Bots can now receive structured commands and requests sent via LXMF message fields (`FIELD_COMMANDS = 0x09`) and automatically reply with results (`FIELD_RESULTS = 0x0A`).
