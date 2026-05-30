@@ -19,8 +19,7 @@ RELEASE_ARTIFACT ?= all
 
 SUDO := $(shell if command -v doas; then echo doas; else echo sudo; fi)
 
-RNGIT_BASE = $(RNGIT) --config $(RNGIT_CONFIG) --rnsconfig $(RNS_CONFIG)
-RNGIT_RELEASE = $(RNGIT_BASE) release $(RNGIT_REMOTE)
+RNGIT_RELEASE = $(RNGIT) release --config $(RNGIT_CONFIG) --rnsconfig $(RNS_CONFIG)
 RNGIT_RELEASE_OPTS = $(if $(RNGIT_IDENTITY),-i $(RNGIT_IDENTITY),) \
 	$(if $(RNGIT_SIGNER),-s $(RNGIT_SIGNER),) \
 	$(if $(RNGIT_NAME),-n $(RNGIT_NAME),)
@@ -175,33 +174,33 @@ release-push: release-tag
 	git push origin --follow-tags
 
 release-local: release-dist
-	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) -L create $(RELEASE_TARGET)
+	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) -L $(RNGIT_REMOTE) create $(RELEASE_TARGET)
 
 release-upload: release-dist
 	@test -n "$(RNGIT_REMOTE)" || (echo "RNGIT_REMOTE is empty; set it or configure git remote origin" && exit 1)
-	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) create $(RELEASE_TARGET)
+	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) $(RNGIT_REMOTE) create $(RELEASE_TARGET)
 
 release: release-dist release-tag release-push release-upload
 
 release-list:
 	@test -n "$(RNGIT_REMOTE)" || (echo "RNGIT_REMOTE is empty" && exit 1)
-	$(RNGIT_RELEASE) list
+	$(RNGIT_RELEASE) $(RNGIT_REMOTE) list
 
 release-view:
 	@test -n "$(RELEASE_TAG)" || (echo "Set RELEASE_TAG=..." && exit 1)
-	$(RNGIT_RELEASE) view $(RELEASE_TAG)
+	$(RNGIT_RELEASE) $(RNGIT_REMOTE) view $(RELEASE_TAG)
 
 release-fetch:
 	@test -n "$(RELEASE_TAG)" || (echo "Set RELEASE_TAG=... and optionally RELEASE_ARTIFACT=all" && exit 1)
-	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) fetch $(RELEASE_TAG):$(RELEASE_ARTIFACT)
+	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) $(RNGIT_REMOTE) fetch $(RELEASE_TAG):$(RELEASE_ARTIFACT)
 
 release-verify:
 	@test -n "$(RELEASE_TAG)" || (echo "Set RELEASE_TAG=... and optionally RELEASE_ARTIFACT=all" && exit 1)
-	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) -o verify $(RELEASE_TAG):$(RELEASE_ARTIFACT)
+	$(RNGIT_RELEASE) $(RNGIT_RELEASE_OPTS) -o $(RNGIT_REMOTE) verify $(RELEASE_TAG):$(RELEASE_ARTIFACT)
 
 release-delete:
 	@test -n "$(RELEASE_TAG)" || (echo "Set RELEASE_TAG=..." && exit 1)
-	$(RNGIT_RELEASE) delete $(RELEASE_TAG)
+	$(RNGIT_RELEASE) $(RNGIT_REMOTE) delete $(RELEASE_TAG)
 
 all: clean lint test build
 
