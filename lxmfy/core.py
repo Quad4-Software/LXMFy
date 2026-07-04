@@ -26,6 +26,7 @@ from .commands import Command
 from .config import BotConfig
 from .events import Event, EventManager, EventPriority
 from .help import HelpSystem
+from .landlock_sandbox import apply_landlock_sandbox, landlock_status_dict
 from .lxmf_fields import FIELD_RESULTS, pack_result, unpack_commands
 from .middleware import MiddlewareContext, MiddlewareManager, MiddlewareType
 from .moderation import SpamProtection
@@ -125,6 +126,19 @@ class LXMFBot:
         )
 
         self._load_delivery_attempts()
+
+        self.landlock_active = False
+        if not self.config.test_mode:
+            storage_dir = os.path.abspath(
+                os.path.expanduser(self.config.storage_path),
+            )
+            self.landlock_active = apply_landlock_sandbox(
+                storage_dir=storage_dir,
+                reticulum_config_dir=self.reticulum_config_dir,
+                config_dir=self.config_path,
+                cogs_dir=self.cogs_dir,
+                config_enabled=self.config.landlock_enabled,
+            )
 
         identity_file = os.path.join(self.config_path, "identity")
 
@@ -1016,6 +1030,13 @@ class LXMFBot:
             lxmf_fields=attachment_specific_fields,
             stamp_cost=stamp_cost,
             opportunistic=opportunistic,
+        )
+
+    def get_landlock_status(self) -> dict[str, bool]:
+        """Return Landlock LSM sandbox availability and activation state."""
+        return landlock_status_dict(
+            active=self.landlock_active,
+            config_enabled=self.config.landlock_enabled,
         )
 
     def run(self, delay=10):
