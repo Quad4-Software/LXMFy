@@ -10,14 +10,16 @@ Easily create LXMF bots for the Reticulum Network with this extensible framework
 | :--- | :--- |
 | **Core** | Interactive CLI, Command Prefixes, Cron-style Task Scheduler, Middleware & Event Systems |
 | **Connectivity** | Direct Delivery & Propagation Fallback, Auto-Peering, RNS Link Support, Opportunistic Sending |
-| **Security** | Spam Protection, Role-based Permissions, Identity Pinning, Message Signing/Verification |
+| **Security** | Spam Protection, Role-based Permissions, Identity Pinning, Message Signing/Verification, Landlock LSM Filesystem Sandbox (Linux) |
 | **NLP** | Local NLP Intent Classification (Offline/Private), Type-hinted Argument Parsing |
-| **Extensions** | Python Cogs, External Script Cogs (Bash, Go, C, etc.), Linux Sandboxing (`bwrap`/`firejail`) |
+| **Extensions** | Python Cogs, External Script Cogs (Bash, Go, C, etc.), Linux Sandboxing (Landlock LSM, `bwrap`/`firejail`) |
 | **Storage** | Extensible Backends (JSON, SQLite, In-Memory), Message Persistence (Crash Recovery) |
 | **Reliability** | Extensive Stability & Mathematical Stress Testing, Chaos Engineering, Resource Leak Detection |
 | **UX** | Help on First Message, Auto-generated Help Menus, Customizable Bot Icons, Attachments |
 
 ## Installation
+
+**Requirements:** Python 3.11+, [RNS](https://pypi.org/project/rns/) 1.3.5+, [LXMF](https://pypi.org/project/lxmf/) 1.0.1+ (installed automatically with LXMFy).
 
 There are many ways to install LXMFy, you pick:
 
@@ -132,6 +134,9 @@ bot = LXMFBot(
     enable_propagation_node=False, # Run as propagation node (default: False)
     message_storage_limit_mb=500, # Storage limit in MB for propagation node (default: 500)
     direct_delivery_retries=3, # Number of direct delivery attempts before falling back to propagation
+    landlock_enabled=True, # Linux Landlock LSM sandbox for the bot process (default)
+    external_cogs_sandbox_enabled=True, # Sandbox external script cogs on Linux
+    external_cogs_sandbox_type="auto", # auto, landlock, bwrap, firejail, or none
 )
 
 # Dynamically load all cogs
@@ -236,14 +241,59 @@ bot.set_message_storage_limit(megabytes=1000)  # Set to 1 GB
 - When running as a propagation node, your bot can still send and receive messages normally
 - Auto-peering respects the `autopeer_maxdepth` setting to avoid connecting to distant nodes
 
+## Security & Sandboxing
+
+On Linux kernels with Landlock support (5.13+), LXMFy can restrict filesystem access for the bot process and for external script cogs.
+
+### Bot process sandbox
+
+When `landlock_enabled=True` (default), the bot applies a Landlock LSM sandbox after startup. System paths are read-only; bot storage, config, cogs, Reticulum config, and temp directories remain writable.
+
+```python
+bot = LXMFBot(
+    name="SecureBot",
+    landlock_enabled=True,
+)
+
+status = bot.get_landlock_status()
+print(status)
+```
+
+Environment overrides:
+
+- `LXMFY_LANDLOCK=0` — disable Landlock
+- `LXMFY_LANDLOCK=1` — force an attempt on Linux
+- unset — follow `landlock_enabled` and kernel auto-detection
+
+### External script cog sandbox
+
+Executable cogs in `cogs/` can run in a restricted environment when `external_cogs_sandbox_enabled=True` (default). Set `external_cogs_sandbox_type` to:
+
+- `auto` (default) — prefer Landlock, then `bwrap`, then `firejail`
+- `landlock` — Landlock-only via `preexec_fn`
+- `bwrap` — bubblewrap read-only bind sandbox
+- `firejail` — firejail private profile with no network
+- `none` — no subprocess sandbox
+
+See the [docs](https://lxmfy.quad4.io) for full configuration details.
+
 ## Development
 
-- poetry
-- python 3.11 or higher
+- Python 3.11+
+- [Poetry](https://python-poetry.org/)
 
-```
+```bash
 poetry install
 poetry run lxmfy run echo
+```
+
+Common Makefile targets:
+
+```bash
+make lint       # ruff check
+make typecheck  # pyright lxmfy
+make test       # pytest
+make ci         # lint, typecheck, security check, test, build
 ```
 
 ## Contributing
