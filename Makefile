@@ -25,7 +25,7 @@ RNGIT_RELEASE_OPTS = $(if $(RNGIT_IDENTITY),-i $(RNGIT_IDENTITY),) \
 	$(if $(RNGIT_NAME),-n $(RNGIT_NAME),)
 RELEASE_TARGET = $(RELEASE_TAG):$(RELEASE_DIST)
 
-.PHONY: default update install install-dev build clean test lint format check dev run
+.PHONY: default update install install-dev build clean test lint format typecheck check dev run
 .PHONY: version bump-patch bump-minor bump-major update-version
 .PHONY: docker docker-build docker-run docker-run-host docker-wheel-build docker-wheel-extract
 .PHONY: docker-compose-build docker-compose-up docker-compose-down docker-compose-logs
@@ -34,7 +34,7 @@ RELEASE_TARGET = $(RELEASE_TAG):$(RELEASE_DIST)
 .PHONY: release-list release-view release-fetch release-verify release-delete
 
 default:
-	@echo "Targets: update install install-dev build clean test lint format check dev run"
+	@echo "Targets: update install install-dev build clean test lint format typecheck check dev run"
 	@echo "         version bump-patch bump-minor bump-major docker docker-build docker-run"
 	@echo "         docker-run-host docker-wheel-build docker-wheel-extract docker-stop docker-clean"
 	@echo "         docker-compose-build docker-compose-up docker-compose-down docker-compose-logs"
@@ -73,6 +73,9 @@ lint:
 
 format:
 	poetry run ruff format .
+
+typecheck:
+	poetry run pyright lxmfy
 
 check:
 	poetry run safety check
@@ -202,6 +205,6 @@ release-delete:
 	@test -n "$(RELEASE_TAG)" || (echo "Set RELEASE_TAG=..." && exit 1)
 	$(RNGIT_RELEASE) $(RNGIT_REMOTE) delete $(RELEASE_TAG)
 
-all: clean lint test build
+all: clean lint typecheck test build
 
-ci: lint check test build
+ci: lint typecheck check test build
