@@ -699,18 +699,18 @@ type = ["pygobject-stubs", "pytest-mypy (>=1.0.1)", "shtab", "types-pywin32"]
 
 [[package]]
 name = "lxmf"
-version = "1.0.0"
+version = "1.0.1"
 description = "Lightweight Extensible Message Format for Reticulum"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "lxmf-1.0.0-py3-none-any.whl", hash = "sha256:23cd549cfe2710f7b6de5f7d83daad244fe9bd8575d92a902c27485110645ad9"},
-    {file = "lxmf-1.0.0.tar.gz", hash = "sha256:2bf9c2e287656ec8fc8e578c9dec418ad04ce2170ffc0cc92b546a3387b6d20d"},
+    {file = "lxmf-1.0.1-py3-none-any.whl", hash = "sha256:96fbf9a02dcd311fd31129724c08faa5f42a0e4e1bab63bea7552fbc983f4fb8"},
+    {file = "lxmf-1.0.1.tar.gz", hash = "sha256:d12ead448296cbd09203462d8dc96a26eb71ef168b4197b133a970d483a607ea"},
 ]
 
 [package.dependencies]
-rns = ">=1.3.2"
+rns = ">=1.3.5"
 
 [[package]]
 name = "markdown-it-py"
@@ -796,6 +796,18 @@ files = [
     {file = "nh3-0.3.5-cp38-abi3-win_amd64.whl", hash = "sha256:45e6a65dc88a300a2e3502cb9c8e6d1d6b831d6fba7470643333609c6aab1f30"},
     {file = "nh3-0.3.5-cp38-abi3-win_arm64.whl", hash = "sha256:8f85285700a18e9f3fc5bff41fe573fa84f81542ef13b48a89f9fecca0474d3b"},
     {file = "nh3-0.3.5.tar.gz", hash = "sha256:45855e14ff056064fec77133bfcf7cd691838168e5e17bbef075394954dc9dc8"},
+]
+
+[[package]]
+name = "nodeenv"
+version = "1.10.0"
+description = "Node.js virtual environment builder"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+groups = ["dev"]
+files = [
+    {file = "nodeenv-1.10.0-py2.py3-none-any.whl", hash = "sha256:5bb13e3eed2923615535339b3c620e76779af4cb4c6a90deccc9e36b274d3827"},
+    {file = "nodeenv-1.10.0.tar.gz", hash = "sha256:996c191ad80897d076bdfba80a41994c2b47c68e224c542b48feba42ba00f8bb"},
 ]
 
 [[package]]
@@ -888,6 +900,27 @@ files = [
 
 [package.extras]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pyright"
+version = "1.1.411"
+description = "Command line wrapper for pyright"
+optional = false
+python-versions = ">=3.7"
+groups = ["dev"]
+files = [
+    {file = "pyright-1.1.411-py3-none-any.whl", hash = "sha256:dc7c72a8e2700c55baa127554040e067041ea53ccfd50bf96308cc4291c7d5d9"},
+    {file = "pyright-1.1.411.tar.gz", hash = "sha256:d885a0551f2e763b089a02702174e7f4ba77548cddabc972ab86d1f7f1b0f998"},
+]
+
+[package.dependencies]
+nodeenv = ">=1.6.0"
+typing-extensions = ">=4.1"
+
+[package.extras]
+all = ["nodejs-wheel-binaries", "twine (>=3.4.1)"]
+dev = ["twine (>=3.4.1)"]
+nodejs = ["nodejs-wheel-binaries"]
 
 [[package]]
 name = "pyserial"
@@ -1072,14 +1105,14 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rns"
-version = "1.3.4"
+version = "1.3.7"
 description = "Self-configuring, encrypted and resilient mesh networking stack for LoRa, packet radio, WiFi and everything in between"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "rns-1.3.4-py3-none-any.whl", hash = "sha256:8c7cba113ad8d8dcd6610cf907d063ad83cebaea265eb03e6ec418bd3539a95d"},
-    {file = "rns-1.3.4.tar.gz", hash = "sha256:11cd80e00506333e39240fc817c80b2a30d7f7a41f6a35c30356bf518f698582"},
+    {file = "rns-1.3.7-py3-none-any.whl", hash = "sha256:95d3bab98513e7f4318ea2dc0b743a21ce9e3c94caee2eb587203ca4b61fd9ed"},
+    {file = "rns-1.3.7.tar.gz", hash = "sha256:6757db65c0af212b386b7e44b95eda4e36d6b11cae834258bc6d2d11dac6e125"},
 ]
 
 [package.dependencies]
@@ -1176,7 +1209,6 @@ description = "Backported and Experimental Type Hints for Python 3.9+"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "python_version < \"3.13\""
 files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
@@ -1224,4 +1256,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "ffff7ce71320d85d5569fd5cafbf76a5770307a5f16178999f099b9cae4d8684"
+content-hash = "54c949917349ad5896898e82965b442240f489adc3dfce0f36be022979f4ad08"
