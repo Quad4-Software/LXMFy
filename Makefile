@@ -25,12 +25,14 @@ RNGIT_RELEASE_OPTS = $(if $(RNGIT_IDENTITY),-i $(RNGIT_IDENTITY),) \
 	$(if $(RNGIT_NAME),-n $(RNGIT_NAME),)
 RELEASE_TARGET = $(RELEASE_TAG):$(RELEASE_DIST)
 
+PACKAGE_VERSION := $(shell poetry version -s)
+
 .PHONY: default update install install-dev build clean test lint format typecheck check dev run
 .PHONY: version bump-patch bump-minor bump-major update-version
 .PHONY: docker docker-build docker-run docker-run-host docker-wheel-build docker-wheel-extract
 .PHONY: docker-compose-build docker-compose-up docker-compose-down docker-compose-logs
 .PHONY: docker-stop docker-clean publish-gitea publish-pypi publish all ci
-.PHONY: release-dist release-tag release-push release-local release-upload release
+.PHONY: release-dist release-dist-clean release-tag release-push release-local release-upload release
 .PHONY: release-list release-view release-fetch release-verify release-delete
 
 default:
@@ -162,7 +164,14 @@ publish-pypi: build
 
 publish: publish-gitea publish-pypi
 
-release-dist: build
+release-dist-clean:
+	@if [ -d dist ]; then \
+		find dist -maxdepth 1 -type f ! -name '$(PACKAGE_NAME)-$(PACKAGE_VERSION)*' -print -delete; \
+	fi
+
+release-dist:
+	rm -rf dist/
+	poetry build
 
 release-tag:
 	@tag="$(RELEASE_TAG)"; \
