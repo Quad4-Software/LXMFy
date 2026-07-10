@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.0.0] - 2026-07-10
+
+Final release of LXMFy!
+
+### Features
+- **Reticulum Relay Chat (RRC)**: CBOR-encoded RRC client support so bots can join hubs as first-class chat participants ([RRC spec](https://rrc.kc1awv.net/), compatible with NomadNet / rrcd).
+  - New `lxmfy.rrc` package: constants, envelope encode/decode/validation (`cbor2`), `RRCClient`, and `RRCManager`.
+  - `BotConfig` options: `rrc_enabled`, `rrc_hubs`, `rrc_rooms`, `rrc_nick`, `rrc_dest_name`, `rrc_auto_reconnect`, `rrc_persist_sessions`.
+  - Bot API: `connect_rrc()`, `disconnect_rrc()`, `@bot.on_rrc`, `bot.rrc` manager, and `rrc_*` event dispatch.
+  - Session behavior: HELLO/WELCOME, JOIN/PART, MSG/NOTICE/ACTION, PING/PONG, ERROR, RESOURCE_ENVELOPE, auto-reconnect with room re-join, client-side hub limit and rate-limit enforcement, pre-WELCOME send guard.
+  - Optional RRC session persistence across restarts (`rrc_persist_sessions`, default on).
+  - New `RRCBot` template and `lxmfy create --template rrc` / `lxmfy run rrc`.
+
+### Fixes
+- **LXMF crash recovery**: Outgoing `persisted_queue` now updates after dequeue, preserves delivery method on restore, keeps failed and deferred restores, requeues on outbound send failure, and flushes on `cleanup()`.
+- **Invalid persisted destinations**: Corrupt or non-hash destinations (for example test-mode leftovers) are dropped on restore instead of looping forever.
+
+### Updates
+- **Dependencies**: RNS `>=1.3.8`, LXMF `>=1.0.1`, CBOR via `cbor2>=5.4.0`.
+- **Defaults**: `message_persistence_enabled` defaults to `True` for crash-safe outgoing queues.
+- **Memory guards**: Bounded outbound queue (`message_queue_size`, default 50) with drop-oldest on overflow, capped persisted queue/content, and RRC caps for tracked nicks, room members, resource expectations, and pending pings.
+
+### Tests
+- Added RRC/CBOR unit, property, persistence, reconnect, limit, resource-envelope, and bot-integration tests.
+- Opt-in live rrcd smoke test via `LXMFY_LIVE_RRC=1`.
+
 ## [1.6.5] - 2026-07-04
 
 ### Features
