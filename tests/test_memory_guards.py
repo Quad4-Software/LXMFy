@@ -118,3 +118,12 @@ def test_rrc_template_defaults():
     assert bot.bot.config.rrc_rooms == DEFAULT_RRC_ROOMS
     assert DEFAULT_RRC_HUB == "664fc0e8d2e448658e37bb3f34e6c88f"
     assert "general" in DEFAULT_RRC_ROOMS
+
+
+def test_rrc_template_uses_home_reticulum(tmp_path, monkeypatch):
+    home_rns = tmp_path / "fake_home_reticulum"
+    home_rns.mkdir()
+    (home_rns / "config").write_text("[reticulum]\nshare_instance = Yes\n")
+    monkeypatch.setenv("LXMFY_RETICULUM_CONFIG_DIR", str(home_rns))
+    bot = RRCBot(test_mode=True)
+    assert bot.bot.reticulum_config_dir == str(home_rns)

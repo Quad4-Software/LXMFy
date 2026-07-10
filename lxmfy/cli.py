@@ -578,12 +578,14 @@ To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
                 if template_name == "rrc" and hasattr(bot_instance, "bot"):
                     hubs = bot_instance.bot.config.rrc_hubs or []
                     rooms = bot_instance.bot.config.rrc_rooms or []
+                    rns_dir = getattr(bot_instance.bot, "reticulum_config_dir", None)
                     print_info(
                         f"RRC hubs: {', '.join(hubs) if hubs else '(none)'}",
                     )
                     print_info(
                         f"RRC rooms: {', '.join('#' + r for r in rooms) if rooms else '(none)'}",
                     )
+                    print_info(f"Reticulum config: {rns_dir or '(default)'}")
 
                 custom_name = args.name_opt
                 if custom_name:

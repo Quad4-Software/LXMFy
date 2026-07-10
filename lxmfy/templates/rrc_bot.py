@@ -1,9 +1,24 @@
 """RRC room bot template that joins hubs and echoes mentions."""
 
+from __future__ import annotations
+
+import os
+
 from lxmfy import LXMFBot, RRCMessage
 
 DEFAULT_RRC_HUB = "664fc0e8d2e448658e37bb3f34e6c88f"
 DEFAULT_RRC_ROOMS = ["general"]
+
+
+def _default_reticulum_config_dir() -> str | None:
+    """Prefer the user Reticulum config."""
+    env = os.environ.get("LXMFY_RETICULUM_CONFIG_DIR")
+    if env:
+        return os.path.abspath(os.path.expanduser(env))
+    home = os.path.abspath(os.path.expanduser("~/.reticulum"))
+    if os.path.isdir(home) and os.path.isfile(os.path.join(home, "config")):
+        return home
+    return None
 
 
 class RRCBot:
@@ -15,6 +30,7 @@ class RRCBot:
         rooms: list[str] | None = None,
         nick: str | None = None,
         test_mode: bool = False,
+        reticulum_config_dir: str | None = None,
     ):
         """Initialize an RRC-capable bot.
 
@@ -27,12 +43,18 @@ class RRCBot:
         """
         resolved_hubs = list(hubs) if hubs is not None else [DEFAULT_RRC_HUB]
         resolved_rooms = list(rooms) if rooms is not None else list(DEFAULT_RRC_ROOMS)
+        resolved_rns = (
+            os.path.abspath(os.path.expanduser(reticulum_config_dir))
+            if reticulum_config_dir
+            else _default_reticulum_config_dir()
+        )
         self.bot = LXMFBot(
             name=nick or "RRC Bot",
             announce=600,
             announce_enabled=True,
             first_message_enabled=True,
             test_mode=test_mode,
+            reticulum_config_dir=resolved_rns,
             rrc_enabled=bool(resolved_hubs) and not test_mode,
             rrc_hubs=resolved_hubs,
             rrc_rooms=resolved_rooms,
