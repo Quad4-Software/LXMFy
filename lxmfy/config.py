@@ -85,7 +85,8 @@ class BotConfig:
     announce_display_name_file: str | None = None
     test_mode: bool = False
     identity_pinning_enabled: bool = False
-    message_persistence_enabled: bool = False
+    message_persistence_enabled: bool = True
+    message_queue_size: int = 50
     dynamic_cogs_enabled: bool = True
     external_cogs_enabled: bool = True
     external_cogs_sandbox_enabled: bool = True
@@ -99,6 +100,13 @@ class BotConfig:
     link_support_enabled: bool = False
     opportunistic_sending: bool = True
     lxmf_commands_enabled: bool = True
+    rrc_enabled: bool = False
+    rrc_hubs: list[str] | None = None
+    rrc_rooms: list[str] | None = None
+    rrc_nick: str | None = None
+    rrc_dest_name: str = "rrc.hub"
+    rrc_auto_reconnect: bool = True
+    rrc_persist_sessions: bool = True
 
     def __post_init__(self):
         """Post-initialization to ensure admins is a set."""
@@ -106,6 +114,10 @@ class BotConfig:
             self.admins = set()
         if self.reticulum_config_dir is None:
             self.reticulum_config_dir = os.environ.get("LXMFY_RETICULUM_CONFIG_DIR")
+        if self.rrc_hubs is None:
+            self.rrc_hubs = []
+        if self.rrc_rooms is None:
+            self.rrc_rooms = []
 
     def __str__(self):
         """Return a string representation of the BotConfig object."""
