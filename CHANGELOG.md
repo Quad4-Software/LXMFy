@@ -1,8 +1,21 @@
 # Changelog
 
+## [2.0.1] - 2026-07-21
+
+### Fixes
+- **RNS shared-instance digest rejection**: Bots no longer default the Reticulum config directory to the bot `config_path` when a user/system Reticulum config already exists. LXMFy now discovers `/etc/reticulum`, `~/.config/reticulum`, then `~/.reticulum` (same order as RNS). When a bot must use an isolated config directory, it forces `share_instance = No` so it cannot collide on the default shared-instance RPC socket/ports with NomadNet, Columba, or `rnsd` (`AuthenticationError: digest sent was rejected`).
+- **Opportunistic delivery**: `opportunistic_sending=True` (the default) now actually selects LXMF `OPPORTUNISTIC` packet delivery instead of only toggling propagation-on-fail. This is required for reliable messaging through public TCP/backbone entrypoints where link-based `DIRECT` delivery often fails.
+
+### Tests
+- Added unit/integration coverage for Reticulum config discovery and isolated `share_instance` handling.
+- Added opt-in live LXMF ping/pong test (`LXMFY_LIVE_LXMF=1`) that selects random online TCP/backbone nodes from `directory.rns.recipes`.
+
+### Updates
+- **Dependencies**: RNS `>=1.3.9`.
+
 ## [2.0.0] - 2026-07-10
 
-Final release of LXMFy!
+Final feature release of LXMFy!
 
 ### Features
 - **Reticulum Relay Chat (RRC)**: CBOR-encoded RRC client support so bots can join hubs as first-class chat participants ([RRC spec](https://rrc.kc1awv.net/), compatible with NomadNet / rrcd).

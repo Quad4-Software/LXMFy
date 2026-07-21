@@ -32,6 +32,11 @@ from .middleware import MiddlewareContext, MiddlewareManager, MiddlewareType
 from .moderation import SpamProtection
 from .nlp import IntentClassifier
 from .permissions import DefaultPerms, PermissionManager
+from .reticulum_config import (
+    ensure_isolated_share_instance_disabled,
+    is_isolated_reticulum_dir,
+    resolve_reticulum_config_dir,
+)
 from .scheduler import TaskScheduler
 from .signatures import SignatureManager, sign_outgoing_message, verify_incoming_message
 from .storage import JSONStorage, MemoryStorage, SQLiteStorage, Storage
@@ -84,13 +89,18 @@ class LXMFBot:
             self.config_path = os.path.join(os.getcwd(), "config")
 
         os.makedirs(self.config_path, exist_ok=True)
-        if self.config.reticulum_config_dir:
-            self.reticulum_config_dir = os.path.abspath(
-                os.path.expanduser(self.config.reticulum_config_dir),
-            )
+        if self.config.test_mode and not self.config.reticulum_config_dir:
+            self.reticulum_config_dir = os.path.abspath(self.config_path)
         else:
-            self.reticulum_config_dir = self.config_path
+            self.reticulum_config_dir = resolve_reticulum_config_dir(
+                self.config.reticulum_config_dir,
+                self.config_path,
+            )
         os.makedirs(self.reticulum_config_dir, exist_ok=True)
+        if not self.config.test_mode and is_isolated_reticulum_dir(
+            self.reticulum_config_dir, self.config_path
+        ):
+            ensure_isolated_share_instance_disabled(self.reticulum_config_dir)
 
         if self.config.storage_type == "json":
             self.storage = Storage(JSONStorage(self.config.storage_path))
@@ -950,6 +960,10 @@ class LXMFBot:
                 f"Using propagation for {destination} after {attempts} failed direct attempts",
                 RNS.LOG_INFO,
             )
+        elif is_opportunistic:
+            # Packet delivery without requiring a Link first. Works much more
+            # reliably through public TCP/backbone entrypoints than DIRECT.
+            desired_method = LXMessage.OPPORTUNISTIC
         else:
             desired_method = LXMessage.DIRECT
 
@@ -1003,9 +1017,10 @@ class LXMFBot:
         # Sign the message (pass-through for LXMF's built-in signing)
         lxm = sign_outgoing_message(self, lxm)
 
-        # Set propagation fallback if enabled
+        # Set propagation fallback if enabled. Applies when starting with
+        # opportunistic or direct delivery and a propagation node is known.
         if (
-            desired_method == LXMessage.DIRECT
+            desired_method in (LXMessage.DIRECT, LXMessage.OPPORTUNISTIC)
             and (self.config.propagation_fallback_enabled or is_opportunistic)
             and has_prop_node
         ):

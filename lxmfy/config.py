@@ -42,7 +42,7 @@ class BotConfig:
         enable_propagation_node (bool): Whether to run this bot as a propagation node. Defaults to False.
         message_storage_limit_mb (float): Maximum storage for propagation node messages in megabytes. Only applies when enable_propagation_node is True. Defaults to 500 MB.
         config_path (str): The path to the bot configuration directory. If None, defaults to "config" in the current working directory. Defaults to None.
-        reticulum_config_dir (str): The Reticulum config directory used for RNS shared instance/auth state. If None, falls back to config_path. Can also be set via LXMFY_RETICULUM_CONFIG_DIR.
+        reticulum_config_dir (str): The Reticulum config directory used for RNS shared instance/auth state. If None, uses LXMFY_RETICULUM_CONFIG_DIR when set, otherwise discovers the user/system Reticulum config (/etc/reticulum, ~/.config/reticulum, ~/.reticulum), and only then falls back to config_path. Isolated bot configs force share_instance=No to avoid RPC digest rejection with NomadNet/Columba.
         test_mode (bool): Whether to run in test mode (skips RNS initialization). Defaults to False.
         announce_display_name_file (str): Optional filename under config_path whose UTF-8 contents override the bot display name for LXMF delivery announces. If unset, ``bot_display_name.txt`` is read when present. Otherwise ``name`` is used.
 
