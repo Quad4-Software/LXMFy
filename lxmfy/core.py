@@ -1209,6 +1209,68 @@ class LXMFBot:
             opportunistic=opportunistic,
         )
 
+    def get_debugger(self):
+        """Return a Debugger bound to this bot."""
+        from .debugger import Debugger
+
+        return Debugger(bot=self)
+
+    def diagnose_destination(
+        self,
+        destination: str,
+        *,
+        request_path: bool = False,
+        wait: float = 0.0,
+    ) -> dict:
+        """Probe path and identity for a destination hash.
+
+        Args:
+            destination: Hex destination hash.
+            request_path: Whether to request a path if missing.
+            wait: Seconds to wait for a path after requesting.
+
+        Returns:
+            Dict describing identity/path status and hints.
+
+        """
+        return (
+            self.get_debugger()
+            .probe_destination(
+                destination,
+                request_path=request_path,
+                wait=wait,
+            )
+            .to_dict()
+        )
+
+    def diagnose_connectivity(
+        self,
+        destination: str | None = None,
+        *,
+        request_path: bool = False,
+        wait: float = 0.0,
+    ) -> dict:
+        """Run a connectivity doctor report for this bot.
+
+        Args:
+            destination: Optional peer hash to include in send diagnosis.
+            request_path: Request a path when probing destination.
+            wait: Seconds to wait for path discovery.
+
+        Returns:
+            Structured doctor report dict.
+
+        """
+        return (
+            self.get_debugger()
+            .run_doctor(
+                destination,
+                request_path=request_path,
+                wait=wait,
+            )
+            .to_dict()
+        )
+
     def get_landlock_status(self) -> dict[str, bool]:
         """Return Landlock LSM sandbox availability and activation state."""
         return landlock_status_dict(

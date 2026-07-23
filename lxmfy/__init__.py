@@ -15,6 +15,16 @@ from .cogs_core import load_cogs_from_directory
 from .commands import Command, command
 from .config import BotConfig
 from .core import LXMFBot, BOT_DISPLAY_NAME_FILE
+from .debugger import (
+    CheckResult,
+    Debugger,
+    DestinationProbe,
+    DoctorReport,
+    MessageDebugger,
+    build_verdict,
+    diagnose_destination,
+    sort_checks_by_severity,
+)
 from .events import Event, EventManager, EventPriority
 from .help import HelpFormatter, HelpSystem
 from .lxmf_fields import FIELD_COMMANDS, FIELD_RESULTS, pack_result, unpack_commands
@@ -40,9 +50,12 @@ __all__ = [
     "Attachment",
     "AttachmentType",
     "BotConfig",
+    "CheckResult",
     "Command",
     "DEFAULT_DEST_NAME",
     "DefaultPerms",
+    "DestinationProbe",
+    "DoctorReport",
     "Event",
     "EventManager",
     "EventPriority",
@@ -54,6 +67,10 @@ __all__ = [
     "JSONStorage",
     "LXMFBot",
     "BOT_DISPLAY_NAME_FILE",
+    "Debugger",
+    "MessageDebugger",
+    "build_verdict",
+    "sort_checks_by_severity",
     "MiddlewareContext",
     "MiddlewareManager",
     "MiddlewareType",
@@ -70,6 +87,7 @@ __all__ = [
     "__version__",
     "command",
     "decode_envelope",
+    "diagnose_destination",
     "encode_envelope",
     "format_validation_results",
     "load_cogs_from_directory",

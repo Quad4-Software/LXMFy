@@ -5,6 +5,7 @@ including bot file creation and example cog generation.
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -13,10 +14,13 @@ from .__version__ import __version__
 from .colors import (
     Colors,
     init_colors,
+    print_check,
     print_error,
     print_header,
     print_info,
+    print_kv,
     print_menu,
+    print_section,
     print_success,
     print_warning,
 )
@@ -27,12 +31,12 @@ def get_user_choice() -> str:
     """Get user's choice from the menu."""
     while True:
         if Colors.is_colors_supported():
-            choice = input(f"{Colors.CYAN}Enter your choice (1-3): {Colors.ENDC}")
+            choice = input(f"{Colors.CYAN}Enter your choice (1-4): {Colors.ENDC}")
         else:
-            choice = input("Enter your choice (1-3): ")
-        if choice in ["1", "2", "3"]:
+            choice = input("Enter your choice (1-4): ")
+        if choice in ["1", "2", "3", "4"]:
             return choice
-        print_error("Invalid choice. Please enter a number between 1 and 3.")
+        print_error("Invalid choice. Please enter a number between 1 and 4.")
 
 
 def get_bot_name() -> str:
@@ -163,6 +167,40 @@ def interactive_run() -> None:
         print_error(f"Error running template bot: {e!s}")
 
 
+def interactive_debug() -> None:
+    """Interactive debugger."""
+    print_header("Debugger")
+    if Colors.is_colors_supported():
+        config = (
+            input(
+                f"{Colors.CYAN}Bot config path (default: ./config): {Colors.ENDC}",
+            ).strip()
+            or None
+        )
+        dest = (
+            input(
+                f"{Colors.CYAN}Destination hash to probe (optional): {Colors.ENDC}",
+            ).strip()
+            or None
+        )
+    else:
+        config = input("Bot config path (default: ./config): ").strip() or None
+        dest = input("Destination hash to probe (optional): ").strip() or None
+
+    from .debugger import Debugger
+
+    dbg = Debugger(config_path=config)
+    report = dbg.run_doctor(
+        destination=dest,
+        request_path=bool(dest),
+        wait=15.0 if dest else 0.0,
+    )
+    dbg.print_report(report)
+    out = dbg.save_report(report)
+    print_success(f"Report saved to {out}")
+    print_info("Share that file when asking for help (privacy-redacted).")
+
+
 def interactive_mode() -> None:
     """Run the CLI in interactive mode."""
     while True:
@@ -174,6 +212,8 @@ def interactive_mode() -> None:
         elif choice == "2":
             interactive_run()
         elif choice == "3":
+            interactive_debug()
+        elif choice == "4":
             print_success("Goodbye!")
             sys.exit(0)
 
@@ -415,6 +455,306 @@ def is_safe_path(path: str, base_path: str | None = None) -> bool:
         return False
 
 
+def run_debug_command(argv: list[str] | None = None) -> int:
+    """Run the debugger CLI.
+
+    Args:
+        argv: Arguments after ``debug`` (sys.argv[2:] when called from main).
+
+    Returns:
+        Process exit code.
+
+    """
+    from .debugger import Debugger, default_report_path
+
+    parser = argparse.ArgumentParser(
+        prog="lxmfy debug",
+        description="Diagnose send/receive connectivity",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  lxmfy debug                         # Full doctor + auto-save report file
+  lxmfy debug doctor --config ./config --output ./debug-report.txt
+  lxmfy debug probe <hash> --request-path --wait 30
+  lxmfy debug send <hash>
+  lxmfy debug receive
+  lxmfy debug compare <hash_a> <hash_b>
+  lxmfy debug tips
+  lxmfy debug --announce-test         # Also try a live announce
+  NO_COLOR=1 lxmfy debug              # Disable ANSI colors
+
+Reports are privacy-redacted by default (home paths and hashes truncated).
+Pass the saved lxmfy-debug-*.txt file when asking for help.
+        """,
+    )
+    parser.add_argument(
+        "action",
+        nargs="?",
+        default="doctor",
+        choices=["doctor", "probe", "send", "receive", "compare", "tips"],
+        help="Debug action (default: doctor)",
+    )
+    parser.add_argument(
+        "destination",
+        nargs="?",
+        default=None,
+        help="Destination hash for probe/send/compare",
+    )
+    parser.add_argument(
+        "other",
+        nargs="?",
+        default=None,
+        help="Second destination hash for compare",
+    )
+    parser.add_argument(
+        "--config",
+        default=None,
+        help="Bot config directory (default: ./config)",
+    )
+    parser.add_argument(
+        "--reticulum-config",
+        default=None,
+        help="Reticulum config directory override",
+    )
+    parser.add_argument(
+        "--request-path",
+        action="store_true",
+        help="Request a path when probing a destination",
+    )
+    parser.add_argument(
+        "--wait",
+        type=float,
+        default=0.0,
+        help="Seconds to wait for a path after --request-path",
+    )
+    parser.add_argument(
+        "--announce-test",
+        action="store_true",
+        help="Attempt a live announce_now (requires usable bot identity/router)",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit machine-readable JSON",
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        default=None,
+        help="Write report to this file path",
+    )
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        default=True,
+        help="Save a privacy-redacted report file (default on for doctor)",
+    )
+    parser.add_argument(
+        "--no-save",
+        action="store_true",
+        help="Do not write a report file",
+    )
+    parser.add_argument(
+        "--no-privacy",
+        action="store_true",
+        help="Do not redact home paths / hashes (local use only)",
+    )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable ANSI colors (also respects NO_COLOR)",
+    )
+
+    args = parser.parse_args(argv)
+
+    if args.no_color:
+        Colors.set_enabled(False)
+
+    dbg = Debugger(
+        reticulum_config_dir=args.reticulum_config,
+        config_path=args.config,
+        privacy=not args.no_privacy,
+    )
+
+    should_save = (args.output is not None or args.save) and not args.no_save
+
+    def _save(report):
+        path = args.output or default_report_path(as_json=args.json)
+        saved = dbg.save_report(report, path, as_json=args.json)
+        if args.json:
+            print(f"Report saved to {saved}", file=sys.stderr)
+        else:
+            print_success(f"Report saved to {saved}")
+            print_info("Share that file when asking for help.")
+        return saved
+
+    if args.action == "tips":
+        print_header("Send / Receive Tips")
+        from .debugger import COMMON_TIPS
+
+        for tip in COMMON_TIPS:
+            print_info(tip)
+        return 0
+
+    if args.action == "compare":
+        left = args.destination
+        right = args.other
+        if not left or not right:
+            print_error("compare requires two destination hashes")
+            print_info("Usage: lxmfy debug compare <hash_a> <hash_b>")
+            return 1
+        result = dbg.compare_destinations(
+            left,
+            right,
+            request_path=args.request_path,
+            wait=args.wait,
+        )
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
+        else:
+            print_header("Destination Compare")
+            print_kv("both_valid", str(result["both_valid"]), ok=result["both_valid"])
+            print_kv(
+                "both_identity_known",
+                str(result["both_identity_known"]),
+                ok=result["both_identity_known"],
+            )
+            print_kv(
+                "both_have_path",
+                str(result["both_have_path"]),
+                ok=result["both_have_path"],
+            )
+            print_section("Left")
+            for k, v in result["left"].items():
+                if k in {"notes", "hints", "timeline"}:
+                    continue
+                if v in (None, "", [], False) and k not in {
+                    "valid_hash",
+                    "identity_known",
+                    "has_path",
+                }:
+                    continue
+                print_kv(k, str(v))
+            print_section("Right")
+            for k, v in result["right"].items():
+                if k in {"notes", "hints", "timeline"}:
+                    continue
+                if v in (None, "", [], False) and k not in {
+                    "valid_hash",
+                    "identity_known",
+                    "has_path",
+                }:
+                    continue
+                print_kv(k, str(v))
+            for note in result.get("notes") or []:
+                print_info(note)
+        if should_save:
+            report = dbg.run_doctor()
+            report.compare = result
+            _save(report)
+        if not (
+            result["both_valid"]
+            and result["both_identity_known"]
+            and result["both_have_path"]
+        ):
+            return 2
+        return 0
+
+    if args.action == "probe":
+        dest = args.destination
+        if not dest:
+            print_error("probe requires a destination hash")
+            print_info(
+                "Usage: lxmfy debug probe <hash> [--request-path] [--wait N]",
+            )
+            return 1
+        probe = dbg.probe_destination(
+            dest,
+            request_path=args.request_path,
+            wait=args.wait,
+        )
+        dbg.print_probe(probe, as_json=args.json)
+        if should_save:
+            report = dbg.run_doctor(destination=dest)
+            report.probe = probe
+            _save(report)
+        if not (probe.valid_hash and probe.identity_known and probe.has_path):
+            return 2
+        return 0
+
+    if args.action == "send":
+        dest = args.destination
+        if not dest:
+            print_error("send requires a destination hash")
+            print_info("Usage: lxmfy debug send <hash>")
+            return 1
+        report = dbg.run_doctor(
+            destination=dest,
+            request_path=args.request_path,
+            wait=args.wait,
+            try_announce=args.announce_test,
+        )
+        if not args.json:
+            print_header("Send Diagnosis")
+            for check in dbg.diagnose_send(dest, probe=report.probe):
+                print_check(check.name, check.status, check.detail, check.hint)
+            if report.probe:
+                dbg.print_probe(report.probe, as_json=False)
+            print_section("Blockers")
+            if report.send_blockers:
+                for b in report.send_blockers:
+                    print_error(b)
+            else:
+                print_success("No hard send blockers detected")
+        else:
+            dbg.print_report(report, as_json=True)
+        if should_save:
+            _save(report)
+        fails = sum(1 for c in report.checks if c.status == "fail")
+        return 2 if fails else 0
+
+    if args.action == "receive":
+        report = dbg.run_doctor(try_announce=args.announce_test)
+        if args.json:
+            dbg.print_report(report, as_json=True)
+        else:
+            print_header("Receive Diagnosis")
+            recv_checks = [
+                c
+                for c in report.checks
+                if c.category in {"receive", "announce", "network", "instance", "disk"}
+            ]
+            for check in recv_checks:
+                print_check(check.name, check.status, check.detail, check.hint)
+            print_section("Blockers")
+            if report.receive_blockers:
+                for b in report.receive_blockers:
+                    print_error(b)
+            else:
+                print_success("No hard receive blockers detected")
+        if should_save:
+            _save(report)
+        fails = sum(1 for c in report.checks if c.status == "fail")
+        return 2 if fails else 0
+
+    # doctor (default)
+    dest = args.destination
+    request_path = args.request_path or bool(dest)
+    wait = args.wait
+    if dest and request_path and wait <= 0:
+        wait = 15.0
+    report = dbg.run_doctor(
+        destination=dest,
+        request_path=request_path,
+        wait=wait,
+        try_announce=args.announce_test,
+    )
+    dbg.print_report(report, as_json=args.json)
+    if should_save:
+        _save(report)
+    return 2 if report.to_dict()["failures"] else 0
+
+
 def main() -> None:
     """Main CLI entry point."""
     try:
@@ -423,6 +763,12 @@ def main() -> None:
         if len(sys.argv) == 1:
             interactive_mode()
             return
+
+        # Fast-path debug before the create/run/signatures parser
+        if len(sys.argv) >= 2 and sys.argv[1] == "debug":
+            if "--no-color" in sys.argv or os.environ.get("NO_COLOR"):
+                Colors.set_enabled(False)
+            sys.exit(run_debug_command(sys.argv[2:]))
 
         print_header("LXMFy Bot Framework")
 
@@ -443,6 +789,11 @@ Examples:
   lxmfy run note                        # Run the built-in note bot
   lxmfy run cogtest                     # Run the cog test bot
 
+  lxmfy debug                           # Diagnose send/receive connectivity
+  lxmfy debug probe <hash> --request-path --wait 30
+  lxmfy debug send <hash>
+  lxmfy debug receive
+
   lxmfy signatures test                 # Test signature functionality
   lxmfy signatures enable               # Show how to enable signatures
   lxmfy signatures disable              # Show how to disable signatures
@@ -451,8 +802,8 @@ Examples:
 
         parser.add_argument(
             "command",
-            choices=["create", "run", "signatures"],
-            help="Create a bot file, run a template bot, or manage signatures",
+            choices=["create", "run", "signatures", "debug"],
+            help="Create a bot file, run a template bot, debug messaging, or manage signatures",
         )
         parser.add_argument(
             "name",
@@ -488,8 +839,25 @@ Examples:
             action="store_true",
             help="Disable cogs loading for 'create' command",
         )
+        parser.add_argument(
+            "--no-color",
+            action="store_true",
+            help="Disable ANSI colors (also respects NO_COLOR)",
+        )
 
         args = parser.parse_args()
+
+        if args.no_color:
+            Colors.set_enabled(False)
+
+        if args.command == "debug":
+            # Reached if someone used a form that did not hit the fast-path
+            remaining = []
+            if args.name:
+                remaining.append(args.name)
+            if args.directory:
+                remaining.append(args.directory)
+            sys.exit(run_debug_command(remaining))
 
         if args.command == "create":
             try:

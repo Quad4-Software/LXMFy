@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.0.2] - 2026-07-23
+
+### Features
+- **Debugger**: New `lxmfy debug` CLI and `Debugger` helpers to diagnose why a bot cannot send or peers cannot receive.
+  - Actions: `doctor`, `probe <hash>`, `send <hash>`, `receive`, `compare <a> <b>`, `tips`.
+  - Checks: OS/Python/package versions, shared vs owned RNS instance, disk permissions (config/storage/reticulum/identity/announce), interfaces online (no host/IP leak), announce enable/throttle/optional live test, send pipeline (queue, persistence, delivery method, retries, propagation, router readiness), storage delivery history, and destination identity/path/hops.
+  - Verdict + next-steps summary, severity-sorted checks, shared-instance client role warning, path-request timeline.
+  - Privacy-redacted shareable reports auto-saved as `lxmfy-debug-*.txt` (or `--output` / `--json`). Home paths become `~`, hashes truncated. Use `--no-privacy` only locally.
+  - Explicit send/receive blocker lists for quick triage.
+  - Bot API: `bot.get_debugger()`, `bot.diagnose_destination()`, `bot.diagnose_connectivity()`.
+  - Interactive menu option for the debugger.
+
+### Fixes
+- **Debugger destination registration**: Computing the bot delivery hash no longer constructs an inbound `RNS.Destination` (which registered `lxmf/delivery` on Transport). That left the interactive CLI unable to start a template bot afterward with `Attempt to register an already registered destination.` Hash is now derived via `Destination.hash()` only.
+
+### Updates
+- **Colors**: Honour `NO_COLOR` and `FORCE_COLOR` / `CLICOLOR_FORCE`, require a TTY on all platforms (including Windows), enable VT when available for modern PowerShell/CMD/Windows Terminal, and fall back to plain text when VT is unavailable. Added `--no-color`, plus `print_section` / `print_check` / `print_kv` helpers for diagnostic output.
+
 ## [2.0.1] - 2026-07-21
 
 ### Fixes

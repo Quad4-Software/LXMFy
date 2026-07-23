@@ -58,6 +58,19 @@ lxmfy
 lxmfy create
 ```
 
+**Debug send/receive:**
+
+```bash
+lxmfy debug
+lxmfy debug --config ./config --output ./lxmfy-debug-report.txt
+lxmfy debug probe <destination_hash> --request-path --wait 30
+lxmfy debug send <destination_hash>
+lxmfy debug receive
+lxmfy debug compare <hash_a> <hash_b>
+```
+
+Doctor mode prints a verdict and next steps, then categorized checks (OS, shared vs owned instance, disk permissions, interfaces, announce, send pipeline / storage history, receive readiness). It saves a privacy-redacted `lxmfy-debug-*.txt` you can share. Colors auto-disable when not a TTY, when `NO_COLOR` is set, or when Windows VT is unavailable. Use `--no-color` or `NO_COLOR=1` for plain output.
+
 ## Docker
 
 ### Building Manually
