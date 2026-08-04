@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Updates
+- **Dependencies**: LXMF `>=1.1.1`, RNS `>=1.4.2` (LXMF 1.1.1 requires RNS 1.4.2+).
+- **Docs**: README and Sphinx guides cleaned up and updated version pins.
+
 ## [2.0.2] - 2026-07-23
 
 ### Features

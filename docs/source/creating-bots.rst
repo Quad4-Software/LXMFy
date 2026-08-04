@@ -182,8 +182,8 @@ When a message contains ``FIELD_COMMANDS``, the bot extracts the command name an
 
 The ``ctx`` object in field command callbacks includes:
 
-- :code:`ctx.fields` — the raw LXMF fields dict from the incoming message
-- :code:`ctx.request_id` — the ``request_id`` from the incoming ``FIELD_COMMANDS`` (if any)
+- :code:`ctx.fields`: the raw LXMF fields dict from the incoming message
+- :code:`ctx.request_id`: the ``request_id`` from the incoming ``FIELD_COMMANDS`` (if any)
 
 **Sending a structured command from an LXMF client**
 
@@ -317,10 +317,10 @@ When the bot starts, it will automatically register any executable file in the :
 
 When a user sends :code:`/greet hello`, the bot will execute this script and reply with its stdout: :code:`Hello from Bash! You sent: /greet hello`.
 
-Sovereign NLP (Local Intent Classification)
--------------------------------------------
+Local NLP Intent Classification
+-------------------------------
 
-LXMFy includes a built-in, lightweight NLP engine for intent classification. This allows your bot to understand the "intent" of a message even if it doesn't match a command exactly.
+LXMFy ships a local intent classifier. It matches message text to labeled example phrases when the text does not match a command prefix exactly.
 
 1.  **Enable NLP** in your bot configuration: :code:`nlp_enabled=True`.
 2.  **Define intents** using the :code:`@bot.intent` decorator.
@@ -331,11 +331,11 @@ LXMFy includes a built-in, lightweight NLP engine for intent classification. Thi
     def help_intent(msg):
         msg.reply("I can help! Try typing /help to see a list of commands.")
 
-The NLP engine uses mathematical vector similarity (TF-IDF and Cosine Similarity) to match incoming text against your example phrases. This processing happens entirely locally on your machine, ensuring full privacy.
+Matching uses TF-IDF vectors and cosine similarity. All scoring runs on the bot host. No text is sent to an external API.
 
-**Persistence and Extensibility:**
+**Model export and import**
 
-For larger bots, you can export and import the trained intent model to avoid retraining on every startup:
+Export and import a trained model so larger bots skip retraining on every startup:
 
 .. code-block:: python
 
@@ -349,7 +349,7 @@ For larger bots, you can export and import the trained intent model to avoid ret
 RNS Link Support
 ----------------
 
-Bots can now establish and respond to direct RNS Links. This is useful for stateful, streaming, or high-bandwidth communication that goes beyond simple message packets.
+Bots can establish and respond to direct RNS Links for stateful, streaming, or higher-bandwidth traffic than single LXMF packets.
 
 1.  **Enable Link Support** in configuration: :code:`link_support_enabled=True`.
 2.  **Request a link**: :code:`bot.request_link(destination_hash)`. You can also specify a custom app name and aspects: :code:`bot.request_link(dest, callback, "my_app", "aspect1")`.
@@ -596,10 +596,8 @@ You can manage signature verification settings using the CLI:
 
 LXMF uses Ed25519 signatures provided by the RNS cryptography system. Every LXMF message includes the sender's signature, which is validated against their known RNS identity. LXMFy simply reads LXMF's :code:`message.signature_validated` property and :code:`message.unverified_reason` to enforce your bot's security policy.
 
-Advanced Message Delivery
---------------------------
-
-LXMFy supports advanced message delivery options for improved reliability.
+Message Delivery
+----------------
 
 Using Propagation Nodes
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -623,7 +621,7 @@ Send messages through specific LXMF propagation nodes:
             "This message will use direct delivery with propagation fallback as configured"
         )
 
-Propagation nodes are useful when direct delivery is not possible or when you want to ensure message delivery through the Reticulum mesh network.
+Use a propagation node when the destination is offline or direct delivery keeps failing on the current path.
 
 Configuring Retries
 ^^^^^^^^^^^^^^^^^^^

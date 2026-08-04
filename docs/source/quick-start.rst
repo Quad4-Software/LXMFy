@@ -5,15 +5,15 @@ Prerequisites
 -------------
 
 *   Python 3.11+
-*   Reticulum Network Stack (:code:`pip install rns`, version 1.3.8+)
-*   LXMF (:code:`pip install lxmf`, version 1.0.1+; installed automatically with LXMFy)
+*   Reticulum Network Stack (:code:`pip install rns`, version 1.4.2+)
+*   LXMF (:code:`pip install lxmf`, version 1.1.1+; installed automatically with LXMFy)
 *   CBOR (:code:`cbor2`, installed automatically, required for RRC)
 *   LXMFy (:code:`pip install lxmfy` or install from source)
 
 Creating Your First Bot (Using the CLI)
 ----------------------------------------
 
-The easiest way to start is using the LXMFy command-line tool.
+Use the LXMFy CLI to scaffold a project.
 
 1.  **Open your terminal** in the directory where you want to create your bot project.
 2.  **Run the create command:**
@@ -99,45 +99,37 @@ Interacting With Your Bot
     If you uncommented the icon example above, this reply might also carry an icon.
 3.  **Try the help command:** Send :code:`/help`.
 
-Advanced Features
------------------
+What to configure next
+----------------------
 
-Once you're comfortable with the basics, explore these advanced features:
+**Message handlers**
 
-**Message Handlers:**
+*   :code:`@bot.on_first_message()` for the first message from each sender
+*   :code:`@bot.on_message()` for all messages before command processing
 
-*   Use :code:`@bot.on_first_message()` to welcome new users
-*   Use :code:`@bot.on_message()` to handle all messages before command processing
+**Delivery**
 
-**Reliable Delivery:**
+*   :code:`direct_delivery_retries` in :code:`LXMFBot(...)` retries direct delivery before propagation fallback
+*   :code:`propagation_node` (or :code:`bot.set_propagation_node(...)`) selects a specific LXMF propagation node
+*   Outgoing queue persistence defaults on (:code:`message_persistence_enabled=True`) with a bounded queue (:code:`message_queue_size`)
 
-*   Configure :code:`direct_delivery_retries` in :code:`LXMFBot(...)` for automatic retry before propagation fallback
-*   Configure :code:`propagation_node` in bot config (or use :code:`bot.set_propagation_node(...)`) to route through a specific LXMF propagation node
-*   Outgoing queue persistence is on by default (:code:`message_persistence_enabled=True`) with a bounded queue (:code:`message_queue_size`)
+**Reticulum Relay Chat (RRC)**
 
-**Reticulum Relay Chat (RRC):**
-
-*   Join RRC hubs as a normal client with :code:`rrc_enabled=True` or the :code:`rrc` template
+*   Join hubs with :code:`rrc_enabled=True` or the :code:`rrc` template
 *   Use the same Reticulum config as MeshChatX or your hub (:code:`reticulum_config_dir` or :code:`LXMFY_RETICULUM_CONFIG_DIR`, typically :code:`~/.reticulum`)
-*   See the `Creating Bots <creating-bots.html#reticulum-relay-chat-rrc>`_ guide for room bots and hub discovery
+*   See `Creating Bots <creating-bots.html#reticulum-relay-chat-rrc>`_ for room bots and hub discovery
 
-**Security:**
+**Security**
 
-*   Enable :code:`signature_verification_enabled=True` to enforce LXMF's built-in signature verification
-*   Set :code:`require_message_signatures=True` to reject unsigned or invalid messages
-*   On Linux, enable the Landlock LSM filesystem sandbox with :code:`landlock_enabled=True` (default); override with :code:`LXMFY_LANDLOCK=0` or :code:`LXMFY_LANDLOCK=1`
-*   External script cogs can run in a Landlock, bubblewrap, or firejail sandbox via :code:`external_cogs_sandbox_type`
-*   Note: LXMF automatically signs all messages; LXMFy enforces verification policy and optional sandboxing
+*   :code:`signature_verification_enabled=True` checks LXMF signature validation results
+*   :code:`require_message_signatures=True` rejects unsigned or invalid messages
+*   On Linux, :code:`landlock_enabled=True` (default) applies a Landlock LSM filesystem sandbox. Override with :code:`LXMFY_LANDLOCK=0` or :code:`LXMFY_LANDLOCK=1`
+*   External script cogs can use Landlock, bubblewrap, or firejail via :code:`external_cogs_sandbox_type`
+*   LXMF signs outbound messages. LXMFy enforces the verification policy and optional sandboxing
 
-**Development:**
+**Development**
 
-*   Run static type checking with :code:`make typecheck` (:code:`pyright lxmfy`)
-*   Run the full CI suite with :code:`make ci` (lint, typecheck, security check, tests, build)
+*   :code:`make typecheck` runs :code:`pyright lxmfy`
+*   :code:`make ci` runs lint, typecheck, security check, tests, and build
 
-See the `Creating Bots <creating-bots.html>`_ guide and `API Reference <api-reference.html>`_ for detailed information on these features.
-
-Next Steps
-----------
-
-*   Explore the `Creating Bots <creating-bots.html>`_ guide for more details on adding commands, using cogs, and different bot types.
-*   Check the `API Reference <api-reference.html>`_ for detailed information on framework components.
+See `Creating Bots <creating-bots.html>`_ and `API Reference <api-reference.html>`_ for command registration, cogs, and API details.

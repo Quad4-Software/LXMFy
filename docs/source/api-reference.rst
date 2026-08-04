@@ -631,7 +631,7 @@ The framework provides command-line tools for bot management:
 Error Handling
 ==============
 
-The framework provides comprehensive error handling:
+Catch shutdown and runtime failures around :code:`bot.run()`:
 
 .. code-block:: python
 
