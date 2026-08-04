@@ -758,18 +758,18 @@ type = ["pygobject-stubs", "pytest-mypy (>=1.0.1)", "shtab", "types-pywin32"]
 
 [[package]]
 name = "lxmf"
-version = "1.0.1"
+version = "1.1.1"
 description = "Lightweight Extensible Message Format for Reticulum"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "lxmf-1.0.1-py3-none-any.whl", hash = "sha256:96fbf9a02dcd311fd31129724c08faa5f42a0e4e1bab63bea7552fbc983f4fb8"},
-    {file = "lxmf-1.0.1.tar.gz", hash = "sha256:d12ead448296cbd09203462d8dc96a26eb71ef168b4197b133a970d483a607ea"},
+    {file = "lxmf-1.1.1-py3-none-any.whl", hash = "sha256:3cdb4c5b3a4ec091ed538050228d8bd15db3ca4dfe7d69be3350ebc6c6d7e696"},
+    {file = "lxmf-1.1.1.tar.gz", hash = "sha256:f2f7ea17d793fcc32cab826e81e8e9824404d025d1fc71b143be3242d45e6a5e"},
 ]
 
 [package.dependencies]
-rns = ">=1.3.5"
+rns = ">=1.4.2"
 
 [[package]]
 name = "markdown-it-py"
@@ -1164,14 +1164,14 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rns"
-version = "1.4.0"
+version = "1.4.2"
 description = "Self-configuring, encrypted and resilient mesh networking stack for LoRa, packet radio, WiFi and everything in between"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "rns-1.4.0-py3-none-any.whl", hash = "sha256:a88c6ae15c289867b2d8ee8f6ba4363f4dc728283f892b0790dba226f7dddcae"},
-    {file = "rns-1.4.0.tar.gz", hash = "sha256:fa9e76d0a78bf253eae66137e6bbdc65f470db3950a95b034ce32ca845ff0e44"},
+    {file = "rns-1.4.2-py3-none-any.whl", hash = "sha256:a3e9be1c178878103284a111be89761f146c44c33a150a7745c15f02b115aa37"},
+    {file = "rns-1.4.2.tar.gz", hash = "sha256:275e4369819c99fbbdb8b70a0d4eb3fc9767716fca639fe7206856839fb3867a"},
 ]
 
 [package.dependencies]
@@ -1315,4 +1315,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "82e2e5790dd940787794757475c4570105519dc57f23680538ada694ad0470e8"
+content-hash = "4dccd7efd596b268660827fac139fb9e7843dc2f6c541c402b4b78ba212e830e"
