@@ -864,6 +864,7 @@ class LXMFBot:
         stamp_cost: int | None = None,
         opportunistic: bool | None = None,
         method=None,
+        include_ticket: bool | None = None,
     ):
         """Send a message to a destination, optionally with custom LXMF fields.
 
@@ -872,10 +873,14 @@ class LXMFBot:
             message: The message content (will be utf-8 encoded).
             title: The message title (optional, will be utf-8 encoded).
             lxmf_fields: Optional dictionary of LXMF fields.
-            stamp_cost: Optional stamp cost override. If None, uses config.stamp_cost.
+            stamp_cost: Optional outbound stamp cost override for this message.
+                If None, LXMF autoconfigures from the peer announce.
+                ``config.stamp_cost`` is inbound-only and is not used here.
             opportunistic: Whether to use opportunistic sending (try direct, then prop).
                            If None, uses config.opportunistic_sending.
             method: Optional explicit LXMF delivery method override for crash recovery.
+            include_ticket: Whether to include an LXMF reply ticket. If None, uses
+                ``config.include_tickets`` (default True).
 
         """
         if self.config.test_mode:
@@ -889,6 +894,12 @@ class LXMFBot:
             mock_message.title = title.encode("utf-8") if title else None
             mock_message.fields = lxmf_fields
             mock_message.desired_method = method
+            mock_message.include_ticket = (
+                self.config.include_tickets
+                if include_ticket is None
+                else include_ticket
+            )
+            mock_message.stamp_cost = stamp_cost
             return self._enqueue_outbound(mock_message)
 
         try:
@@ -964,15 +975,26 @@ class LXMFBot:
             # Packet delivery without requiring a Link first. Works much more
             # reliably through public TCP/backbone entrypoints than DIRECT.
             desired_method = LXMessage.OPPORTUNISTIC
+            peer_ratchet = RNS.Identity.current_ratchet_id(dest_hash_bytes)
+            if peer_ratchet is None:
+                RNS.log(
+                    f"No known ratchet for {destination} yet opportunistic delivery "
+                    "will use static identity encryption until a peer announce arrives",
+                    RNS.LOG_DEBUG,
+                )
         else:
             desired_method = LXMessage.DIRECT
 
         if method is not None:
             desired_method = method
 
-        # Use provided stamp_cost or fall back to config
-        final_stamp_cost = (
-            stamp_cost if stamp_cost is not None else self.config.stamp_cost
+        # Outbound stamp cost must come from the peer announce (LXMF
+        # handle_outbound autoconfigure) unless the caller overrides it.
+        # config.stamp_cost is inbound-only for register_delivery_identity.
+        do_include_ticket = (
+            self.config.include_tickets
+            if include_ticket is None
+            else include_ticket
         )
 
         lxm = LXMessage(
@@ -982,7 +1004,8 @@ class LXMFBot:
             title=cast(Any, title_bytes),
             desired_method=desired_method,
             fields=lxmf_fields,
-            stamp_cost=final_stamp_cost,
+            stamp_cost=stamp_cost,
+            include_ticket=do_include_ticket,
         )
 
         # Register callbacks to reset counter on success or track failure
@@ -1187,6 +1210,7 @@ class LXMFBot:
         title: str = "Reply",
         stamp_cost: int | None = None,
         opportunistic: bool | None = None,
+        include_ticket: bool | None = None,
     ):
         """Send a message with an attachment to a destination.
 
@@ -1195,8 +1219,9 @@ class LXMFBot:
             message: The message content.
             attachment: The attachment to send.
             title: The message title.
-            stamp_cost: Optional stamp cost override.
+            stamp_cost: Optional outbound stamp cost override.
             opportunistic: Whether to use opportunistic sending.
+            include_ticket: Whether to include an LXMF reply ticket.
 
         """
         attachment_specific_fields = pack_attachment(attachment)
@@ -1207,6 +1232,7 @@ class LXMFBot:
             lxmf_fields=attachment_specific_fields,
             stamp_cost=stamp_cost,
             opportunistic=opportunistic,
+            include_ticket=include_ticket,
         )
 
     def get_debugger(self):

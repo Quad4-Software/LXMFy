@@ -1487,9 +1487,26 @@ class Debugger:
         stamp = cfg.stamp_cost
         results.append(
             CheckResult(
-                name="stamp_cost",
+                name="inbound_stamp_cost",
                 status="info",
                 detail=str(stamp),
+                hint=(
+                    "Inbound-only. Outbound stamp cost comes from peer announces "
+                    "unless send(stamp_cost=...) overrides it."
+                ),
+                category="send",
+            ),
+        )
+        results.append(
+            CheckResult(
+                name="include_tickets",
+                status="ok" if getattr(cfg, "include_tickets", True) else "warn",
+                detail=str(getattr(cfg, "include_tickets", True)),
+                hint=(
+                    None
+                    if getattr(cfg, "include_tickets", True)
+                    else "Peers that require stamps may not be able to reply quickly."
+                ),
                 category="send",
             ),
         )
@@ -1500,6 +1517,32 @@ class Debugger:
                     status="info",
                     detail="True (inbound unsigned/invalid stamps rejected)",
                     category="receive",
+                ),
+            )
+
+        if router is not None:
+            deferred = getattr(router, "pending_deferred_stamps", None) or {}
+            lxmf_outbound = getattr(router, "pending_outbound", None) or []
+            results.append(
+                CheckResult(
+                    name="deferred_stamps",
+                    status="warn" if deferred else "ok",
+                    detail=f"{len(deferred)} pending",
+                    hint=(
+                        "Outbound messages waiting on stamp PoW. High peer stamp "
+                        "costs delay replies until generation finishes."
+                        if deferred
+                        else None
+                    ),
+                    category="send",
+                ),
+            )
+            results.append(
+                CheckResult(
+                    name="pending_outbound",
+                    status="info",
+                    detail=f"{len(lxmf_outbound)} in LXMF outbound queue",
+                    category="send",
                 ),
             )
 
@@ -1826,6 +1869,75 @@ class Debugger:
                 category="destination",
             ),
         )
+
+        if probe.valid_hash:
+            try:
+                import RNS
+
+                dest_bytes = parse_destination_hash(probe.destination)
+                ratchet_id = (
+                    RNS.Identity.current_ratchet_id(dest_bytes)
+                    if dest_bytes is not None
+                    else None
+                )
+                results.append(
+                    CheckResult(
+                        name="peer_ratchet",
+                        status="ok" if ratchet_id else "warn",
+                        detail=(
+                            RNS.hexrep(ratchet_id, delimit=False)
+                            if ratchet_id
+                            else "unknown"
+                        ),
+                        hint=(
+                            None
+                            if ratchet_id
+                            else "No announced ratchet yet. Opportunistic sends "
+                            "use static identity encryption until an announce arrives."
+                        ),
+                        category="destination",
+                    ),
+                )
+                if self.bot and getattr(self.bot, "router", None):
+                    peer_stamp = self.bot.router.get_outbound_stamp_cost(dest_bytes)
+                    ticket = self.bot.router.get_outbound_ticket(dest_bytes)
+                    results.append(
+                        CheckResult(
+                            name="peer_stamp_cost",
+                            status="info",
+                            detail=str(peer_stamp),
+                            hint=(
+                                "Peer requires stamps. Replies wait on PoW unless "
+                                "an outbound ticket is available."
+                                if peer_stamp
+                                else None
+                            ),
+                            category="destination",
+                        ),
+                    )
+                    results.append(
+                        CheckResult(
+                            name="outbound_ticket",
+                            status="ok" if ticket or not peer_stamp else "warn",
+                            detail="present" if ticket else "none",
+                            hint=(
+                                None
+                                if ticket or not peer_stamp
+                                else "No ticket from peer. Stamp generation may "
+                                "delay or fail replies to stamp-requiring clients."
+                            ),
+                            category="destination",
+                        ),
+                    )
+            except Exception as e:
+                results.append(
+                    CheckResult(
+                        name="peer_stamp_ratchet",
+                        status="warn",
+                        detail=f"check failed: {e}",
+                        category="destination",
+                    ),
+                )
 
         if self.bot:
             attempts = (getattr(self.bot, "delivery_attempts", None) or {}).get(

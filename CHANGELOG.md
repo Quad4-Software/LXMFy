@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-09-01
+
+### Fixes
+- Outbound stamps: config stamp_cost is inbound-only again. Outbound cost comes from the peer announce (or an explicit send override), so stamp-requiring Sideband/NomadNet clients stop dropping bot replies.
+- Reply tickets: outbound messages include LXMF reply tickets by default so stamp-requiring peers can answer without PoW.
+
 ### Updates
-- **Dependencies**: LXMF `>=1.1.1`, RNS `>=1.4.2` (LXMF 1.1.1 requires RNS 1.4.2+).
-- **Docs**: README and Sphinx guides cleaned up and updated version pins.
+- RNS >=1.5.2, LXMF >=1.1.1.
+- Debugger covers stamp/ticket/ratchet send blockers more clearly.
 
 ## [2.0.2] - 2026-07-23
 
@@ -189,7 +195,7 @@ Updated dependencies:
 - **Configurable Stamp Cost for bots**
 
 ### Codebase Changes
-- **Simplied codebase to just use poetry.** 
+- **Simplied codebase to just use poetry.**
 - **Numerous codebase cleanup and improvements.**
 
 ### Updates
@@ -420,7 +426,7 @@ Bot configuration:
 ## [0.4.7] - 2025-01-25
 - **Fix Storage System**
   - Serialization errors
-  
+
 - **Fix Event System**
   - Event handling of some attributes
 

@@ -33,7 +33,8 @@ class BotConfig:
         require_message_signatures (bool): Whether to reject unsigned messages when signature verification is enabled. Defaults to False.
         require_stamps (bool): Whether to reject messages with invalid stamps. Defaults to False.
         request_unknown_identities (bool): Whether to request unknown identities from the network when a message is received from an unknown source. Defaults to False.
-        stamp_cost (int): The cost of stamps for messages. If set, required for incoming and applied to outgoing. None disables stamps. Defaults to None.
+        stamp_cost (int): Inbound stamp cost announced on the bot delivery destination. Outbound stamp cost is taken from the peer announce (or an explicit send override). None disables inbound stamps. Defaults to None.
+        include_tickets (bool): Whether outbound LXMF messages include a reply ticket so peers that require stamps can answer without PoW. Defaults to True.
         direct_delivery_retries (int): Number of times to retry direct delivery before falling back to propagation. Defaults to 3.
         propagation_fallback_enabled (bool): Whether to use propagation nodes as fallback after direct delivery fails. Defaults to True.
         propagation_node (str): The destination hash of the outbound propagation node. If None and autopeer_propagation is True, automatically discovers nodes. Defaults to None.
@@ -73,6 +74,7 @@ class BotConfig:
     require_stamps: bool = False
     request_unknown_identities: bool = False
     stamp_cost: int | None = None
+    include_tickets: bool = True
     direct_delivery_retries: int = 3
     propagation_fallback_enabled: bool = True
     propagation_node: str | None = None
