@@ -224,7 +224,9 @@ def _load_results(*paths: Path) -> list:
     return results
 
 
-def _wait_for_started(master_out: Path, client_out: Path, timeout: float = 20.0) -> list:
+def _wait_for_started(
+    master_out: Path, client_out: Path, timeout: float = 20.0
+) -> list:
     deadline = time.time() + timeout
     while time.time() < deadline:
         results = _load_results(master_out, client_out)
