@@ -399,7 +399,8 @@ class LXMFBot:
     def _sync_delivery_display_name(self) -> None:
         if not self.local:
             return
-        self.local.display_name = self._effective_announce_display_name()
+        # RNS Destination.display_name is set dynamically at runtime
+        setattr(self.local, "display_name", self._effective_announce_display_name())
 
     def command(self, *args, **kwargs):
         """Decorator for registering commands.
@@ -1048,7 +1049,8 @@ class LXMFBot:
             and (self.config.propagation_fallback_enabled or is_opportunistic)
             and has_prop_node
         ):
-            lxm.try_propagation_on_fail = True
+            # LXMF sets try_propagation_on_fail dynamically at runtime
+            setattr(lxm, "try_propagation_on_fail", True)
 
         if not self._enqueue_outbound(lxm):
             RNS.log(

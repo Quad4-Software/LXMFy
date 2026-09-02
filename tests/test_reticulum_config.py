@@ -183,20 +183,29 @@ def _write_tcp_shared_config(
     )
 
 
+def _drain_queue(q: multiprocessing.Queue) -> list:
+    results = []
+    while not q.empty():
+        results.append(q.get())
+    return results
+
+
 @pytest.mark.integration
 def test_colliding_shared_instance_rejects_digest(tmp_path):
     """Different config dirs on the same shared ports fail RPC auth."""
+    # spawn avoids inheriting a parent Reticulum singleton via fork
+    ctx = multiprocessing.get_context("spawn")
     master = tmp_path / "master"
     client = tmp_path / "client"
     _write_tcp_shared_config(master, share=True, iface=47628, control=47629)
     _write_tcp_shared_config(client, share=True, iface=47628, control=47629)
 
-    q: multiprocessing.Queue = multiprocessing.Queue()
-    p1 = multiprocessing.Process(
+    q = ctx.Queue()
+    p1 = ctx.Process(
         target=_shared_instance_worker,
         args=("master", str(master), q),
     )
-    p2 = multiprocessing.Process(
+    p2 = ctx.Process(
         target=_shared_instance_worker,
         args=("client", str(client), q, 2.0),
     )
@@ -206,10 +215,7 @@ def test_colliding_shared_instance_rejects_digest(tmp_path):
     p1.terminate()
     p1.join(timeout=5)
 
-    results = []
-    while not q.empty():
-        results.append(q.get())
-
+    results = _drain_queue(q)
     assert any(
         r[0] == "client" and "digest sent was rejected" in str(r[1]) for r in results
     )
@@ -221,6 +227,7 @@ def test_isolated_share_instance_avoids_digest_rejection(tmp_path):
 
     RETICULUM_DIGEST_PROVED
     """
+    ctx = multiprocessing.get_context("spawn")
     master = tmp_path / "master"
     client = tmp_path / "client"
     ensure_isolated_share_instance_disabled(str(master))
@@ -228,12 +235,12 @@ def test_isolated_share_instance_avoids_digest_rejection(tmp_path):
     _write_tcp_shared_config(master, share=False, iface=47728, control=47729)
     _write_tcp_shared_config(client, share=False, iface=47738, control=47739)
 
-    q: multiprocessing.Queue = multiprocessing.Queue()
-    p1 = multiprocessing.Process(
+    q = ctx.Queue()
+    p1 = ctx.Process(
         target=_shared_instance_worker,
         args=("master", str(master), q),
     )
-    p2 = multiprocessing.Process(
+    p2 = ctx.Process(
         target=_shared_instance_worker,
         args=("client", str(client), q, 1.5),
     )
@@ -243,10 +250,7 @@ def test_isolated_share_instance_avoids_digest_rejection(tmp_path):
     p1.terminate()
     p1.join(timeout=5)
 
-    results = []
-    while not q.empty():
-        results.append(q.get())
-
+    results = _drain_queue(q)
     started = [r for r in results if len(r) >= 5 and r[1] == "started"]
     assert len(started) == 2
     assert all(r[4] is True for r in started)
