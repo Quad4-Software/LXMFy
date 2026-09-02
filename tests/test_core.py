@@ -42,10 +42,10 @@ class TestBotConfig:
 
 
 class TestOutboundStampTicketWiring:
-    """Outbound stamp cost and reply-ticket behavior."""
+    """Outbound stamp cost and reply ticket behavior."""
 
     def test_send_does_not_apply_inbound_stamp_cost(self, test_bot, monkeypatch):
-        """config.stamp_cost is inbound-only and must not be forced outbound."""
+        """BotConfig.stamp_cost must not be forced onto outbound messages."""
         test_bot.config.stamp_cost = 16
         test_bot.config.test_mode = False
         test_bot.config.opportunistic_sending = True

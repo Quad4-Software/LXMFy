@@ -927,7 +927,8 @@ class RRCClient:
             rooms_to_join = sorted(set(self._auto_join_rooms) | set(self._rejoin_rooms))
         self._set_status(STATUS_CONNECTED, "Connected")
         self._emit(
-            "welcome", {"hub_name": self.hub_name, "hub_version": self.hub_version}
+            "welcome",
+            {"hub_name": self.hub_name, "hub_version": self.hub_version},
         )
         if rooms_to_join:
             RNS.log(

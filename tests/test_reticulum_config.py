@@ -159,7 +159,11 @@ def _shared_instance_worker(
 
 
 def _write_tcp_shared_config(
-    path: Path, *, share: bool, iface: int, control: int
+    path: Path,
+    *,
+    share: bool,
+    iface: int,
+    control: int,
 ) -> None:
     path.mkdir(parents=True, exist_ok=True)
     share_val = "Yes" if share else "No"

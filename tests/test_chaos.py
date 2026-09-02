@@ -2,10 +2,12 @@
 
 import random
 import time
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from lxmfy import BotConfig, LXMFBot
-from lxmfy.storage import Storage, JSONStorage
+from lxmfy.storage import JSONStorage, Storage
 
 
 class FailingStorageBackend:
@@ -92,7 +94,7 @@ class TestChaosBot:
                 error_count += 1
 
         print(
-            f"\n[Chaos Storage] Successes: {success_count}, Simulated Errors: {error_count}"
+            f"\n[Chaos Storage] Successes: {success_count}, Simulated Errors: {error_count}",
         )
         # The goal is not 100% success, but that the framework doesn't CRASH the entire process
         assert (success_count + error_count) == 100

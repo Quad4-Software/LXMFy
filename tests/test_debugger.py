@@ -8,9 +8,9 @@ from unittest.mock import MagicMock, patch
 from lxmfy.cli import run_debug_command
 from lxmfy.debugger import (
     CheckResult,
+    Debugger,
     DestinationProbe,
     DoctorReport,
-    Debugger,
     normalize_destination_hex,
     parse_destination_hash,
     redact_hash,
@@ -472,7 +472,8 @@ class TestStorageHistory:
         data = tmp_path / "data"
         data.mkdir()
         (data / "delivery_attempts.json").write_text(
-            json.dumps([1, 2]), encoding="utf-8"
+            json.dumps([1, 2]),
+            encoding="utf-8",
         )
         dbg = Debugger(config_path=str(tmp_path))
         dbg._storage_path = str(data)
@@ -518,7 +519,9 @@ class TestCompareAndTimeline:
                 with patch.object(RNS.Identity, "recall_app_data", return_value=None):
                     with patch.object(RNS.Transport, "has_path", return_value=False):
                         with patch.object(
-                            RNS.Transport, "request_path", return_value=None
+                            RNS.Transport,
+                            "request_path",
+                            return_value=None,
                         ):
                             probe = dbg.probe_destination(
                                 h,
@@ -612,7 +615,8 @@ class TestAdversarialDebugger:
             with patch("lxmfy.debugger.Debugger.run_doctor") as mock_doc:
                 mock_doc.return_value = DoctorReport(privacy=True)
                 with patch(
-                    "lxmfy.debugger.Debugger.save_report", return_value=str(out)
+                    "lxmfy.debugger.Debugger.save_report",
+                    return_value=str(out),
                 ):
                     code = run_debug_command(
                         ["compare", h1, h2, "--json", "--output", str(out)],

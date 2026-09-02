@@ -59,8 +59,7 @@ class TestNLPManifolds:
                 for v1, mag1 in nlp._processed_examples[name1]:
                     for v2, mag2 in nlp._processed_examples[name2]:
                         sim = nlp._cosine_similarity(v1, mag1, v2, mag2)
-                        if sim > max_cross_sim:
-                            max_cross_sim = sim
+                        max_cross_sim = max(max_cross_sim, sim)
 
                 # If similarity is too high (> 0.7), the manifold is ambiguous
                 if max_cross_sim > 0.7:
@@ -72,7 +71,7 @@ class TestNLPManifolds:
                 [
                     f"Ambiguous intent pair: {n1} <-> {n2} (Sim: {s:.4f})"
                     for n1, n2, s in collisions
-                ]
+                ],
             )
             # We don't necessarily fail unless it's extreme, but we want to know
             print(f"\n[NLP Manifold Warning] {msg}")
@@ -91,7 +90,8 @@ class TestNLPManifolds:
 
         nlp_sparse.add_intent("help", ["help"])
         nlp_dense.add_intent(
-            "help", ["help", "i need help", "assist me", "show commands", "manual"]
+            "help",
+            ["help", "i need help", "assist me", "show commands", "manual"],
         )
 
         nlp_sparse.train()
@@ -105,7 +105,7 @@ class TestNLPManifolds:
         # Dense training should generally provide better or equal confidence for variations
         # due to more anchor points in the manifold
         print(
-            f"\n[NLP Density] Sparse score: {score_sparse:.4f}, Dense score: {score_dense:.4f}"
+            f"\n[NLP Density] Sparse score: {score_sparse:.4f}, Dense score: {score_dense:.4f}",
         )
         # Note: In TF-IDF, score_dense might be lower if "help" is less rare,
         # but bigrams/trigrams help stability.

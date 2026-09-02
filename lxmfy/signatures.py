@@ -249,6 +249,17 @@ def verify_incoming_message(bot, message, sender: str) -> bool:
         True if message should be processed, False if it should be rejected.
 
     """
+    # Drop messages with an invalid signature even if verification is optional.
+    # Unknown source and unsigned messages still follow SignatureManager policy.
+    if (
+        hasattr(message, "signature_validated")
+        and not message.signature_validated
+        and getattr(message, "unverified_reason", None)
+        == LXMF.LXMessage.SIGNATURE_INVALID
+    ):
+        logger.warning("Invalid LXMF signature from %s, dropping", sender)
+        return False
+
     if not hasattr(bot, "signature_manager"):
         return True
 
@@ -257,9 +268,6 @@ def verify_incoming_message(bot, message, sender: str) -> bool:
         return True
 
     if not message.signature_validated:
-        if message.unverified_reason == LXMF.LXMessage.SIGNATURE_INVALID:
-            logger.warning("Invalid LXMF signature for message from %s", sender)
-            return False
         if message.unverified_reason == LXMF.LXMessage.SOURCE_UNKNOWN:
             logger.debug(
                 "Could not verify message from %s - source identity unknown",

@@ -12,10 +12,11 @@ import os
 import re
 import sys
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from queue import Full, Queue
-from typing import Any, Callable, cast
 from types import SimpleNamespace
+from typing import Any, cast
 
 import RNS
 from LXMF import LXMessage, LXMRouter
@@ -37,10 +38,10 @@ from .reticulum_config import (
     is_isolated_reticulum_dir,
     resolve_reticulum_config_dir,
 )
+from .rrc import DEFAULT_DEST_NAME, RRCManager, RRCMessage
 from .scheduler import TaskScheduler
 from .signatures import SignatureManager, sign_outgoing_message, verify_incoming_message
 from .storage import JSONStorage, MemoryStorage, SQLiteStorage, Storage
-from .rrc import DEFAULT_DEST_NAME, RRCManager, RRCMessage
 from .transport import Transport
 from .validation import format_validation_results, validate_bot
 
@@ -98,7 +99,8 @@ class LXMFBot:
             )
         os.makedirs(self.reticulum_config_dir, exist_ok=True)
         if not self.config.test_mode and is_isolated_reticulum_dir(
-            self.reticulum_config_dir, self.config_path
+            self.reticulum_config_dir,
+            self.config_path,
         ):
             ensure_isolated_share_instance_disabled(self.reticulum_config_dir)
 
@@ -392,12 +394,12 @@ class LXMFBot:
             except OSError:
                 pass
 
-        return self.config.name if self.config.name else "LXMFBot"
+        return self.config.name or "LXMFBot"
 
     def _sync_delivery_display_name(self) -> None:
         if not self.local:
             return
-        setattr(self.local, "display_name", self._effective_announce_display_name())
+        self.local.display_name = self._effective_announce_display_name()
 
     def command(self, *args, **kwargs):
         """Decorator for registering commands.
@@ -644,7 +646,9 @@ class LXMFBot:
                 lxmf_fields = kwargs.pop("lxmf_fields", None) or {}
                 if has_field_commands or request_id is not None:
                     lxmf_fields[FIELD_RESULTS] = pack_result(
-                        response, request_id, kwargs.pop("status", "ok")
+                        response,
+                        request_id,
+                        kwargs.pop("status", "ok"),
                     )
                 if lxmf_fields:
                     kwargs["lxmf_fields"] = lxmf_fields
@@ -697,9 +701,8 @@ class LXMFBot:
                         cmd_args = []
                     if cmd_name and self._execute_command(cmd_name, cmd_args, msg):
                         return
-                    else:
-                        reply(f"Unknown command: {cmd_name}", status="error")
-                        return
+                    reply(f"Unknown command: {cmd_name}", status="error")
+                    return
 
             if self.command_prefix is None or content.startswith(self.command_prefix):
                 command_name = (
@@ -818,7 +821,7 @@ class LXMFBot:
                 return
 
         with open(announce_path, "w+") as af:
-            interval = self.announce_time if self.announce_time > 0 else 0
+            interval = max(0, self.announce_time)
             next_announce = int(time.time()) + interval
             af.write(str(next_announce))
 
@@ -873,14 +876,14 @@ class LXMFBot:
             message: The message content (will be utf-8 encoded).
             title: The message title (optional, will be utf-8 encoded).
             lxmf_fields: Optional dictionary of LXMF fields.
-            stamp_cost: Optional outbound stamp cost override for this message.
-                If None, LXMF autoconfigures from the peer announce.
-                ``config.stamp_cost`` is inbound-only and is not used here.
+            stamp_cost: Optional outbound stamp cost for this message.
+                If omitted, LXMF takes the cost from the peer announce.
+                BotConfig.stamp_cost only applies to inbound delivery.
             opportunistic: Whether to use opportunistic sending (try direct, then prop).
                            If None, uses config.opportunistic_sending.
             method: Optional explicit LXMF delivery method override for crash recovery.
-            include_ticket: Whether to include an LXMF reply ticket. If None, uses
-                ``config.include_tickets`` (default True).
+            include_ticket: Whether to include an LXMF reply ticket.
+                If None, uses BotConfig.include_tickets (default True).
 
         """
         if self.config.test_mode:
@@ -978,8 +981,9 @@ class LXMFBot:
             peer_ratchet = RNS.Identity.current_ratchet_id(dest_hash_bytes)
             if peer_ratchet is None:
                 RNS.log(
-                    f"No known ratchet for {destination} yet opportunistic delivery "
-                    "will use static identity encryption until a peer announce arrives",
+                    f"No known ratchet for {destination}. "
+                    "Opportunistic delivery will use static identity encryption "
+                    "until a peer announce arrives.",
                     RNS.LOG_DEBUG,
                 )
         else:
@@ -988,20 +992,17 @@ class LXMFBot:
         if method is not None:
             desired_method = method
 
-        # Outbound stamp cost must come from the peer announce (LXMF
-        # handle_outbound autoconfigure) unless the caller overrides it.
-        # config.stamp_cost is inbound-only for register_delivery_identity.
+        # Use the peer stamp cost from LXMF unless the caller overrides it.
+        # BotConfig.stamp_cost is only for inbound delivery identity setup.
         do_include_ticket = (
-            self.config.include_tickets
-            if include_ticket is None
-            else include_ticket
+            self.config.include_tickets if include_ticket is None else include_ticket
         )
 
         lxm = LXMessage(
             lxmf_destination_obj,
             self.local,
-            cast(Any, message_bytes),
-            title=cast(Any, title_bytes),
+            cast("Any", message_bytes),
+            title=cast("Any", title_bytes),
             desired_method=desired_method,
             fields=lxmf_fields,
             stamp_cost=stamp_cost,
@@ -1047,7 +1048,7 @@ class LXMFBot:
             and (self.config.propagation_fallback_enabled or is_opportunistic)
             and has_prop_node
         ):
-            setattr(lxm, "try_propagation_on_fail", True)
+            lxm.try_propagation_on_fail = True
 
         if not self._enqueue_outbound(lxm):
             RNS.log(
@@ -1219,7 +1220,7 @@ class LXMFBot:
             message: The message content.
             attachment: The attachment to send.
             title: The message title.
-            stamp_cost: Optional outbound stamp cost override.
+            stamp_cost: Optional outbound stamp cost for this message.
             opportunistic: Whether to use opportunistic sending.
             include_ticket: Whether to include an LXMF reply ticket.
 

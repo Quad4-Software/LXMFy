@@ -128,7 +128,7 @@ class TestLXMFBotFieldCommands:
                 "command": "echo",
                 "args": ["hello", "world"],
                 "request_id": "req-42",
-            }
+            },
         }
 
         sent = []
@@ -253,7 +253,7 @@ class TestLXMFBotFieldCommands:
                 "command": "capture",
                 "args": [],
                 "request_id": "req-99",
-            }
+            },
         }
 
         original_send = bot.send

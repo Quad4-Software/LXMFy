@@ -13,8 +13,6 @@ from hypothesis import strategies as st
 from lxmfy import BotConfig, LXMFBot
 from lxmfy.rrc import (
     DEFAULT_DEST_NAME,
-    RRCClient,
-    RRCManager,
     RRC_VERSION,
     STATUS_CONNECTED,
     T_ACTION,
@@ -26,6 +24,8 @@ from lxmfy.rrc import (
     T_PING,
     T_PONG,
     T_WELCOME,
+    RRCClient,
+    RRCManager,
     decode_envelope,
     encode_envelope,
     make_envelope,

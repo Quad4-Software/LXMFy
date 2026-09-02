@@ -13,7 +13,7 @@ import platform
 import tempfile
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from .__version__ import __version__ as LXMFY_VERSION
@@ -250,15 +250,15 @@ def build_verdict(
         and by_name["interfaces_online"].status == "fail"
     ):
         steps.append(
-            "Bring at least one Reticulum interface online before debugging send/receive."
+            "Bring at least one Reticulum interface online before debugging send/receive.",
         )
     if by_name.get("instance_mode") and by_name["instance_mode"].status == "fail":
         steps.append(
-            "Set share_instance=No on isolated bot configs (digest rejection with NomadNet/Columba)."
+            "Set share_instance=No on isolated bot configs (digest rejection with NomadNet/Columba).",
         )
     if by_name.get("announce_enabled") and by_name["announce_enabled"].status == "fail":
         steps.append(
-            "Enable announce_enabled so peers can discover your delivery hash."
+            "Enable announce_enabled so peers can discover your delivery hash.",
         )
     client = by_name.get("shared_instance_role")
     if client and client.status == "warn":
@@ -271,22 +271,22 @@ def build_verdict(
         and by_name["propagation_fallback"].status == "warn"
     ):
         steps.append(
-            "Configure propagation_node or enable autopeer_propagation, or disable propagation_fallback."
+            "Configure propagation_node or enable autopeer_propagation, or disable propagation_fallback.",
         )
     if (
         by_name.get("opportunistic_sending")
         and by_name["opportunistic_sending"].status == "warn"
     ):
         steps.append(
-            "Set opportunistic_sending=True for public TCP/backbone entrypoints."
+            "Set opportunistic_sending=True for public TCP/backbone entrypoints.",
         )
     if by_name.get("identity_known") and by_name["identity_known"].status == "fail":
         steps.append(
-            "lxmfy debug probe <hash> --request-path --wait 30 after the peer announces."
+            "lxmfy debug probe <hash> --request-path --wait 30 after the peer announces.",
         )
     if by_name.get("has_path") and by_name["has_path"].status == "fail":
         steps.append(
-            "Fix routing/path: shared network + online interfaces + peer announce."
+            "Fix routing/path: shared network + online interfaces + peer announce.",
         )
 
     # De-dupe while preserving order
@@ -298,7 +298,7 @@ def build_verdict(
             uniq.append(s)
     if not uniq and verdict == "likely_ok":
         uniq.append(
-            "No hard blockers found. If messaging still fails, run: lxmfy debug probe <peer> --request-path --wait 30"
+            "No hard blockers found. If messaging still fails, run: lxmfy debug probe <peer> --request-path --wait 30",
         )
     return verdict, uniq[:6]
 
@@ -402,8 +402,7 @@ def _check_to_dict(check: CheckResult) -> dict[str, Any]:
 def normalize_destination_hex(destination: str) -> str:
     """Normalize a destination hash string (strip separators, lowercase)."""
     cleaned = destination.strip().lower().replace(":", "").replace("-", "")
-    if cleaned.startswith("0x"):
-        cleaned = cleaned[2:]
+    cleaned = cleaned.removeprefix("0x")
     return cleaned
 
 
@@ -1491,7 +1490,8 @@ class Debugger:
                 status="info",
                 detail=str(stamp),
                 hint=(
-                    "Inbound-only. Outbound stamp cost comes from peer announces "
+                    "Applies to inbound delivery only. "
+                    "Outbound stamp cost comes from peer announces "
                     "unless send(stamp_cost=...) overrides it."
                 ),
                 category="send",
@@ -1529,8 +1529,8 @@ class Debugger:
                     status="warn" if deferred else "ok",
                     detail=f"{len(deferred)} pending",
                     hint=(
-                        "Outbound messages waiting on stamp PoW. High peer stamp "
-                        "costs delay replies until generation finishes."
+                        "Outbound messages are waiting on stamp generation. "
+                        "High peer stamp costs delay replies."
                         if deferred
                         else None
                     ),
@@ -1907,8 +1907,8 @@ class Debugger:
                             status="info",
                             detail=str(peer_stamp),
                             hint=(
-                                "Peer requires stamps. Replies wait on PoW unless "
-                                "an outbound ticket is available."
+                                "Peer requires stamps. Replies wait on stamp "
+                                "generation unless an outbound ticket is available."
                                 if peer_stamp
                                 else None
                             ),
@@ -1923,8 +1923,8 @@ class Debugger:
                             hint=(
                                 None
                                 if ticket or not peer_stamp
-                                else "No ticket from peer. Stamp generation may "
-                                "delay or fail replies to stamp-requiring clients."
+                                else "No ticket from this peer. Stamp generation "
+                                "may delay or fail replies to stamp-requiring clients."
                             ),
                             category="destination",
                         ),
@@ -2027,7 +2027,8 @@ class Debugger:
         return results
 
     def _collect_blockers(
-        self, checks: list[CheckResult]
+        self,
+        checks: list[CheckResult],
     ) -> tuple[list[str], list[str]]:
         send_keys = {
             "interfaces",
@@ -2105,7 +2106,7 @@ class Debugger:
             reticulum_config_dir=self.reticulum_config_dir,
             bot_hash=self._bot_hash(),
             tips=list(COMMON_TIPS),
-            generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            generated_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             lxmfy_version=LXMFY_VERSION,
             privacy=self.privacy,
         )
@@ -2278,7 +2279,7 @@ class Debugger:
     ) -> str:
         """Write report to a file and return the path used."""
         if path is None:
-            stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+            stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
             ext = "json" if as_json else "txt"
             path = os.path.abspath(f"lxmfy-debug-{stamp}.{ext}")
         else:
@@ -2509,6 +2510,6 @@ def diagnose_destination(
 
 def default_report_path(*, as_json: bool = False) -> str:
     """Default shareable report filename in the current directory."""
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     ext = "json" if as_json else "txt"
     return os.path.abspath(f"lxmfy-debug-{stamp}.{ext}")
