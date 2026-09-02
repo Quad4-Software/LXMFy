@@ -108,7 +108,9 @@ def _remember_peer(peer_hash_hex: str, peer_pub_hex: str) -> None:
     )
 
 
-def _wait_path_and_identity(peer_hash_hex: str, bot, stop_event, timeout_s: float) -> bool:
+def _wait_path_and_identity(
+    peer_hash_hex: str, bot, stop_event, timeout_s: float,
+) -> bool:
     import RNS
 
     peer = bytes.fromhex(peer_hash_hex)
@@ -145,7 +147,9 @@ def _summarize_fields(fields: dict | None) -> dict:
         first = files[0]
         if isinstance(first, (list, tuple)) and len(first) >= 2:
             summary["file_name"] = first[0]
-            summary["file_size"] = len(first[1]) if isinstance(first[1], bytes) else None
+            summary["file_size"] = (
+                len(first[1]) if isinstance(first[1], bytes) else None
+            )
             summary["file_data"] = first[1] if isinstance(first[1], bytes) else None
 
     image = fields.get(LXMF.FIELD_IMAGE)
@@ -181,7 +185,9 @@ def _record_message(sender, message) -> dict:
     raw = message.content
     content = raw.decode("utf-8") if isinstance(raw, bytes) else (raw or "")
     title_raw = getattr(message, "title", None) or b""
-    title = title_raw.decode("utf-8") if isinstance(title_raw, bytes) else str(title_raw)
+    title = (
+        title_raw.decode("utf-8") if isinstance(title_raw, bytes) else str(title_raw)
+    )
     return {
         "sender": sender,
         "content": content,
@@ -199,7 +205,6 @@ def _alice_worker(
     cmd_q: multiprocessing.Queue,
     stop_event: multiprocessing.Event,
 ) -> None:
-    import LXMF
     import RNS
     from LXMF import LXMessage
 
@@ -487,7 +492,9 @@ def _bob_worker(
                     "bob",
                     "no_identity_or_path",
                     {
-                        "has_path": RNS.Transport.has_path(bytes.fromhex(alice_hash_hex)),
+                        "has_path": RNS.Transport.has_path(
+                            bytes.fromhex(alice_hash_hex),
+                        ),
                         "identity": RNS.Identity.recall(bytes.fromhex(alice_hash_hex))
                         is not None,
                     },
@@ -538,7 +545,9 @@ def _bob_worker(
         _drain_outbound(bot)
         pong = wait_for(f"pong:{token}")
         if pong is None:
-            result_q.put(("bob", "timeout", {"stage": "ping", "received": received[-5:]}))
+            result_q.put(
+                ("bob", "timeout", {"stage": "ping", "received": received[-5:]}),
+            )
             return
 
         # 2) File attachment
@@ -555,7 +564,9 @@ def _bob_worker(
         _drain_outbound(bot)
         file_ack = wait_for("file_ok:")
         if file_ack is None:
-            result_q.put(("bob", "timeout", {"stage": "file", "received": received[-5:]}))
+            result_q.put(
+                ("bob", "timeout", {"stage": "file", "received": received[-5:]}),
+            )
             return
 
         # 3) Image attachment
@@ -571,7 +582,9 @@ def _bob_worker(
         _drain_outbound(bot)
         image_ack = wait_for("image_ok:")
         if image_ack is None:
-            result_q.put(("bob", "timeout", {"stage": "image", "received": received[-5:]}))
+            result_q.put(
+                ("bob", "timeout", {"stage": "image", "received": received[-5:]}),
+            )
             return
 
         # 4) Audio attachment
@@ -589,7 +602,9 @@ def _bob_worker(
         _drain_outbound(bot)
         audio_ack = wait_for("audio_ok:")
         if audio_ack is None:
-            result_q.put(("bob", "timeout", {"stage": "audio", "received": received[-5:]}))
+            result_q.put(
+                ("bob", "timeout", {"stage": "audio", "received": received[-5:]}),
+            )
             return
 
         # 5) Icon appearance field
@@ -605,7 +620,9 @@ def _bob_worker(
         _drain_outbound(bot)
         icon_ack = wait_for("icon_ok:")
         if icon_ack is None:
-            result_q.put(("bob", "timeout", {"stage": "icon", "received": received[-5:]}))
+            result_q.put(
+                ("bob", "timeout", {"stage": "icon", "received": received[-5:]}),
+            )
             return
 
         # 6) Structured LXMF command field
@@ -625,7 +642,9 @@ def _bob_worker(
         _drain_outbound(bot)
         cmd_ack = wait_for("cmd_ok:")
         if cmd_ack is None:
-            result_q.put(("bob", "timeout", {"stage": "cmd", "received": received[-5:]}))
+            result_q.put(
+                ("bob", "timeout", {"stage": "cmd", "received": received[-5:]}),
+            )
             return
 
         # 7) Title roundtrip
@@ -638,7 +657,9 @@ def _bob_worker(
         _drain_outbound(bot)
         title_ack = wait_for("title_ok:")
         if title_ack is None:
-            result_q.put(("bob", "timeout", {"stage": "title", "received": received[-5:]}))
+            result_q.put(
+                ("bob", "timeout", {"stage": "title", "received": received[-5:]}),
+            )
             return
 
         result_q.put(
