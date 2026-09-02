@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-09-02
+
+### Fixes
+- Always drop inbound LXMF messages with an invalid signature, even when optional signature verification is disabled.
+
 ## [2.0.3] - 2026-09-01
 
 ### Fixes
@@ -408,8 +413,12 @@ Updated dependencies:
 Bot configuration:
 
 ```python
-    announce=600,  # Set the announce interval in seconds, set to 0 to disable periodic announces
-    announce_enabled=True,  # Set to False to disable all announces (both initial and periodic)
+announce = (
+    600,
+)  # Set the announce interval in seconds, set to 0 to disable periodic announces
+announce_enabled = (
+    True,
+)  # Set to False to disable all announces (both initial and periodic)
 ```
 
 - **Fix Duplicate Responses**
@@ -451,11 +460,13 @@ from lxmfy import LXMFBot, MiddlewareType, TaskScheduler
 
 bot = LXMFBot(name="MyBot")
 
+
 # Add middleware
 @bot.middleware.register(MiddlewareType.PRE_COMMAND)
 def log_commands(ctx):
     print(f"Command received: {ctx.data}")
     return ctx.data
+
 
 # Schedule task
 @bot.scheduler.schedule("cleanup", "0 */2 * * *")  # Every 2 hours
@@ -477,6 +488,7 @@ def cleanup_task():
 @bot.events.on("custom_event")
 async def handle_custom_event(event):
     print(f"Custom event received: {event.data}")
+
 
 # Dispatch custom event
 await bot.events.dispatch(Event("custom_event", {"foo": "bar"}))
@@ -511,7 +523,6 @@ Templates Removed: FullBot
 On First Message Handler:
 
 ```python
-
 @bot.on_first_message()
 def welcome_message(sender, message):
     # Custom welcome message handler
