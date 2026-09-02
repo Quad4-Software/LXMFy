@@ -110,41 +110,44 @@ That copies the built wheel into `./dist_output`.
 from lxmfy import LXMFBot, load_cogs_from_directory
 
 bot = LXMFBot(
-    name="LXMFy Test Bot", # Name of the bot that appears on the network.
-    announce=5400, # Announce every hour, set to 0 to disable.
-    announce_enabled=True, # Set to False to disable all announces (both initial and periodic)
-    announce_immediately=True, # Set to False to disable initial announce
-    admins=["your_lxmf_hash_here"], # List of admin hashes.
-    hot_reloading=True, # Enable hot reloading.
-    command_prefix="/", # Set to None to process all messages as commands.
-    cogs_dir="cogs", # Specify cogs directory name.
-    rate_limit=5, # 5 messages per minute
-    cooldown=5, # 5 seconds cooldown
-    max_warnings=3, # 3 warnings before ban
-    warning_timeout=300, # Warnings reset after 5 minutes
-    signature_verification_enabled=True, # Enable cryptographic signature verification
-    require_message_signatures=False, # Allow unsigned messages but log them
-    propagation_fallback_enabled=True, # Enable propagation fallback after direct delivery fails
-    propagation_node="your_propagation_node_hash_here", # Manual propagation node (optional)
-    autopeer_propagation=True, # Auto-discover propagation nodes (optional)
-    autopeer_maxdepth=4, # Max hops for auto-peering (default: 4)
-    enable_propagation_node=False, # Run as propagation node (default: False)
-    message_storage_limit_mb=500, # Storage limit in MB for propagation node (default: 500)
-    direct_delivery_retries=3, # Number of direct delivery attempts before falling back to propagation
-    landlock_enabled=True, # Linux Landlock LSM sandbox for the bot process (default)
-    external_cogs_sandbox_enabled=True, # Sandbox external script cogs on Linux
-    external_cogs_sandbox_type="auto", # auto, landlock, bwrap, firejail, or none
+    name="LXMFy Test Bot",  # Name of the bot that appears on the network.
+    announce=5400,  # Announce every hour, set to 0 to disable.
+    announce_enabled=True,  # Set to False to disable all announces (both initial and periodic)
+    announce_immediately=True,  # Set to False to disable initial announce
+    admins=["your_lxmf_hash_here"],  # List of admin hashes.
+    hot_reloading=True,  # Enable hot reloading.
+    command_prefix="/",  # Set to None to process all messages as commands.
+    cogs_dir="cogs",  # Specify cogs directory name.
+    rate_limit=5,  # 5 messages per minute
+    cooldown=5,  # 5 seconds cooldown
+    max_warnings=3,  # 3 warnings before ban
+    warning_timeout=300,  # Warnings reset after 5 minutes
+    signature_verification_enabled=True,  # Enable cryptographic signature verification
+    require_message_signatures=False,  # Allow unsigned messages but log them
+    propagation_fallback_enabled=True,  # Enable propagation fallback after direct delivery fails
+    propagation_node="your_propagation_node_hash_here",  # Manual propagation node (optional)
+    autopeer_propagation=True,  # Auto-discover propagation nodes (optional)
+    autopeer_maxdepth=4,  # Max hops for auto-peering (default: 4)
+    enable_propagation_node=False,  # Run as propagation node (default: False)
+    message_storage_limit_mb=500,  # Storage limit in MB for propagation node (default: 500)
+    direct_delivery_retries=3,  # Number of direct delivery attempts before falling back to propagation
+    landlock_enabled=True,  # Linux Landlock LSM sandbox for the bot process (default)
+    external_cogs_sandbox_enabled=True,  # Sandbox external script cogs on Linux
+    external_cogs_sandbox_type="auto",  # auto, landlock, bwrap, firejail, or none
 )
 
 load_cogs_from_directory(bot)
+
 
 @bot.command(name="ping", description="Test if bot is responsive")
 def ping(ctx):
     ctx.reply("Pong!")
 
+
 @bot.command(name="echo", description="Echo a message", admin_only=True)
 def echo(ctx, message: str):
     ctx.reply(message)
+
 
 bot.run()
 ```
@@ -164,10 +167,12 @@ bot = LXMFBot(
     rrc_nick="RoomBot",
 )
 
+
 @bot.on_rrc
 def on_rrc(event, client, payload):
     if event == "msg" and isinstance(payload, RRCMessage) and payload.mention:
         client.send_message(payload.room, f"Heard you, {payload.nick}")
+
 
 bot.run()
 ```
