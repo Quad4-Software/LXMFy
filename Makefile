@@ -13,13 +13,14 @@ RNGIT_REMOTE ?= $(shell git config --get remote.origin.url)
 RNGIT_IDENTITY ?=
 RNGIT_SIGNER ?=
 RNGIT_NAME ?=
+RNGIT_EDITOR ?= nano
 RELEASE_TAG ?= v$(shell poetry version -s)
 RELEASE_DIST ?= dist
 RELEASE_ARTIFACT ?= all
 
 SUDO := $(shell if command -v doas; then echo doas; else echo sudo; fi)
 
-RNGIT_RELEASE = $(RNGIT) release --config $(RNGIT_CONFIG) --rnsconfig $(RNS_CONFIG)
+RNGIT_RELEASE = env EDITOR=$(RNGIT_EDITOR) $(RNGIT) release --config $(RNGIT_CONFIG) --rnsconfig $(RNS_CONFIG)
 RNGIT_RELEASE_OPTS = $(if $(RNGIT_IDENTITY),-i $(RNGIT_IDENTITY),) \
 	$(if $(RNGIT_SIGNER),-s $(RNGIT_SIGNER),) \
 	$(if $(RNGIT_NAME),-n $(RNGIT_NAME),)
