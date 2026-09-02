@@ -1,7 +1,7 @@
 ARG PYTHON_VERSION=3.13
 FROM python:${PYTHON_VERSION}-alpine
 
-LABEL org.opencontainers.image.source="https://git.quad4.io/LXMFy/LXMFy"
+LABEL org.opencontainers.image.source="https://github.com/Quad4-Software/LXMFy"
 LABEL org.opencontainers.image.description="Easily create LXMF bots for the Reticulum Network with this extensible framework."
 LABEL org.opencontainers.image.licenses="BSD-0-Clause"
 LABEL org.opencontainers.image.authors="LXMFy"

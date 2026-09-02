@@ -1,12 +1,12 @@
 lxmfy documentation
 ========================
 
-Python framework for `LXMF <https://git.quad4.io/LXMFy/LXMFy>`_ bots on the `Reticulum Network <https://reticulum.network/>`_.
+Python framework for `LXMF <https://github.com/Quad4-Software/LXMFy>`_ bots on the `Reticulum Network <https://reticulum.network/>`_.
 
 Download
 --------
 
-PDF, EPUB, HTML, and text builds are in the `Gitea repository <https://git.quad4.io/LXMFy/LXMFy>`_.
+PDF, EPUB, HTML, and text builds are in the `GitHub repository <https://github.com/Quad4-Software/LXMFy>`_.
 
 Languages
 ---------

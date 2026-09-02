@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://git.quad4.io/LXMFy/LXMFy"
-Repository = "https://git.quad4.io/LXMFy/LXMFy"
+Homepage = "https://github.com/Quad4-Software/LXMFy"
+Repository = "https://github.com/Quad4-Software/LXMFy"
 
 [project.scripts]
 lxmfy = "lxmfy.cli:main"

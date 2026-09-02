@@ -34,7 +34,7 @@ pipx install lxmfy
 ### From source
 
 ```bash
-git clone https://git.quad4.io/LXMFy/LXMFy.git
+git clone https://github.com/Quad4-Software/LXMFy.git
 cd LXMFy
 poetry install
 ```

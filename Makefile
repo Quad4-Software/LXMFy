@@ -32,7 +32,7 @@ PACKAGE_VERSION := $(shell poetry version -s)
 .PHONY: version bump-patch bump-minor bump-major update-version
 .PHONY: docker docker-build docker-run docker-run-host docker-wheel-build docker-wheel-extract
 .PHONY: docker-compose-build docker-compose-up docker-compose-down docker-compose-logs
-.PHONY: docker-stop docker-clean publish-gitea publish-pypi publish all ci
+.PHONY: docker-stop docker-clean publish-pypi publish all ci
 .PHONY: release-dist release-dist-clean release-tag release-push release-local release-upload release
 .PHONY: release-list release-view release-fetch release-verify release-delete
 
@@ -41,7 +41,7 @@ default:
 	@echo "         version bump-patch bump-minor bump-major docker docker-build docker-run"
 	@echo "         docker-run-host docker-wheel-build docker-wheel-extract docker-stop docker-clean"
 	@echo "         docker-compose-build docker-compose-up docker-compose-down docker-compose-logs"
-	@echo "         publish-gitea publish-pypi publish all ci"
+	@echo "         publish-pypi publish all ci"
 	@echo "         release release-dist release-tag release-push release-local release-upload"
 	@echo "         release-list release-view release-fetch release-verify release-delete"
 
@@ -157,13 +157,10 @@ docker-clean: docker-stop
 	docker rmi $(DOCKER_IMAGE) || true
 	docker rmi $(WHEEL_BUILDER_IMAGE) || true
 
-publish-gitea: build
-	twine upload --repository-url https://git.quad4.io/api/packages/LXMFy/pypi dist/*
-
 publish-pypi: build
 	twine upload dist/*
 
-publish: publish-gitea publish-pypi
+publish: publish-pypi
 
 release-dist-clean:
 	@if [ -d dist ]; then \

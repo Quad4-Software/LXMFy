@@ -109,7 +109,10 @@ def _remember_peer(peer_hash_hex: str, peer_pub_hex: str) -> None:
 
 
 def _wait_path_and_identity(
-    peer_hash_hex: str, bot, stop_event, timeout_s: float,
+    peer_hash_hex: str,
+    bot,
+    stop_event,
+    timeout_s: float,
 ) -> bool:
     import RNS
 
