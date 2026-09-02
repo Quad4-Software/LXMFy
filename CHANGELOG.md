@@ -7,6 +7,9 @@
 ### Fixes
 - Always drop inbound LXMF messages with an invalid signature, even when optional signature verification is disabled.
 
+### Tests
+- Added Alice/Bob local live LXMF test over TCP loopback (LXMFY_LIVE_LOCAL=1) covering ping/pong, attachments, icon fields, structured commands/results, titles, reply tickets, valid signatures, and forged-signature rejection.
+
 ## [2.0.3] - 2026-09-01
 
 ### Fixes
