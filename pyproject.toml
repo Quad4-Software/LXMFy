@@ -16,7 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "lxmf>=1.1.1",
-    "rns>=1.5.2",
+    "rns>=1.5.4",
     "cbor2>=5.4.0",
 ]
 
