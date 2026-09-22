@@ -1,0 +1,26 @@
+[project]
+site_name = "LXMFy"
+site_url = "https://lxmfy.quad4.io"
+site_description = "Python framework for LXMF bots on the Reticulum Network"
+repo_url = "https://github.com/Quad4-Software/LXMFy"
+docs_dir = "docs"
+nav = [
+  { "Home" = "index.md" },
+  { "Quick Start" = "quick-start.md" },
+  { "Creating Bots" = "creating-bots.md" },
+  { "API Reference" = "api-reference.md" },
+  { "Русский" = [
+    "ru/index.md",
+    "ru/quick-start.md",
+    "ru/creating-bots.md",
+    "ru/api-reference.md",
+  ] },
+]
+
+[project.theme]
+features = [
+  "navigation.sections",
+  "toc.integrate",
+]
+
+[project.plugins.mkdocstrings]

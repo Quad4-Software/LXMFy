@@ -16,6 +16,7 @@
 - LXMF reactions: bot.react(destination, message_hash, reaction) sends a FIELD_REACTION delivery, on_reaction registers inbound handlers, msg.reaction exposes parsed reaction metadata
 - pack_reaction and unpack_reaction build and parse FIELD_REACTION dicts
 - Landlock sandbox now uses the landlockpy package instead of in-module syscall bindings
+- Documentation moved from Sphinx/RST to Zensical/Markdown, deployed to GitHub Pages on every docs change; PDF, EPUB, and text bundles are built at release time and attached to the GitHub release
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes

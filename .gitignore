@@ -44,3 +44,5 @@ testing/
 .hypothesis/.coverage
 coverage.xml
 benchmarks.json
+site/
+docs-dist/
