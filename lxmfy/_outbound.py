@@ -12,7 +12,7 @@ from LXMF import LXMessage
 
 from .attachments import Attachment, pack_attachment
 from .delivery import DeliveryTracker
-from .lxmf_fields import pack_reaction
+from .lxmf_fields import pack_reaction, pack_reply
 from .signatures import sign_outgoing_message
 from .validation import destination_bytes
 
@@ -92,6 +92,9 @@ class OutboundMixin:
         method=None,
         include_ticket: bool | None = None,
         defer: bool | None = None,
+        reply_to: bytes | str | None = None,
+        quote: bytes | str | None = None,
+        thread: bytes | str | None = None,
     ):
         """Send a message to a destination, optionally with custom LXMF fields.
 
@@ -111,8 +114,18 @@ class OutboundMixin:
             defer: When the destination identity is unknown, hold the message
                 and retry after its next announce instead of dropping it.
                 If None, uses BotConfig.pending_sends_enabled (default True).
+            reply_to: Hash (bytes or hex) of the LXMessage this message replies
+                to. Sets FIELD_REPLY_TO so clients render it as a threaded reply.
+            quote: Quoted text shown alongside the reply in clients that render
+                FIELD_REPLY_QUOTE.
+            thread: Thread root hash (bytes or hex) for FIELD_THREAD. Defaults
+                to reply_to when only reply_to is given.
 
         """
+        reply_fields = pack_reply(reply_to, quote=quote, thread=thread)
+        if reply_fields:
+            lxmf_fields = {**(lxmf_fields or {}), **reply_fields}
+
         if self.config.test_mode:
             # In test mode, just queue a mock message
             mock_message = SimpleNamespace()
@@ -771,3 +784,87 @@ class OutboundMixin:
         if self.router is None or dest is None:
             return None
         return self.router.get_outbound_stamp_cost(dest)
+
+    @staticmethod
+    def _hash32_bytes(value) -> bytes | None:
+        if isinstance(value, (bytes, bytearray)):
+            raw = bytes(value)
+        elif isinstance(value, str):
+            try:
+                raw = bytes.fromhex(value.strip())
+            except ValueError:
+                return None
+        else:
+            return None
+        return raw if len(raw) == RNS.Identity.HASHLENGTH // 8 else None
+
+    def has_message(self, message_hash: bytes | str) -> bool:
+        """Check whether an inbound LXM hash was already delivered."""
+        raw = self._hash32_bytes(message_hash)
+        if raw is None or self.router is None:
+            return False
+        return bool(self.router.has_message(raw))
+
+    def inbound_count(self) -> int:
+        """Number of inbound resource transfers currently in progress."""
+        if self.router is None:
+            return 0
+        return int(self.router.inbound_count())
+
+    def inbound_transfers(self) -> list[dict]:
+        """Snapshot active inbound resource transfers.
+
+        Each entry carries the resource hash, byte sizes, transfer
+        progress, and status so callers can monitor or cancel large
+        inbound deliveries.
+        """
+        if self.router is None:
+            return []
+        transfers = []
+        for resource in self.router.inbound_resources():
+            entry = {
+                "hash": RNS.hexrep(resource.hash, delimit=False)
+                if resource.hash
+                else None,
+                "size": getattr(resource, "size", None),
+                "status": getattr(resource, "status", None),
+                "progress": None,
+                "transfer_size": None,
+            }
+            for key, getter in (
+                ("progress", "get_progress"),
+                ("transfer_size", "get_transfer_size"),
+            ):
+                try:
+                    entry[key] = getattr(resource, getter)()
+                except Exception:
+                    entry[key] = None
+            transfers.append(entry)
+        return transfers
+
+    def cancel_inbound(self, resource_hash: bytes | str) -> bool:
+        """Cancel an active inbound resource transfer by its hash.
+
+        The hash is available from inbound_transfers. Returns False when
+        no active transfer carries that hash.
+        """
+        raw = self._hash32_bytes(resource_hash)
+        if raw is None or self.router is None:
+            return False
+        active = {entry.get("hash") for entry in self.inbound_transfers()}
+        hex_hash = RNS.hexrep(raw, delimit=False)
+        if hex_hash not in active:
+            return False
+        self.router.cancel_inbound(raw)
+        return True
+
+    def cancel_all_inbound(self) -> int:
+        """Cancel all active inbound resource transfers.
+
+        Returns the number of transfers that were in progress.
+        """
+        if self.router is None:
+            return 0
+        count = self.inbound_count()
+        self.router.cancel_all_inbound()
+        return count

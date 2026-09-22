@@ -14,6 +14,7 @@ from .attachments import (
 from .cogs_core import load_cogs_from_directory
 from .commands import Command, command
 from .config import BotConfig
+from .conversations import Answer, ConversationManager
 from .core import BOT_DISPLAY_NAME_FILE, LXMFBot
 from .debugger import (
     CheckResult,
@@ -31,13 +32,18 @@ from .help import HelpFormatter, HelpSystem
 from .lxmf_fields import (
     FIELD_COMMANDS,
     FIELD_REACTION,
+    FIELD_REPLY_QUOTE,
+    FIELD_REPLY_TO,
     FIELD_RESULTS,
+    FIELD_THREAD,
     REACTION_CONTENT,
     REACTION_TO,
     pack_reaction,
+    pack_reply,
     pack_result,
     unpack_commands,
     unpack_reaction,
+    unpack_reply,
 )
 from .middleware import MiddlewareContext, MiddlewareManager, MiddlewareType
 from .permissions import DefaultPerms, PermissionManager, Role
@@ -55,6 +61,7 @@ from .rrc import (
 )
 from .scheduler import ScheduledTask, TaskScheduler
 from .storage import JSONStorage, SQLiteStorage, Storage
+from .testing import SentMessage, TestBot, fake_message
 from .validation import format_validation_results, validate_bot
 
 __all__ = [
@@ -62,15 +69,20 @@ __all__ = [
     "DEFAULT_DEST_NAME",
     "FIELD_COMMANDS",
     "FIELD_REACTION",
+    "FIELD_REPLY_QUOTE",
+    "FIELD_REPLY_TO",
     "FIELD_RESULTS",
+    "FIELD_THREAD",
     "REACTION_CONTENT",
     "REACTION_TO",
     "RRC_VERSION",
+    "Answer",
     "Attachment",
     "AttachmentType",
     "BotConfig",
     "CheckResult",
     "Command",
+    "ConversationManager",
     "Debugger",
     "DefaultPerms",
     "DeliveryTracker",
@@ -95,14 +107,17 @@ __all__ = [
     "Role",
     "SQLiteStorage",
     "ScheduledTask",
+    "SentMessage",
     "Storage",
     "TaskScheduler",
+    "TestBot",
     "__version__",
     "build_verdict",
     "command",
     "decode_envelope",
     "diagnose_destination",
     "encode_envelope",
+    "fake_message",
     "format_validation_results",
     "load_cogs_from_directory",
     "make_envelope",
@@ -110,10 +125,12 @@ __all__ = [
     "pack_attachment",
     "pack_icon_appearance_field",
     "pack_reaction",
+    "pack_reply",
     "pack_result",
     "sort_checks_by_severity",
     "unpack_commands",
     "unpack_reaction",
+    "unpack_reply",
     "validate_bot",
     "validate_envelope",
 ]

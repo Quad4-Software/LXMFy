@@ -33,6 +33,7 @@ from ._propagation import PropagationMixin
 from ._rrc import RRCMixin
 from .cogs_core import load_cogs_from_directory
 from .config import BotConfig
+from .conversations import ConversationManager
 from .delivery import DeliveryTracker
 from .events import EventManager
 from .help import HelpSystem
@@ -174,6 +175,7 @@ class LXMFBot(
 
         self.delivery_attempts = {}
         self._load_delivery_attempts()
+        self.conversations = ConversationManager(self)
 
         self.landlock_active = False
         if not self.config.test_mode:
@@ -497,6 +499,7 @@ class LXMFBot(
             self._persist_queue()
         except Exception:
             self.logger.exception("Failed to persist queue during cleanup")
+        self.conversations.cancel_all()
         if hasattr(self, "rrc") and self.rrc:
             try:
                 self.rrc.shutdown()

@@ -14,6 +14,7 @@ from .lxmf_fields import (
     pack_result,
     unpack_commands,
     unpack_reaction,
+    unpack_reply,
 )
 from .middleware import MiddlewareContext, MiddlewareType
 from .permissions import DefaultPerms
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
     from LXMF import LXMRouter
 
     from .config import BotConfig
+    from .conversations import ConversationManager
     from .events import EventManager
     from .middleware import MiddlewareManager
     from .moderation import SpamProtection
@@ -40,7 +42,9 @@ class InboundMixin:
     """Message intake, dispatch, and handler registration."""
 
     command_prefix: str | None
+    commands: dict
     config: BotConfig
+    conversations: ConversationManager
     delivery_callbacks: list
     events: EventManager
     first_message_handlers: list
@@ -84,6 +88,7 @@ class InboundMixin:
             content = message.content.decode("utf-8") if message.content else ""
             receipt = RNS.hexrep(message.hash, delimit=False)
             msg_fields = getattr(message, "fields", None) or {}
+            reply_info = unpack_reply(msg_fields) or {}
 
             field_commands = unpack_commands(msg_fields)
             request_id = None
@@ -102,6 +107,15 @@ class InboundMixin:
                     )
                 if lxmf_fields:
                     kwargs["lxmf_fields"] = lxmf_fields
+                reply_to = kwargs.pop("reply_to", "auto")
+                if reply_to is True or reply_to == "auto":
+                    kwargs["reply_to"] = getattr(message, "hash", None)
+                    if reply_info.get("thread"):
+                        kwargs.setdefault("thread", reply_info["thread"])
+                elif reply_to:
+                    kwargs["reply_to"] = reply_to
+                if kwargs.get("quote") is True:
+                    kwargs["quote"] = content[:200]
                 self.send(sender, response, **kwargs)
 
             if self.config.first_message_enabled:
@@ -131,6 +145,15 @@ class InboundMixin:
                 return
 
             reaction = unpack_reaction(msg_fields, sender)
+
+            if self.conversations.has_pending(sender):
+                if has_field_commands or self._is_command_text(content):
+                    self.conversations.cancel(sender)
+                elif reaction is not None and not content.strip():
+                    pass  # bare reactions reach reaction handlers normally
+                elif self.conversations.resolve(sender, message):
+                    return
+
             if reaction is not None:
                 for handler in self.reaction_handlers:
                     if run_sync(handler, sender, reaction):
@@ -149,15 +172,38 @@ class InboundMixin:
                     )
                     return
 
+            def ask(prompt, **kwargs):
+                """Ask the sender a question and get the answer.
+
+                Blocks until the reply arrives unless on_answer is given,
+                in which case the reply invokes that callback instead.
+                """
+                if kwargs.get("on_answer") is not None:
+                    return self.conversations.ask_callback(sender, prompt, **kwargs)
+                return self.conversations.ask(sender, prompt, **kwargs)
+
+            async def ask_async(prompt, **kwargs):
+                """Ask the sender a question and await the answer."""
+                return await self.conversations.ask_async(sender, prompt, **kwargs)
+
             msg_ctx = {
                 "lxmf": message,
                 "reply": reply,
+                "ask": ask,
+                "ask_async": ask_async,
+                "cancel_conversation": lambda: self.conversations.cancel(sender),
+                "conversation_pending": lambda: self.conversations.has_pending(
+                    sender,
+                ),
                 "sender": sender,
                 "content": content,
                 "hash": receipt,
                 "fields": msg_fields,
                 "reaction": reaction,
                 "request_id": request_id,
+                "reply_to": reply_info.get("reply_to"),
+                "reply_quote": reply_info.get("quote"),
+                "thread": reply_info.get("thread"),
             }
             msg = SimpleNamespace(**msg_ctx)
 
@@ -222,6 +268,18 @@ class InboundMixin:
 
         except Exception:
             self.logger.exception("Error processing message from %s", sender)
+
+    def _is_command_text(self, content: str) -> bool:
+        """True when content starts with a registered command name."""
+        parts = content.split()
+        if not parts:
+            return False
+        name = parts[0]
+        if self.command_prefix:
+            if not name.startswith(self.command_prefix):
+                return False
+            name = name[len(self.command_prefix) :]
+        return name in self.commands
 
     def _message_received(self, message):
         """Handle received messages."""

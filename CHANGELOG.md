@@ -36,6 +36,12 @@
 - Docker base images are pinned by digest and Poetry installs from a hashed requirements file
 - CodeQL workflow provides GitHub-native SAST on pushes, PRs, and a weekly schedule
 - master branch protection blocks force pushes and branch deletion
+- Reply threading: send(reply_to=, quote=, thread=) sets FIELD_REPLY_TO/FIELD_REPLY_QUOTE/FIELD_THREAD, msg.reply() threads automatically, inbound replies parse onto msg.reply_to/msg.reply_quote/msg.thread
+- Conversations: msg.ask() blocks a handler for the sender's next message, msg.ask_async() awaits it in async handlers, and on_answer/on_timeout callbacks handle long waits. Sending a command cancels a pending question. Validators re-prompt on bad answers
+- lxmfy.testing: TestBot runs the real inbound pipeline without a Reticulum instance and captures outbound sends. receive, receive_later, drain, wait_sent, last_sent, and outbox cover sync and threaded handlers
+- Peer discovery: get_peer_app_data, get_peer_lxmf_data, get_peer_announce, and list_peer_announces read announce metadata from the RNS transport
+- Inbound introspection: has_message, inbound_count, inbound_transfers, cancel_inbound, cancel_all_inbound, plus the /inbox admin command
+- pack_reply and unpack_reply build and parse reply threading fields
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes

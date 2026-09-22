@@ -123,6 +123,52 @@ def register_admin_commands(bot: LXMFBot) -> None:
         ctx.reply(f"Reloaded {name}.")
 
     @bot.command(
+        name="inbox",
+        description="List inbound transfers or cancel one by hash",
+        admin_only=True,
+    )
+    def inbox_command(ctx):
+        if ctx.args:
+            action = str(ctx.args[0]).strip().lower()
+            if action == "cancel":
+                if len(ctx.args) > 1 and str(ctx.args[1]).strip() == "all":
+                    count = bot.cancel_all_inbound()
+                    ctx.reply(f"Cancelled {count} inbound transfer(s).")
+                    return
+                if len(ctx.args) < 2:
+                    ctx.reply(
+                        f"Usage: {_prefix(bot)}inbox cancel <resource_hash|all>",
+                    )
+                    return
+                target = str(ctx.args[1]).strip()
+                if bot.cancel_inbound(target):
+                    ctx.reply("Cancelled.")
+                else:
+                    ctx.reply(
+                        "Not cancelled: no active inbound transfer with that hash.",
+                    )
+                return
+            ctx.reply(f"Usage: {_prefix(bot)}inbox [cancel <hash|all>]")
+            return
+
+        transfers = bot.inbound_transfers()
+        lines = [f"active inbound transfers: {bot.inbound_count()}"]
+        for index, entry in enumerate(transfers[:_MAX_LISTED], start=1):
+            progress = entry.get("progress")
+            pct = (
+                f"{int(100 * progress)}%" if isinstance(progress, (int, float)) else "-"
+            )
+            size = entry.get("size")
+            size_text = f" {size}B" if isinstance(size, int) else ""
+            lines.append(
+                f"{index}. {_short(entry.get('hash'), 32)} "
+                f"{pct}{size_text} status={entry.get('status')}",
+            )
+        if len(transfers) > _MAX_LISTED:
+            lines.append(f"... {len(transfers) - _MAX_LISTED} more")
+        ctx.reply("\n".join(lines))
+
+    @bot.command(
         name="delivery",
         description="Show recent outbound delivery events",
         admin_only=True,

@@ -131,9 +131,15 @@ def _wait_path_and_identity(
 def _summarize_fields(fields: dict | None) -> dict:
     import LXMF
 
-    from lxmfy.lxmf_fields import FIELD_COMMANDS, FIELD_RESULTS, unpack_commands
+    from lxmfy.lxmf_fields import (
+        FIELD_COMMANDS,
+        FIELD_RESULTS,
+        unpack_commands,
+        unpack_reply,
+    )
 
     fields = fields or {}
+    reply = unpack_reply(fields) or {}
     summary: dict = {
         "keys": sorted(int(k) for k in fields),
         "has_ticket": LXMF.FIELD_TICKET in fields,
@@ -143,6 +149,9 @@ def _summarize_fields(fields: dict | None) -> dict:
         "has_icon": LXMF.FIELD_ICON_APPEARANCE in fields,
         "has_commands": FIELD_COMMANDS in fields,
         "has_results": FIELD_RESULTS in fields,
+        "reply_to": reply.get("reply_to"),
+        "reply_quote": reply.get("quote"),
+        "thread": reply.get("thread"),
     }
 
     files = fields.get(LXMF.FIELD_FILE_ATTACHMENTS)
@@ -191,10 +200,12 @@ def _record_message(sender, message) -> dict:
     title = (
         title_raw.decode("utf-8") if isinstance(title_raw, bytes) else str(title_raw)
     )
+    msg_hash = getattr(message, "hash", None)
     return {
         "sender": sender,
         "content": content,
         "title": title,
+        "hash": msg_hash.hex() if isinstance(msg_hash, bytes) else None,
         "signature_validated": bool(getattr(message, "signature_validated", False)),
         "unverified_reason": getattr(message, "unverified_reason", None),
         "fields": _summarize_fields(getattr(message, "fields", None)),
@@ -247,6 +258,15 @@ def _alice_worker(
             IconAppearance(ICON_NAME, b"\xff\x00\x00", b"\x00\x00\xff"),
         )
 
+        @bot.command("quiz")
+        def quiz(msg):
+            answer = msg.ask("quiz_q:what?", timeout=60)
+            if answer is None:
+                msg.reply("quiz_timeout")
+            else:
+                msg.reply(f"quiz_done:{answer.content}")
+            _drain_outbound(bot)
+
         @bot.on_message()
         def on_msg(sender, message):
             entry = _record_message(sender, message)
@@ -254,6 +274,22 @@ def _alice_worker(
             content = entry["content"]
             fields = entry["fields"]
             _log(f"alice: recv {content!r} title={entry['title']!r} fields={fields}")
+
+            if content.startswith("/"):
+                return False
+
+            if content.startswith("ping2:"):
+                token = content.split(":", 1)[1]
+                bot.send(
+                    sender,
+                    f"pong2:{token}",
+                    title="Pong2",
+                    method=LXMessage.OPPORTUNISTIC,
+                    reply_to=message.hash,
+                    quote=content[:80],
+                )
+                _drain_outbound(bot)
+                return True
 
             if content.startswith("ping:"):
                 token = content.split(":", 1)[1]
@@ -509,8 +545,10 @@ def _bob_worker(
         _log(f"bob: path+identity ok, starting scenarios token={token}")
 
         original_enqueue = bot._enqueue_outbound
+        sent_lxms: list = []
 
         def enqueue_with_meta(lxm):
+            sent_lxms.append(lxm)
             send_meta.setdefault("sends", [])
             send_meta["sends"].append(
                 {
@@ -665,6 +703,69 @@ def _bob_worker(
             )
             return
 
+        # 8) Reply threading: alice quotes the ping2 hash back
+        ping2_idx = len(sent_lxms)
+        if not bot.send(
+            alice_hash_hex,
+            f"ping2:{token}",
+            title="Ping2",
+            method=LXMessage.OPPORTUNISTIC,
+        ):
+            result_q.put(("bob", "send_failed", "ping2"))
+            return
+        _drain_outbound(bot)
+        pong2 = wait_for(f"pong2:{token}")
+        if pong2 is None:
+            result_q.put(
+                ("bob", "timeout", {"stage": "pong2", "received": received[-5:]}),
+            )
+            return
+
+        # 9) Conversation API: /quiz asks, bob's next message answers
+        quiz_idx = len(sent_lxms)
+        if not bot.send(
+            alice_hash_hex,
+            "/quiz",
+            method=LXMessage.OPPORTUNISTIC,
+        ):
+            result_q.put(("bob", "send_failed", "quiz"))
+            return
+        _drain_outbound(bot)
+        quiz_prompt = wait_for("quiz_q:")
+        if quiz_prompt is None:
+            result_q.put(
+                ("bob", "timeout", {"stage": "quiz_q", "received": received[-5:]}),
+            )
+            return
+        bot.send(
+            alice_hash_hex,
+            f"quizanswer:{token}",
+            method=LXMessage.OPPORTUNISTIC,
+        )
+        _drain_outbound(bot)
+        quiz_done = wait_for(f"quiz_done:quizanswer:{token}")
+        if quiz_done is None:
+            result_q.put(
+                ("bob", "timeout", {"stage": "quiz_done", "received": received[-5:]}),
+            )
+            return
+
+        ping2_lxm = sent_lxms[ping2_idx] if ping2_idx < len(sent_lxms) else None
+        ping2_hash = ping2_lxm.hash.hex() if getattr(ping2_lxm, "hash", None) else None
+        quiz_lxm = sent_lxms[quiz_idx] if quiz_idx < len(sent_lxms) else None
+        quiz_hash = quiz_lxm.hash.hex() if getattr(quiz_lxm, "hash", None) else None
+
+        # 10) Peer announce metadata + inbound introspection
+        peer_app_data = bot.get_peer_app_data(alice_hash_hex)
+        peer_lxmf = bot.get_peer_lxmf_data(alice_hash_hex)
+        peer_announce = bot.get_peer_announce(alice_hash_hex)
+        inbound = {
+            "count": bot.inbound_count(),
+            "transfers": bot.inbound_transfers(),
+            "has_pong2": bot.has_message(pong2.get("hash") or ""),
+            "has_bogus": bot.has_message(b"\x00" * 32),
+        }
+
         result_q.put(
             (
                 "bob",
@@ -678,6 +779,15 @@ def _bob_worker(
                     "icon_ack": icon_ack,
                     "cmd_ack": cmd_ack,
                     "title_ack": title_ack,
+                    "pong2": pong2,
+                    "ping2_hash": ping2_hash,
+                    "quiz_hash": quiz_hash,
+                    "quiz_prompt": quiz_prompt,
+                    "quiz_done": quiz_done,
+                    "peer_app_data": peer_app_data,
+                    "peer_lxmf": peer_lxmf,
+                    "peer_announce": peer_announce,
+                    "inbound": inbound,
                     "send_meta": send_meta,
                     "received": received,
                 },
@@ -834,9 +944,32 @@ def test_alice_bob_local_roundtrip_and_signatures(tmp_path):
     assert payload["cmd_ack"]["fields"]["results"]["status"] == "ok"
     assert payload["title_ack"]["content"] == "title_ok:Fancy Title"
 
+    pong2 = payload["pong2"]
+    assert payload["ping2_hash"] is not None
+    assert pong2["fields"]["reply_to"] == payload["ping2_hash"]
+    assert pong2["fields"]["reply_quote"] == f"ping2:{token}"
+    assert pong2["fields"]["thread"] == payload["ping2_hash"]
+
+    assert payload["quiz_prompt"]["content"] == "quiz_q:what?"
+    assert payload["quiz_done"]["content"] == f"quiz_done:quizanswer:{token}"
+    assert payload["quiz_done"]["fields"]["reply_to"] == payload["quiz_hash"]
+
+    assert isinstance(payload["peer_app_data"], bytes)
+    assert payload["peer_lxmf"]["display_name"] == "Alice"
+    announce = payload["peer_announce"]
+    assert announce["destination"] == alice_hash
+    assert announce["app_data"] == payload["peer_app_data"]
+    assert announce["received_at"] > 0
+
+    inbound = payload["inbound"]
+    assert inbound["count"] == 0
+    assert inbound["transfers"] == []
+    assert inbound["has_pong2"] is True
+    assert inbound["has_bogus"] is False
+
     assert payload["send_meta"].get("include_ticket") is True
     assert payload["send_meta"].get("stamp_cost") is None
-    assert len(payload["send_meta"].get("sends") or []) >= 7
+    assert len(payload["send_meta"].get("sends") or []) >= 10
 
     alice_snap = next(
         (r for r in results if r[0] == "alice" and r[1] == "snapshot"),

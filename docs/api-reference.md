@@ -157,6 +157,102 @@ def on_reaction(sender, reaction):
 Reaction text is capped at 16 printable characters. The raw field stays
 available in `ctx.fields` and `msg.fields` for compatibility.
 
+## Reply Threading
+
+Replies can carry the LXMF `FIELD_REPLY_TO` (`0x30`), `FIELD_REPLY_QUOTE`
+(`0x31`), and `FIELD_THREAD` (`0x08`) fields. Clients that render
+threads, like MeshChatX and Sideband, show these as proper quote
+replies instead of flat messages.
+
+`msg.reply()` threads automatically: it sets `FIELD_REPLY_TO` to the
+inbound message hash and `FIELD_THREAD` to the conversation root.
+
+``` python
+@bot.command("status")
+def status(msg):
+    msg.reply("all systems nominal")          # threaded reply
+    msg.reply("flat", reply_to=None)          # opt out of threading
+    msg.reply("noted", quote=True)            # quote the inbound text
+```
+
+For sends that are not replies, pass the fields explicitly:
+
+``` python
+bot.send(dest, "see above", reply_to=msg_hash_hex, quote="earlier text")
+```
+
+Inbound replies are parsed onto the message context:
+
+``` python
+@bot.command("ctx")
+def ctx_cmd(msg):
+    msg.reply_to      # hex hash this message replies to, or None
+    msg.reply_quote   # quoted text carried by the reply, or None
+    msg.thread        # hex thread root hash, or None
+```
+
+`pack_reply(message_hash, quote=..., thread=...)` and
+`unpack_reply(fields)` are exported for manual field handling.
+
+## Conversations
+
+Commands can ask the sender a question and treat their next message as
+the answer, instead of dispatching it as a command:
+
+``` python
+@bot.command("report")
+def report(msg):
+    title = msg.ask("Report title?", timeout=300)
+    if title is None:
+        msg.reply("Timed out.")
+        return
+    body = msg.ask("Describe the issue.", timeout=600)
+    if body is None:
+        msg.reply("Timed out.")
+        return
+    msg.reply(f"Filed: {title.content}")
+```
+
+`msg.ask(prompt, timeout=..., validator=...)` blocks the handler until
+the answer arrives, the timeout fires, or the conversation is
+cancelled. It returns an `Answer` with `content`, `fields`, `hash`,
+`sender`, and a `reply(text)` shortcut.
+
+A validator rejects bad answers and re-prompts:
+
+``` python
+num = msg.ask(
+    "Pick a number",
+    validator=lambda a: None if a.content.isdigit() else "Digits only",
+)
+```
+
+In async command handlers use `await msg.ask_async(...)`. For long
+waits, or when many conversations may be open, use the callback style so
+no thread stays parked:
+
+``` python
+msg.ask(
+    "Send the log file",
+    on_answer=lambda ans: ans.reply("received"),
+    on_timeout=lambda sender: bot.send(sender, "Too slow."),
+    timeout=3600,
+)
+```
+
+Notes:
+
+- Sending a registered command while a question is pending cancels the
+  question and runs the command. Users always have an escape hatch.
+- `bot.conversations.pending_count()` and
+  `bot.conversations.cancel(sender)` expose the registry for
+  diagnostics and admin tools.
+- The registry is capped at 1024 pending questions. `ask` returns `None`
+  when it is full.
+- Blocking `ask` parks the delivery thread handling that message. That
+  is safe for direct deliveries, but bots that sync large batches from a
+  propagation node should prefer `on_answer` callbacks.
+
 ## Storage
 
 The framework provides three storage backends:
@@ -270,8 +366,39 @@ def handle_message(event):
 
 ## Testing
 
-Project tests include reliability and stress scenarios in the repository
-test suite. Use the repository's test runner to execute them.
+`lxmfy.testing.TestBot` is an `LXMFBot` preconfigured for tests. No
+Reticulum instance starts. Inbound messages go through the real receive
+pipeline (middleware, spam checks, permissions, dispatch) and outbound
+sends are captured for assertions.
+
+``` python
+from lxmfy import TestBot
+
+def test_ping():
+    with TestBot() as bot:
+        @bot.command("ping")
+        def ping(msg):
+            msg.reply("pong")
+
+        sent = bot.receive("/ping", sender="alice")
+        assert sent[0].content == "pong"
+        assert sent[0].destination == bot.sender_hex("alice")
+```
+
+- `bot.receive(content, sender=..., fields=..., message_hash=...)`
+  injects a message and returns the `SentMessage` objects it produced.
+  Senders are named: `"alice"` maps to a stable fake hash, or pass a hex
+  destination hash directly.
+- `bot.drain()` pops queued outbound messages. `bot.outbox` accumulates
+  everything sent. `bot.last_sent(sender=...)` fetches the latest.
+- `bot.wait_sent(n, timeout=...)` waits for threaded commands.
+- `bot.receive_later(content, sender=..., delay=...)` answers blocking
+  `msg.ask` calls from a daemon thread.
+- `fake_message(content, source_hash=..., ...)` builds an inbound
+  message for driving `bot._message_received` directly.
+
+The repository test suite also includes reliability and stress
+scenarios. Use the repository's test runner to execute them.
 
 ### Advanced Reliability Suite
 
@@ -567,6 +694,7 @@ be in `admins` when permissions are enabled:
 | --- | --- |
 | `/queue` | Show router outbound queue, internal queue, and held sends |
 | `/cancel <id|all>` | Cancel pending outbound messages |
+| `/inbox [cancel <hash|all>]` | List or cancel active inbound transfers |
 | `/delivery [n]` | Show the last n delivery events (default 15, max 50) |
 | `/loadext <name>` | Load a cog extension |
 | `/reloadext <name>` | Reload a loaded cog extension |
@@ -609,6 +737,29 @@ not running (for example in `test_mode`).
   delivery
 - `delivery_link_available(destination)`: Whether an active RNS link
   exists to the destination
+
+**Inbound queue**
+
+- `has_message(message_hash)`: Whether an inbound LXM hash was already
+  delivered
+- `inbound_count()`: Active inbound resource transfers in progress
+- `inbound_transfers()`: Snapshot of each transfer with hash, size,
+  progress, and status
+- `cancel_inbound(resource_hash)`: Abort an active inbound transfer
+- `cancel_all_inbound()`: Abort every active inbound transfer, returns
+  the count cancelled
+
+**Peer discovery**
+
+Announce metadata for destinations this node has heard:
+
+- `get_peer_app_data(destination)`: Raw announced app_data bytes
+- `get_peer_lxmf_data(destination)`: Decoded LXMF announce metadata
+  (`display_name`, `stamp_cost`, `capabilities`), or `None` when the
+  peer has not announced valid LXMF data
+- `get_peer_announce(destination)`: Full announce record with hops,
+  received_at, interface, and app_data
+- `list_peer_announces(limit=100)`: All heard announces, newest first
 
 **Propagation**
 

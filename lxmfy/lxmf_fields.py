@@ -3,18 +3,27 @@
 try:
     from LXMF.LXMF import FIELD_COMMANDS as _fc
     from LXMF.LXMF import FIELD_REACTION as _frc
+    from LXMF.LXMF import FIELD_REPLY_QUOTE as _frq
+    from LXMF.LXMF import FIELD_REPLY_TO as _frt
     from LXMF.LXMF import FIELD_RESULTS as _fr
+    from LXMF.LXMF import FIELD_THREAD as _ft
     from LXMF.LXMF import REACTION_CONTENT as _rc
     from LXMF.LXMF import REACTION_TO as _rt
 except ImportError:
     _fc = 0x09
     _fr = 0x0A
+    _ft = 0x08
+    _frt = 0x30
+    _frq = 0x31
     _frc = 0x40
     _rt = 0x00
     _rc = 0x01
 
 FIELD_COMMANDS: int = _fc
 FIELD_RESULTS: int = _fr
+FIELD_THREAD: int = _ft
+FIELD_REPLY_TO: int = _frt
+FIELD_REPLY_QUOTE: int = _frq
 FIELD_REACTION: int = _frc
 REACTION_TO: int = _rt
 REACTION_CONTENT: int = _rc
@@ -136,3 +145,75 @@ def unpack_reaction(fields: dict | None, sender: str = "") -> dict | None:
         "reaction_emoji": _reaction_text(content),
         "reaction_sender": sender,
     }
+
+
+QUOTE_MAX_LEN = 200
+
+
+def _hash_bytes(value) -> bytes | None:
+    if isinstance(value, (bytes, bytearray)):
+        raw = bytes(value)
+        return raw if raw else None
+    if isinstance(value, str):
+        try:
+            raw = bytes.fromhex(value.strip())
+        except ValueError:
+            return None
+        return raw if raw else None
+    return None
+
+
+def pack_reply(
+    message_hash: bytes | str | None,
+    quote: bytes | str | None = None,
+    thread: bytes | str | None = None,
+) -> dict:
+    """Build reply threading fields for an outbound LXMF message.
+
+    Args:
+        message_hash: Hash of the LXMessage being replied to, bytes or hex.
+            Sets FIELD_REPLY_TO. Ignored when it cannot be parsed.
+        quote: Quoted content shown by clients that render replies.
+            Sets FIELD_REPLY_QUOTE. ``True`` is not accepted; pass text.
+        thread: Thread root hash, bytes or hex. Sets FIELD_THREAD so all
+            messages in a conversation share the root identifier.
+
+    Returns:
+        A dict of LXMF fields suitable for merging into ``lxmf_fields``.
+
+    """
+    fields: dict = {}
+    target = _hash_bytes(message_hash)
+    if target is not None:
+        fields[FIELD_REPLY_TO] = target
+        if thread is None:
+            thread = target
+    thread_bytes = _hash_bytes(thread)
+    if thread_bytes is not None:
+        fields[FIELD_THREAD] = thread_bytes
+    if isinstance(quote, str):
+        fields[FIELD_REPLY_QUOTE] = quote.encode("utf-8")[:QUOTE_MAX_LEN]
+    elif isinstance(quote, (bytes, bytearray)):
+        fields[FIELD_REPLY_QUOTE] = bytes(quote)[:QUOTE_MAX_LEN]
+    return fields
+
+
+def unpack_reply(fields: dict | None) -> dict | None:
+    """Parse reply threading fields from an inbound LXMF message.
+
+    Returns a dict with reply_to (hex), quote (str), and thread (hex)
+    keys, or None when no reply fields are present.
+    """
+    if not isinstance(fields, dict):
+        return None
+    reply_to = _hash_hex(_dict_key(fields, FIELD_REPLY_TO, "reply_to", 0x30))
+    quote_raw = _dict_key(fields, FIELD_REPLY_QUOTE, "quote", 0x31)
+    thread = _hash_hex(_dict_key(fields, FIELD_THREAD, "thread", 0x08))
+    if reply_to is None and quote_raw is None and thread is None:
+        return None
+    quote = None
+    if isinstance(quote_raw, (bytes, bytearray)):
+        quote = bytes(quote_raw).decode("utf-8", errors="replace")
+    elif isinstance(quote_raw, str):
+        quote = quote_raw
+    return {"reply_to": reply_to, "quote": quote, "thread": thread}
