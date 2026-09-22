@@ -2,6 +2,7 @@
 
 import inspect
 
+from ._sync import run_sync
 from .commands import Command
 from .middleware import MiddlewareType
 
@@ -90,9 +91,9 @@ class DispatchMixin:
 
             try:
                 if cmd.threaded:
-                    self.thread_pool.submit(cmd.callback, msg)
+                    self.thread_pool.submit(run_sync, cmd.callback, msg)
                 else:
-                    cmd.callback(msg)
+                    run_sync(cmd.callback, msg)
             finally:
                 self.middleware.execute(MiddlewareType.POST_COMMAND, msg)
             return True

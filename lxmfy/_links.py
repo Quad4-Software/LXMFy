@@ -4,6 +4,8 @@ from collections.abc import Callable
 
 import RNS
 
+from ._sync import run_sync
+
 
 class LinkMixin:
     """Outbound link requests and inbound link tracking."""
@@ -53,7 +55,7 @@ class LinkMixin:
         if callback:
 
             def _link_established(link):
-                callback(link)
+                run_sync(callback, link)
 
             link.set_link_established_callback(_link_established)
 
@@ -96,6 +98,6 @@ class LinkMixin:
         self.logger.debug("Link established with %s", sender)
         for handler in self.link_handlers:
             try:
-                handler(link)
+                run_sync(handler, link)
             except Exception:
                 self.logger.exception("Error in link handler")

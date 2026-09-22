@@ -2,6 +2,29 @@
 
 ## [Unreleased]
 
+### Features
+- Async def command callbacks and message handlers now run instead of silently returning coroutines
+- Outbound messages to unknown destinations are held and retried on the peer's next announce instead of dropped
+- LXMFBot accepts the bot name positionally: LXMFBot("mybot")
+- Configurable lxmfy log_level and RNS loglevel passthrough
+
+### Fixes
+- Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes
+- Scheduler no longer crashes on sub-minute announce intervals or malformed cron fields
+- cleanup() only exits Reticulum when this bot started it, so shared instances survive
+- Command POST_COMMAND middleware runs even when a command raises
+- Outbound queue persistence snapshots under the queue lock
+- Closed links are removed from the link table instead of leaking
+- request_link validates destination hashes and reports typed errors
+- Generated template bots accept a name argument instead of a dead attribute write
+- cogs directory is only created when cogs are enabled
+
+### Tests
+- Localhost UDP pair live test with two subprocess routers (LXMFY_LIVE_UDP=1)
+- Propagation tests run against a real isolated router instead of no-op asserts
+- Subprocess tests pass PYTHONPATH so they work outside editable installs
+- Removed permanently skipped and tautological tests
+
 ### CI/CD
 - GitHub Actions for lint, typecheck, tests, live-local Alice/Bob, and build
 - Secure defaults: SHA-pinned actions, least-privilege token, Dependabot, dependency review, Scorecard, CODEOWNERS

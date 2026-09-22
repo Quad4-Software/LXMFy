@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 import RNS
 
+from ._sync import run_sync
 from .events import Event
 from .rrc import DEFAULT_DEST_NAME, RRCManager, RRCMessage
 
@@ -146,6 +147,6 @@ class RRCMixin:
 
         for handler in self.rrc_handlers:
             try:
-                handler(event, client, payload)
-            except Exception as e:
-                self.logger.error("Error in RRC handler: %s", e)
+                run_sync(handler, event, client, payload)
+            except Exception:
+                self.logger.exception("Error in RRC handler")

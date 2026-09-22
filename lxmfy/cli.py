@@ -94,32 +94,7 @@ def interactive_create() -> None:
 
     try:
         bot_path = create_from_template(template, output_path, bot_name)
-        if template == "basic":
-            create_example_cog(bot_path)
-            print_success("Bot created successfully!")
-            print_info(f"""
-Files created:
-  - {bot_path} (main bot file)
-  - {os.path.join(os.path.dirname(bot_path), "cogs")}
-    - __init__.py
-    - basic.py (example cog)
-
-To start your bot:
-  python {bot_path}
-
-To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
-            """)
-        else:
-            print_success("Bot created successfully!")
-            print_info(f"""
-Files created:
-  - {bot_path} (main bot file)
-
-To start your bot:
-  python {bot_path}
-
-To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
-            """)
+        _print_created(bot_path, with_cogs=template == "basic")
     except Exception as e:
         print_error(f"Error creating bot: {e!s}")
 
@@ -151,16 +126,16 @@ def interactive_run() -> None:
 
         BotClass = template_map[template]
         print_header(f"Starting {template} Bot")
-        bot_instance = BotClass()
 
         if custom_name:
-            if hasattr(bot_instance, "bot"):
+            try:
+                bot_instance = BotClass(name=custom_name)
+            except TypeError:
+                bot_instance = BotClass()
                 bot_instance.bot.config.name = custom_name
-                bot_instance.bot.name = custom_name
-            else:
-                bot_instance.config.name = custom_name
-                bot_instance.name = custom_name
             print_info(f"Running with custom name: {custom_name}")
+        else:
+            bot_instance = BotClass()
 
         bot_instance.run()
     except Exception as e:
@@ -295,34 +270,24 @@ def create_bot_file(name: str, output_path: str, no_cogs: bool = False) -> str:
 
         safe_path = os.path.abspath(output_path)
 
-        template = f"""from lxmfy import LXMFBot
+        cogs_line = (
+            "" if no_cogs else "\n# Drop .py files in ./cogs to add more commands."
+        )
 
-bot = LXMFBot(
-    name="{name}",
-    announce=600,
-    announce_immediately=True,
-    admins=set(),
-    hot_reloading=False,
-    rate_limit=5,
-    cooldown=60,
-    max_warnings=3,
-    warning_timeout=300,
-    command_prefix="/",
-    cogs_dir="cogs",
-    cogs_enabled={not no_cogs},
-    permissions_enabled=False,
-    storage_type="json",
-    storage_path="data",
-    first_message_enabled=True,
-    event_logging_enabled=True,
-    max_logged_events=1000,
-    event_middleware_enabled=True,
-    announce_enabled=True
-)
+        template = f'''from lxmfy import LXMFBot
+{cogs_line}
+bot = LXMFBot("{name}", cogs_enabled={not no_cogs})
+
+
+@bot.command("hello", description="Say hello")
+def hello(ctx):
+    ctx.reply(f"Hello {{ctx.sender}}!")
+
 
 if __name__ == "__main__":
     bot.run()
-"""
+'''
+
         with open(safe_path, "w", encoding="utf-8") as f:
             f.write(template)
 
@@ -355,11 +320,11 @@ class BasicCommands:
         self.bot = bot
 
     @Command(name="hello", description="Says hello")
-    async def hello(self, ctx):
+    def hello(self, ctx):
         ctx.reply(f"Hello {ctx.sender}!")
 
     @Command(name="about", description="About this bot")
-    async def about(self, ctx):
+    def about(self, ctx):
         ctx.reply("I'm a bot created with LXMFy!")
 
 def setup(bot):
@@ -421,8 +386,7 @@ def create_from_template(template_name: str, output_path: str, bot_name: str) ->
         template = f"""from lxmfy.templates import {template_map[template_name].__name__}
 
 if __name__ == "__main__":
-    bot = {template_map[template_name].__name__}()
-    bot.bot.name = "{name}"  # Set custom name
+    bot = {template_map[template_name].__name__}(name="{name}")
     bot.run()
 """
         with open(safe_path, "w", encoding="utf-8") as f:
@@ -432,6 +396,26 @@ if __name__ == "__main__":
 
     except Exception as e:
         raise RuntimeError(f"Failed to create bot from template: {e!s}") from e
+
+
+def _print_created(bot_path: str, with_cogs: bool) -> None:
+    """Print the post-create summary for a generated bot file."""
+    if with_cogs:
+        create_example_cog(bot_path)
+    print_success("Bot created successfully!")
+    files = f"  - {bot_path} (main bot file)"
+    if with_cogs:
+        cogs_dir = os.path.join(os.path.dirname(bot_path), "cogs")
+        files += f"\n  - {cogs_dir}\n    - __init__.py\n    - basic.py (example cog)"
+    print_info(f"""
+Files created:
+{files}
+
+To start your bot:
+  python {bot_path}
+
+To add admin rights, pass admins={{"<your lxmf hash>"}} to LXMFBot in {bot_path}.
+    """)
 
 
 def is_safe_path(path: str, base_path: str | None = None) -> bool:
@@ -885,33 +869,7 @@ Examples:
 
                 print_header("Creating New Bot")
                 bot_path = create_from_template(args.template, output_path, bot_name)
-
-                if args.template == "basic":
-                    create_example_cog(bot_path)
-                    print_success("Bot created successfully!")
-                    print_info(f"""
-Files created:
-  - {bot_path} (main bot file)
-  - {os.path.join(os.path.dirname(bot_path), "cogs")}
-    - __init__.py
-    - basic.py (example cog)
-
-To start your bot:
-  python {bot_path}
-
-To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
-                    """)
-                else:
-                    print_success("Bot created successfully!")
-                    print_info(f"""
-Files created:
-  - {bot_path} (main bot file)
-
-To start your bot:
-  python {bot_path}
-
-To add admin rights, edit {bot_path} and add your LXMF hash to the admins list.
-                    """)
+                _print_created(bot_path, with_cogs=args.template == "basic")
             except Exception as e:
                 print_error(f"Error creating bot: {e!s}")
                 sys.exit(1)

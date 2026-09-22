@@ -10,12 +10,12 @@ from lxmfy import LXMFBot
 class ReminderBot:
     """A bot that reminds users of tasks at specified times."""
 
-    def __init__(self, test_mode=False):
+    def __init__(self, name="Reminder Bot", test_mode=False):
         """Initializes the ReminderBot, sets up the bot instance,
         configures commands, and sets up the reminder check loop.
         """
         self.bot = LXMFBot(
-            name="Reminder Bot",
+            name=name,
             announce=600,
             command_prefix="/",
             storage_type="sqlite",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -205,13 +206,20 @@ def _start_worker(
     delay: float = 0.0,
 ) -> subprocess.Popen:
     # Fresh interpreter avoids fork/singleton and parent multiprocessing tracker issues
+    repo_root = Path(__file__).resolve().parent.parent
+    tests_dir = Path(__file__).resolve().parent
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(repo_root), str(tests_dir), env.get("PYTHONPATH", "")]
+    ).rstrip(os.pathsep)
     code = (
         "from test_reticulum_config import _shared_instance_worker_file; "
         f"_shared_instance_worker_file({role!r}, {str(cfg)!r}, {str(result_path)!r}, {delay})"
     )
     return subprocess.Popen(
         [sys.executable, "-c", code],
-        cwd=str(Path(__file__).resolve().parent),
+        cwd=str(tests_dir),
+        env=env,
     )
 
 

@@ -264,7 +264,7 @@ class TestFileCreation:
         with open(output_path) as f:
             content = f.read()
             assert "from lxmfy import LXMFBot" in content
-            assert 'name="TestBot"' in content
+            assert 'LXMFBot("TestBot"' in content
 
     def test_create_bot_file_no_cogs(self, tmp_path):
         """Test create_bot_file with no_cogs=True."""

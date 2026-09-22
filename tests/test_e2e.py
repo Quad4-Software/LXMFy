@@ -22,7 +22,7 @@ class TestCLIE2E:
             import os
 
             env = os.environ.copy()
-            env["PYTHONPATH"] = str(Path.cwd())
+            env["PYTHONPATH"] = str(Path(__file__).resolve().parent.parent)
 
             cmd = [
                 sys.executable,
@@ -62,7 +62,7 @@ class TestCLIE2E:
         import sys
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path.cwd())
+        env["PYTHONPATH"] = str(Path(__file__).resolve().parent.parent)
 
         cmd = [
             sys.executable,
@@ -108,7 +108,7 @@ class TestCLIE2E:
         import sys
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path.cwd())
+        env["PYTHONPATH"] = str(Path(__file__).resolve().parent.parent)
 
         cmd = [
             sys.executable,
@@ -137,7 +137,7 @@ class TestCLIE2E:
         import sys
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(Path.cwd())
+        env["PYTHONPATH"] = str(Path(__file__).resolve().parent.parent)
 
         # Test enable command
         cmd_enable = [
@@ -162,7 +162,7 @@ class TestCLIE2E:
 
         # Test disable command
         cmd_disable = [
-            "python",
+            sys.executable,
             "-m",
             "lxmfy.cli",
             "signatures",

@@ -66,13 +66,16 @@ class LXMFBot(
     - Admin privileges
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, name: str | None = None, **kwargs):
         """Initialize a new LXMFBot instance.
 
         Args:
+            name: Optional bot name, same as the name config key.
             **kwargs: Override default configuration settings
 
         """
+        if name is not None:
+            kwargs["name"] = name
         self.config = BotConfig(**kwargs)
         self.commands = {}
         self.cogs = {}
@@ -139,11 +142,11 @@ class LXMFBot(
         self.middleware = MiddlewareManager()
 
         self.cogs_dir = os.path.join(self.config_path, self.config.cogs_dir)
-        os.makedirs(self.cogs_dir, exist_ok=True)
-
-        init_file = os.path.join(self.cogs_dir, "__init__.py")
-        if not os.path.exists(init_file):
-            open(init_file, "w", encoding="utf-8").close()
+        if self.config.cogs_enabled:
+            os.makedirs(self.cogs_dir, exist_ok=True)
+            init_file = os.path.join(self.cogs_dir, "__init__.py")
+            if not os.path.exists(init_file):
+                open(init_file, "w", encoding="utf-8").close()
 
         self.transport = Transport(self, self.storage)
         self.spam_protection = SpamProtection(
@@ -172,6 +175,7 @@ class LXMFBot(
 
         identity_file = os.path.join(self.config_path, "identity")
 
+        self._owns_reticulum = False
         if not self.config.test_mode:
             # Initialize Reticulum (will raise exception if already running)
             if RNS.Reticulum.get_instance() is None:
@@ -180,6 +184,7 @@ class LXMFBot(
                         configdir=self.reticulum_config_dir,
                         loglevel=self.config.loglevel,
                     )
+                    self._owns_reticulum = True
                 except OSError:
                     if RNS.Reticulum.get_instance() is None:
                         raise
@@ -454,8 +459,9 @@ class LXMFBot(
             except Exception as e:
                 self.logger.debug("Router exit handler failed: %s", e)
 
-        # Ensure Reticulum exits cleanly
-        if not self.config.test_mode:
+        # Ensure Reticulum exits cleanly, but only if this bot started it.
+        # A shared instance may still be serving other bots or tests.
+        if not self.config.test_mode and self._owns_reticulum:
             try:
                 RNS.Reticulum.exit_handler()
             except Exception as e:

@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import RNS
 
+from ._sync import run_sync
 from .events import Event, EventPriority
 from .lxmf_fields import FIELD_RESULTS, pack_result, unpack_commands
 from .middleware import MiddlewareContext, MiddlewareType
@@ -72,7 +73,7 @@ class InboundMixin:
                 if is_first:
                     self.logger.debug("First message from %s", sender)
                     for handler in self.first_message_handlers:
-                        if handler(sender, message):
+                        if run_sync(handler, sender, message):
                             self.logger.debug(
                                 "First message from %s consumed by handler",
                                 sender,
@@ -85,7 +86,7 @@ class InboundMixin:
 
             # Call message handlers
             for handler in self.message_handlers:
-                if handler(sender, message):
+                if run_sync(handler, sender, message):
                     self.logger.debug(
                         "Message from %s consumed by message handler",
                         sender,
@@ -151,7 +152,7 @@ class InboundMixin:
                     msg.intent = intent_name
                     msg.intent_score = score
                     try:
-                        self.intents[intent_name](msg)
+                        run_sync(self.intents[intent_name], msg)
                         return
                     except Exception:
                         self.logger.exception(
@@ -160,7 +161,7 @@ class InboundMixin:
                         )
 
             for callback in self.delivery_callbacks:
-                callback(msg)
+                run_sync(callback, msg)
 
         except Exception:
             self.logger.exception("Error processing message from %s", sender)

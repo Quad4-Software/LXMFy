@@ -113,3 +113,28 @@ def test_delivery_link_established_without_router():
     bot._delivery_link_established(mock_link)
 
     assert handler_calls == [mock_link]
+
+
+def test_delivery_destination_registers_chained_callback(reticulum_instance, tmp_path):
+    """The delivery destination must point at the chained callback.
+
+    A plain assignment of _link_established here would silently replace
+    LXMF's delivery_link_established again, so assert the wiring itself,
+    not just the handler's behavior. The router threads stay daemonized;
+    cleanup is skipped because it would tear down the shared Reticulum
+    instance used by other tests.
+    """
+    bot = LXMFBot(
+        test_mode=False,
+        announce_enabled=False,
+        announce_immediately=False,
+        landlock_enabled=False,
+        config_path=str(tmp_path / "cfg"),
+        storage_path=str(tmp_path / "data"),
+        storage_type="memory",
+        reticulum_config_dir=str(tmp_path / "rns"),
+    )
+
+    callback = bot.local.callbacks.link_established
+    assert callback.__self__ is bot
+    assert callback.__func__ is LXMFBot._delivery_link_established

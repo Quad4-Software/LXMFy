@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 
+from ._sync import run_sync
+
 logger = logging.getLogger(__name__)
 
 
@@ -143,14 +145,13 @@ class EventManager:
             if event.name in self.handlers:
                 for _priority, handler in self.handlers[event.name]:
                     try:
-                        handler(event)
+                        run_sync(handler, event)
                         if event.cancelled:
                             break
-                    except Exception as e:
-                        self.logger.error(
-                            "Error in event handler %s: %s",
+                    except Exception:
+                        self.logger.exception(
+                            "Error in event handler %s",
                             handler.__name__,
-                            str(e),
                         )
         except Exception as e:
             self.logger.error("Error dispatching event: %s", str(e))

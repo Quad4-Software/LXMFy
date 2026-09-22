@@ -46,7 +46,7 @@ class TestCog(Cog):
 class CogTestBot:
     """Template bot that uses cogs for testing command loading."""
 
-    def __init__(self, name="CogTestBot", test_mode=False):
+    def __init__(self, name="CogTestBot", test_mode=False, storage_path="cogtest_data"):
         self.bot = LXMFBot(
             name=name,
             announce=600,
@@ -61,7 +61,7 @@ class CogTestBot:
             cogs_enabled=False,
             permissions_enabled=False,
             storage_type="json",
-            storage_path="cogtest_data",
+            storage_path=storage_path,
             first_message_enabled=True,
             test_mode=test_mode,
         )

@@ -106,11 +106,32 @@ That copies the built wheel into `./dist_output`.
 
 ## Example
 
-```python
-from lxmfy import LXMFBot, load_cogs_from_directory
+The smallest working bot needs a name and one command:
 
+```python
+from lxmfy import LXMFBot
+
+bot = LXMFBot("LXMFy Test Bot")
+
+
+@bot.command("ping", description="Test if bot is responsive")
+def ping(ctx):
+    ctx.reply("Pong!")
+
+
+@bot.command("echo", description="Echo a message", admin_only=True)
+def echo(ctx, message: str):
+    ctx.reply(message)
+
+
+bot.run()
+```
+
+Everything else has defaults. Pass keyword arguments to `LXMFBot` to override them:
+
+```python
 bot = LXMFBot(
-    name="LXMFy Test Bot",  # Name of the bot that appears on the network.
+    "LXMFy Test Bot",
     announce=5400,  # Announce every hour, set to 0 to disable.
     announce_enabled=True,  # Set to False to disable all announces (both initial and periodic)
     announce_immediately=True,  # Set to False to disable initial announce
@@ -135,21 +156,6 @@ bot = LXMFBot(
     external_cogs_sandbox_enabled=True,  # Sandbox external script cogs on Linux
     external_cogs_sandbox_type="auto",  # auto, landlock, bwrap, firejail, or none
 )
-
-load_cogs_from_directory(bot)
-
-
-@bot.command(name="ping", description="Test if bot is responsive")
-def ping(ctx):
-    ctx.reply("Pong!")
-
-
-@bot.command(name="echo", description="Echo a message", admin_only=True)
-def echo(ctx, message: str):
-    ctx.reply(message)
-
-
-bot.run()
 ```
 
 ## RRC (Reticulum Relay Chat)

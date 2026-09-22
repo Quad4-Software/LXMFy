@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from threading import Event, Thread
 
+from ._sync import run_sync
+
 logger = logging.getLogger(__name__)
 
 
@@ -184,7 +186,7 @@ class TaskScheduler:
             for task in list(self.tasks.values()):
                 try:
                     if task.should_run(current_time):
-                        task.callback()
+                        run_sync(task.callback)
                         task.last_run = current_time
                 except Exception:
                     self.logger.exception("Error running task %s", task.name)
