@@ -22,7 +22,7 @@ out="${1:-site/llms-full.txt}"
 
   modref=""
   if command -v griffe2md >/dev/null 2>&1; then
-    modref="$(griffe2md -o - lxmfy 2>/dev/null || true)"
+    modref="$(griffe2md lxmfy 2>/dev/null || true)"
   fi
   if [ -n "$modref" ]; then
     printf '\n\n================================================================================\n'
