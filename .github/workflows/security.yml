@@ -117,7 +117,9 @@ jobs:
         run: poetry install --no-interaction --no-ansi
 
       - name: Install audit tooling
-        run: poetry run pip install "pip-audit==2.10.1" "cyclonedx-bom==7.4.0"
+        run: |
+          poetry run pip install --upgrade pip
+          poetry run pip install "pip-audit==2.10.1" "cyclonedx-bom==7.4.0"
 
       - name: Audit dependencies for known vulnerabilities
         run: poetry run pip-audit
