@@ -13,11 +13,14 @@ from .lxmf_fields import FIELD_RESULTS, pack_result, unpack_commands
 from .middleware import MiddlewareContext, MiddlewareType
 from .permissions import DefaultPerms
 from .signatures import verify_incoming_message
+from .validation import destination_bytes
 
 if TYPE_CHECKING:
     import logging
     import threading
     from collections.abc import Callable
+
+    from LXMF import LXMRouter
 
     from .config import BotConfig
     from .events import EventManager
@@ -31,18 +34,20 @@ if TYPE_CHECKING:
 class InboundMixin:
     """Message intake, dispatch, and handler registration."""
 
-    command_prefix: str
+    command_prefix: str | None
     config: BotConfig
     delivery_callbacks: list
     events: EventManager
     first_message_handlers: list
     intents: dict
+    local: RNS.Destination | None
     logger: logging.Logger
     message_handlers: list
     middleware: MiddlewareManager
     nlp: IntentClassifier
     permissions: PermissionManager
     receipts: list
+    router: LXMRouter | None
     spam_protection: SpamProtection
     storage: Storage
     _receive_lock: threading.Lock
@@ -292,3 +297,137 @@ class InboundMixin:
             return func
 
         return decorator
+
+    def ignore_destination(self, destination: str) -> bool:
+        """Silently drop all inbound LXMF traffic from a destination.
+
+        Returns False when the router is not running or the hash is invalid.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        self.router.ignore_destination(dest)
+        return True
+
+    def unignore_destination(self, destination: str) -> bool:
+        """Stop dropping inbound traffic from a destination."""
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        self.router.unignore_destination(dest)
+        return dest not in self.router.ignored_list
+
+    def is_ignored(self, destination: str) -> bool:
+        """Check whether inbound traffic from a destination is dropped."""
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        return dest in self.router.ignored_list
+
+    def allow_destination(self, destination: str) -> bool:
+        """Add an identity to the router allow list.
+
+        When the allow list is non-empty, LXMF only accepts deliveries
+        from listed identities. Returns False on an invalid hash.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        self.router.allow(dest)
+        return True
+
+    def disallow_destination(self, destination: str) -> bool:
+        """Remove an identity from the router allow list.
+
+        Operates on the list directly because LXMRouter.disallow pops by
+        index in LXMF 1.1.1 and raises instead of removing the entry.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        if dest in self.router.allowed_list:
+            self.router.allowed_list.remove(dest)
+            return True
+        return False
+
+    def prioritise_destination(self, destination: str) -> bool:
+        """Mark a destination for prioritised outbound processing."""
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        self.router.prioritise(dest)
+        return True
+
+    def unprioritise_destination(self, destination: str) -> bool:
+        """Remove a destination from the prioritised list.
+
+        Operates on the list directly because LXMRouter.unprioritise in
+        LXMF 1.1.1 references an unbound name and always fails.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        if dest in self.router.prioritised_list:
+            self.router.prioritised_list.remove(dest)
+            return True
+        return False
+
+    def set_inbound_stamp_cost(self, stamp_cost: int | None) -> bool:
+        """Require a proof-of-work stamp for inbound deliveries.
+
+        Args:
+            stamp_cost: Required stamp value between 1 and 254, or None
+                to clear the requirement.
+
+        Returns False when the bot's delivery destination is not
+        registered or LXMF rejects the cost.
+        """
+        if self.router is None or self.local is None:
+            return False
+        return bool(self.router.set_inbound_stamp_cost(self.local.hash, stamp_cost))
+
+    def enforce_stamps(self) -> bool:
+        """Enforce stamp requirements for inbound deliveries."""
+        if self.router is None:
+            return False
+        self.router.enforce_stamps()
+        return True
+
+    def ignore_stamps(self) -> bool:
+        """Disable stamp enforcement for inbound deliveries."""
+        if self.router is None:
+            return False
+        self.router.ignore_stamps()
+        return True
+
+    def generate_ticket(self, destination: str, expiry: int | None = None):
+        """Generate an LXMF ticket that lets a destination bypass stamp costs.
+
+        Args:
+            destination: The destination hash the ticket is valid for.
+            expiry: Seconds until expiry. None uses the LXMF default.
+
+        Returns a dict with expires and ticket keys, or None when a valid
+        ticket was recently delivered or the hash is invalid.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return None
+        kwargs = {} if expiry is None else {"expiry": expiry}
+        entry = self.router.generate_ticket(dest, **kwargs)
+        if entry is None:
+            return None
+        return {"expires": entry[0], "ticket": entry[1]}
+
+    def get_inbound_tickets(self, destination: str):
+        """List valid inbound tickets held for a destination, or None."""
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return None
+        return self.router.get_inbound_tickets(dest)
+
+    def ingest_lxm_uri(self, uri: str) -> bool:
+        """Import an LXM from an lxm:// URI as if it arrived off the wire."""
+        if self.router is None or not isinstance(uri, str):
+            return False
+        return bool(self.router.ingest_lxm_uri(uri))

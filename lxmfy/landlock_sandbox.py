@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import ctypes
 import ctypes.util
 import errno
@@ -262,7 +263,7 @@ def _collect_rw_roots(
             cogs_dir,
             log_dir,
             tempfile.gettempdir(),
-            "/dev/shm",  # nosec B108
+            "/dev/shm",  # noqa: S108  # nosec B108
             "/run",  # nosec B108
         ]
     for candidate in candidates:
@@ -363,16 +364,12 @@ def apply_landlock_sandbox(
         _syscall(libc, restrict_nr, ruleset_fd, 0)
     except OSError as exc:
         logger.warning("Landlock disabled while adding rules: %s", exc)
-        try:
+        with contextlib.suppress(OSError):
             os.close(ruleset_fd)
-        except OSError:
-            pass
         return False
 
-    try:
+    with contextlib.suppress(OSError):
         os.close(ruleset_fd)
-    except OSError:
-        pass
 
     if landlock_auto_enabled(config_enabled):
         logger.info("Landlock filesystem sandbox enabled (auto-detected on Linux)")

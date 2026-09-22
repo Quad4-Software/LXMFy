@@ -50,8 +50,8 @@ class RRCMixin:
         if self.config.rrc_persist_sessions:
             try:
                 restored = self.rrc.restore_sessions()
-            except Exception as e:
-                self.logger.error("Failed to restore RRC sessions: %s", e)
+            except Exception:
+                self.logger.exception("Failed to restore RRC sessions")
         for hub in self.config.rrc_hubs or []:
             try:
                 RNS.log(
@@ -60,7 +60,7 @@ class RRCMixin:
                 )
                 self.connect_rrc(hub, rooms=list(config_rooms))
             except Exception as e:
-                self.logger.error("Failed to connect RRC hub %s: %s", hub, e)
+                self.logger.exception("Failed to connect RRC hub %s", hub)
                 RNS.log(f"RRC hub connect failed for {hub}: {e}", RNS.LOG_ERROR)
         if restored:
             RNS.log(f"Restored {restored} RRC hub session(s)", RNS.LOG_INFO)
@@ -83,11 +83,9 @@ class RRCMixin:
                         client.hub_hash.hex(),
                         rooms=list(config_rooms),
                     )
-                except Exception as e:
-                    self.logger.error(
-                        "Failed to apply RRC rooms to hub %s: %s",
-                        client.hub_hash.hex(),
-                        e,
+                except Exception:
+                    self.logger.exception(
+                        "Failed to apply RRC rooms to hub %s", client.hub_hash.hex()
                     )
 
     def connect_rrc(
@@ -163,8 +161,8 @@ class RRCMixin:
             )
         try:
             self.events.dispatch(Event(f"rrc_{event}", event_data))
-        except Exception as e:
-            self.logger.error("Error dispatching RRC event: %s", e)
+        except Exception:
+            self.logger.exception("Error dispatching RRC event")
 
         for handler in self.rrc_handlers:
             try:

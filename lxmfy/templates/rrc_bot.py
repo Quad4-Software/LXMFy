@@ -73,8 +73,8 @@ class RRCBot:
                 reply = f"{payload.nick or 'someone'} mentioned me: {payload.text}"
                 try:
                     client.send_message(payload.room, reply)
-                except Exception as exc:
-                    self.bot.logger.error("RRC reply failed: %s", exc)
+                except Exception:
+                    self.bot.logger.exception("RRC reply failed")
 
     def run(self) -> None:
         """Run the bot event loop."""

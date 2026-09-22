@@ -181,7 +181,7 @@ class TaskScheduler:
     def _scheduler_loop(self):
         """Main scheduler loop.  Checks and runs tasks based on their cron expressions."""
         while not self.stop_event.is_set():
-            current_time = datetime.now()
+            current_time = datetime.now()  # noqa: DTZ005 - cron matches local wall time
 
             for task in list(self.tasks.values()):
                 try:
@@ -191,4 +191,6 @@ class TaskScheduler:
                 except Exception:
                     self.logger.exception("Error running task %s", task.name)
 
-            self.stop_event.wait(max(0, 60 - datetime.now().second))
+            self.stop_event.wait(
+                max(0, 60 - datetime.now().second)  # noqa: DTZ005
+            )

@@ -1,6 +1,6 @@
 """Note-taking bot with JSON storage."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from lxmfy import LXMFBot
 
@@ -37,7 +37,7 @@ class NoteBot:
 
             note = {
                 "text": " ".join(ctx.args),
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "tags": [w[1:] for w in ctx.args if w.startswith("#")],
             }
 

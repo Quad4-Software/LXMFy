@@ -12,6 +12,7 @@ from LXMF import LXMessage
 
 from .attachments import Attachment, pack_attachment
 from .signatures import sign_outgoing_message
+from .validation import destination_bytes
 
 if TYPE_CHECKING:
     import logging
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
     from .storage import Storage
 
 
-class _PendingSendAnnounceHandler:
+class PendingSendAnnounceHandler:
     """Retries deferred outbound messages when their destination announces."""
 
     aspect_filter = "lxmf.delivery"
@@ -294,8 +295,8 @@ class OutboundMixin:
                 )
                 del dropped
                 self.queue.put_nowait(lxm)
-            except Exception as e:
-                self.logger.error("Failed to enqueue outbound message: %s", e)
+            except Exception:
+                self.logger.exception("Failed to enqueue outbound message")
                 return False
         self._persist_queue()
         return True
@@ -345,8 +346,8 @@ class OutboundMixin:
                     "method": lxm.desired_method,
                 }
                 queued_messages.append(msg_data)
-            except Exception as e:
-                self.logger.error("Failed to serialize message for persistence: %s", e)
+            except Exception:
+                self.logger.exception("Failed to serialize message for persistence")
 
         self.storage.set("persisted_queue", queued_messages)
 
@@ -396,8 +397,8 @@ class OutboundMixin:
                 )
                 if not queued:
                     deferred.append(msg_data)
-            except Exception as e:
-                self.logger.error("Failed to restore message from persistence: %s", e)
+            except Exception:
+                self.logger.exception("Failed to restore message from persistence")
                 deferred.append(msg_data)
 
         # Keep successfully requeued messages on disk until outbound drain.
@@ -571,3 +572,93 @@ class OutboundMixin:
                     f"Reset delivery attempts for {destination} (user came back online)",
                     RNS.LOG_DEBUG,
                 )
+
+    def delivery_link_available(self, destination: str) -> bool:
+        """Check whether a direct link is up for a destination.
+
+        When True, outbound messages to this destination can deliver over
+        an established link instead of opportunistic packets or a
+        propagation node.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        return bool(self.router.delivery_link_available(dest))
+
+    def outbound_queue(self) -> list[dict]:
+        """Snapshot pending outbound messages.
+
+        Each entry carries hash, message_id, destination, state, and
+        progress so callers can feed hashes back into cancel_outbound or
+        get_outbound_progress.
+        """
+        if self.router is None:
+            return []
+        queue = []
+        for lxm in self.router.pending_outbound:
+            entry = {
+                "hash": RNS.hexrep(lxm.hash, delimit=False) if lxm.hash else None,
+                "message_id": RNS.hexrep(lxm.message_id, delimit=False)
+                if lxm.message_id
+                else None,
+                "destination": RNS.hexrep(lxm.destination.hash, delimit=False)
+                if getattr(lxm, "destination", None)
+                else None,
+                "state": lxm.state,
+                "progress": lxm.progress,
+            }
+            queue.append(entry)
+        return queue
+
+    def get_outbound_progress(self, lxm_hash: str) -> float | None:
+        """Get transfer progress (0.0-1.0) for a pending outbound LXM.
+
+        Accepts a hex hash from outbound_queue. Returns None when the
+        message is not in the outbound queue.
+        """
+        if self.router is None:
+            return None
+        try:
+            raw = bytes.fromhex(lxm_hash)
+        except (ValueError, TypeError):
+            return None
+        return self.router.get_outbound_progress(raw)
+
+    def cancel_outbound(self, message_id: str) -> bool:
+        """Cancel a pending outbound message by its message_id.
+
+        The message_id is available from outbound_queue entries.
+        """
+        if self.router is None:
+            return False
+        try:
+            raw = bytes.fromhex(message_id)
+        except (ValueError, TypeError):
+            return False
+        self.router.cancel_outbound(raw)
+        return True
+
+    def get_outbound_ticket(self, destination: str) -> bytes | None:
+        """Get a valid outbound ticket held for a destination, or None.
+
+        Outbound tickets are tickets a peer sent us so our deliveries to
+        them satisfy their stamp requirement.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return None
+        return self.router.get_outbound_ticket(dest)
+
+    def get_outbound_ticket_expiry(self, destination: str) -> float | None:
+        """Get the expiry timestamp of the outbound ticket for a destination."""
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return None
+        return self.router.get_outbound_ticket_expiry(dest)
+
+    def get_outbound_stamp_cost(self, destination: str) -> int | None:
+        """Get the stamp cost a destination announced it requires, or None."""
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return None
+        return self.router.get_outbound_stamp_cost(dest)

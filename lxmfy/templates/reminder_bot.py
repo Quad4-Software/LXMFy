@@ -2,7 +2,7 @@
 
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from lxmfy import LXMFBot
 
@@ -66,7 +66,9 @@ class ReminderBot:
                 )
                 return
 
-            remind_time = datetime.now() + timedelta(minutes=total_minutes)
+            remind_time = datetime.now(UTC) + timedelta(
+                minutes=total_minutes,
+            )
 
             reminder = {
                 "user": ctx.sender,
@@ -100,7 +102,10 @@ class ReminderBot:
 
             response = "Your reminders:\n"
             for i, reminder in enumerate(user_reminders, 1):
-                remind_time = datetime.fromtimestamp(reminder["time"])
+                remind_time = datetime.fromtimestamp(
+                    reminder["time"],
+                    UTC,
+                )
                 response += f"{i}. {reminder['message']} (at {remind_time.strftime('%Y-%m-%d %H:%M:%S')})\n"
 
             ctx.reply(response)

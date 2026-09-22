@@ -8,7 +8,8 @@ from typing import Any
 
 import RNS
 
-from .._sync import run_sync
+from lxmfy._sync import run_sync
+
 from .client import RRCClient
 from .constants import DEFAULT_DEST_NAME
 from .envelope import normalize_room

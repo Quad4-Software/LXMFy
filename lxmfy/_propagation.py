@@ -5,10 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import RNS
+from LXMF import LXMRouter
+
+from .validation import destination_bytes
 
 if TYPE_CHECKING:
-    from LXMF import LXMRouter
-
     from .config import BotConfig
 
 
@@ -16,6 +17,7 @@ class PropagationMixin:
     """Propagation node configuration, status, and storage limits."""
 
     config: BotConfig
+    identity: RNS.Identity
     local: RNS.Destination | None
     router: LXMRouter | None
 
@@ -107,7 +109,7 @@ class PropagationMixin:
                     "hash": RNS.hexrep(peer_hash, delimit=False),
                     "hops": RNS.Transport.hops_to(peer_hash),
                 }
-                for peer_hash in self.router.peers.keys()
+                for peer_hash in self.router.peers
             ]
 
         return status
@@ -209,7 +211,7 @@ class PropagationMixin:
             if not isinstance(storage_limit, int):
                 storage_limit = None
 
-            stats = {
+            return {
                 "is_propagation_node": True,
                 "storage_size_bytes": storage_size,
                 "storage_size_mb": storage_size / (1000 * 1000) if storage_size else 0,
@@ -224,7 +226,87 @@ class PropagationMixin:
                 if hasattr(self.router, "propagation_entries")
                 else 0,
             }
-
-            return stats
         except Exception as e:
             return {"error": f"Failed to get stats: {e}"}
+
+    def sync_propagation_node(self, max_messages: int | None = None) -> bool:
+        """Request stored messages from the outbound propagation node.
+
+        Establishes a link to the configured propagation node if needed
+        and downloads messages held for this bot's identity. Delivery
+        completes asynchronously through the normal inbound pipeline.
+
+        Args:
+            max_messages: Maximum messages to request. None requests all.
+
+        Returns False when no router, identity, or outbound propagation
+        node is configured.
+        """
+        if self.router is None or self.router.outbound_propagation_node is None:
+            return False
+        limit = max_messages if max_messages is not None else LXMRouter.PR_ALL_MESSAGES
+        self.router.request_messages_from_propagation_node(self.identity, limit)
+        return True
+
+    def cancel_propagation_sync(self) -> bool:
+        """Tear down an in-progress propagation node sync."""
+        if self.router is None:
+            return False
+        self.router.cancel_propagation_node_requests()
+        return True
+
+    def get_propagation_stats(self) -> dict | None:
+        """Compile propagation node statistics.
+
+        Returns None when this bot is not running as a propagation node.
+        """
+        if self.router is None:
+            return None
+        return self.router.compile_stats()
+
+    def set_retain_on_node(self, retain: bool) -> bool:
+        """Keep copies of synced messages on the propagation node.
+
+        Only meaningful when this bot runs as a propagation node.
+        """
+        if self.router is None:
+            return False
+        self.router.set_retain_node_lxms(retain)
+        return True
+
+    def announce_propagation_node(self) -> bool:
+        """Announce this node as a propagation node.
+
+        Returns False unless the router is running with propagation
+        enabled, since the announce requires the propagation destination.
+        """
+        if self.router is None or not getattr(self.router, "propagation_node", False):
+            return False
+        self.router.announce_propagation_node()
+        return True
+
+    def allow_control_identity(self, destination: str) -> bool:
+        """Allow an identity to issue control requests to this node.
+
+        Control requests include peer sync and unpeer operations on a
+        propagation node. Returns False on an invalid hash.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        self.router.allow_control(dest)
+        return True
+
+    def disallow_control_identity(self, destination: str) -> bool:
+        """Revoke control request access for an identity.
+
+        Operates on the list directly because LXMRouter.disallow_control
+        pops by index in LXMF 1.1.1 and raises instead of removing.
+        """
+        dest = destination_bytes(destination)
+        if self.router is None or dest is None:
+            return False
+        if dest in self.router.control_allowed_list:
+            self.router.control_allowed_list.remove(dest)
+            return True
+        return False

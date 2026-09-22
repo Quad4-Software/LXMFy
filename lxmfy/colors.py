@@ -61,7 +61,7 @@ class Colors:
             return True
 
         # Third-party ANSI wrappers (legacy CMD / ConEmu)
-        if os.environ.get("ANSICON") or os.environ.get("ConEmuANSI") == "ON":
+        if os.environ.get("ANSICON") or os.environ.get("ConEmuANSI") == "ON":  # noqa: SIM112 - ConEmu exports this exact name
             cls._windows_vt_enabled = True
             cls._colors_enabled = True
             return True

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeVar
 
 from ._sync import run_sync
 from .commands import Command
@@ -18,6 +19,8 @@ if TYPE_CHECKING:
     from .middleware import MiddlewareManager
     from .permissions import PermissionManager
 
+F = TypeVar("F", bound=Callable)
+
 
 class DispatchMixin:
     """Command decorator, admin check, and command execution."""
@@ -31,7 +34,7 @@ class DispatchMixin:
     thread_pool: ThreadPoolExecutor
     send: Callable[..., bool]
 
-    def command(self, *args, **kwargs):
+    def command(self, *args, **kwargs) -> Callable[[F], F]:
         """Decorator for registering commands.
 
         Args:
@@ -40,7 +43,7 @@ class DispatchMixin:
 
         """
 
-        def decorator(func):
+        def decorator(func: F) -> F:
             """The actual decorator that registers the command."""
             name = args[0] if len(args) > 0 else kwargs.get("name", func.__name__)
 
@@ -95,7 +98,7 @@ class DispatchMixin:
                     annotation = param.annotation
                     if (
                         annotation != inspect.Parameter.empty
-                        and hasattr(annotation, "__call__")
+                        and callable(annotation)
                         and not isinstance(annotation, str)
                     ):
                         try:

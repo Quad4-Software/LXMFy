@@ -7,6 +7,12 @@
 - Outbound messages to unknown destinations are held and retried on the peer's next announce instead of dropped
 - LXMFBot accepts the bot name positionally: LXMFBot("mybot")
 - Configurable lxmfy log_level and RNS loglevel passthrough
+- Sender controls: ignore_destination, unignore_destination, is_ignored, allow_destination, disallow_destination, prioritise_destination, unprioritise_destination
+- Inbound stamp controls: set_inbound_stamp_cost, enforce_stamps, ignore_stamps
+- LXMF tickets: generate_ticket, get_inbound_tickets, get_outbound_ticket, get_outbound_ticket_expiry, get_outbound_stamp_cost
+- Outbound delivery control: outbound_queue, get_outbound_progress, cancel_outbound, delivery_link_available
+- Propagation sync: sync_propagation_node, cancel_propagation_sync, get_propagation_stats, set_retain_on_node, announce_propagation_node, allow_control_identity, disallow_control_identity
+- ingest_lxm_uri imports an LXM from an lxm:// URI
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes
@@ -19,24 +25,34 @@
 - Generated template bots accept a name argument instead of a dead attribute write
 - cogs directory is only created when cogs are enabled
 - CLI signatures test verifies against the identity it signed with instead of an unrecallable lookup
+- disallow_destination, unprioritise_destination, and disallow_control_identity edit router lists directly because the matching LXMF 1.1.1 methods pop by index or reference unbound names
+- Identity files that fail to load raise a clear RuntimeError instead of passing None to LXMRouter
+- connect_rrc and disconnect_rrc guard against an uninitialized RRC manager
 
 ### Tests
 - Localhost UDP pair live test with two subprocess routers (LXMFY_LIVE_UDP=1)
 - Propagation tests run against a real isolated router instead of no-op asserts
 - Subprocess tests pass PYTHONPATH so they work outside editable installs
 - Removed permanently skipped and tautological tests
+- Router control tests cover ignore/allow/prioritise lists, stamp costs, tickets, outbound queue and cancel, propagation sync, and URI ingestion against a real router
+- Benchmark suite for hot paths: field packing, command unpacking, hash parsing, permission checks, canonicalization, signatures, storage
 
 ### CI/CD
 - GitHub Actions for lint, typecheck, tests, live-local Alice/Bob, live UDP pair, and build
 - Security workflow: zizmor workflow audit, bandit SAST, gitleaks secret scan
-- Coverage XML artifact on the 3.13 test leg
+- Coverage XML artifact on the 3.13 test leg with a 65% coverage gate
 - Releases build a self-contained .pyz zipapp (shiv) alongside the wheel and attach it to the GitHub release
+- SLSA build provenance attestations on the wheel, sdist, and pyz via GitHub artifact attestations (Sigstore)
+- Test matrix covers Python 3.11 through 3.14
+- Benchmark job archives results per run
 - Secure defaults: SHA-pinned actions, least-privilege token, Dependabot, dependency review, Scorecard, CODEOWNERS
 - OIDC publish to PyPI on GitHub release (or confirmed manual run)
 
 ### Updates
 - Dropped former self-hosted package registry publish targets
 - Project links point at GitHub
+- Pyright runs in strict mode with the untyped-dependency noise rules disabled
+- Ruff lint expanded to the modern ruleset (bugbear, bandit, refactor, perf, try-except, datetime, logging, and friends)
 
 ## [2.0.4] - 2026-09-02
 

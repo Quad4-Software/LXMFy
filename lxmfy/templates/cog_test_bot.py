@@ -4,6 +4,10 @@ This template demonstrates proper cog usage and serves as a test case
 for the command loading system.
 """
 
+# pyright: reportUntypedFunctionDecorator=false
+# Command is a class decorator that replaces methods with Command objects
+# which the cog loader collects.
+
 from lxmfy import Command, LXMFBot
 from lxmfy.commands import Cog
 

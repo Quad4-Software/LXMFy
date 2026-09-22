@@ -9,6 +9,7 @@ import json
 import os
 import re
 import sys
+from typing import Any
 
 from .__version__ import __version__
 from .colors import (
@@ -917,12 +918,9 @@ Examples:
                 if custom_name:
                     try:
                         validated_name = validate_bot_name(custom_name)
-                        if hasattr(bot_instance, "bot"):
-                            bot_instance.bot.config.name = validated_name
-                            bot_instance.bot.name = validated_name
-                        else:
-                            bot_instance.config.name = validated_name
-                            bot_instance.name = validated_name
+                        target: Any = getattr(bot_instance, "bot", bot_instance)
+                        target.config.name = validated_name
+                        target.name = validated_name
                         print_info(f"Running with custom name: {validated_name}")
                     except ValueError as ve:
                         print_warning(

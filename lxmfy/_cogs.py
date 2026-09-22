@@ -96,12 +96,9 @@ class CogMixin:
                     continue
 
                 self.commands[cmd.name] = cmd
-            except Exception as e:
-                self.logger.error(
-                    "Error adding command %s from cog %s: %s",
-                    _name,
-                    cog.__class__.__name__,
-                    e,
+            except Exception:
+                self.logger.exception(
+                    "Error adding command %s from cog %s", _name, cog.__class__.__name__
                 )
                 continue
 
@@ -129,10 +126,7 @@ class CogMixin:
 
     def reload_extension(self, name: str) -> None:
         """Reload an extension (cog) by name."""
-        if not name.startswith("cogs."):
-            ext_name = f"cogs.{name}"
-        else:
-            ext_name = name
+        ext_name = name if name.startswith("cogs.") else f"cogs.{name}"
 
         # Find the cog associated with this extension to remove it first
         for cname, cog in list(self.cogs.items()):

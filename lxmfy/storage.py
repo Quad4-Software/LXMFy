@@ -211,8 +211,8 @@ class JSONStorage(StorageBackend):
                     data = json.load(f)
                     self.cache[key] = data
                     return data
-        except Exception as e:
-            self.logger.error("Error reading %s: %s", key, str(e))
+        except Exception:
+            self.logger.exception("Error reading %s", key)
         return default
 
     def set(self, key: str, value: Any) -> None:
@@ -228,8 +228,8 @@ class JSONStorage(StorageBackend):
             with open(file_path, "w") as f:
                 json.dump(value, f, indent=2)
             self.cache[key] = value
-        except Exception as e:
-            self.logger.error("Error writing %s: %s", key, str(e))
+        except Exception:
+            self.logger.exception("Error writing %s", key)
             raise
 
     def delete(self, key: str) -> None:
@@ -244,8 +244,8 @@ class JSONStorage(StorageBackend):
             if file_path.exists():
                 file_path.unlink()
             self.cache.pop(key, None)
-        except Exception as e:
-            self.logger.error("Error deleting %s: %s", key, str(e))
+        except Exception:
+            self.logger.exception("Error deleting %s", key)
             raise
 
     def exists(self, key: str) -> bool:
@@ -276,8 +276,8 @@ class JSONStorage(StorageBackend):
                 key = file.stem
                 if key.startswith(prefix):
                     results.append(key)
-        except Exception as e:
-            self.logger.error("Error scanning with prefix %s: %s", prefix, str(e))
+        except Exception:
+            self.logger.exception("Error scanning with prefix %s", prefix)
         return results
 
 
@@ -303,12 +303,8 @@ class SQLiteStorage(StorageBackend):
         db_dir = db_path.parent
         try:
             db_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            self.logger.error(
-                "Failed to create database directory %s: %s",
-                db_dir,
-                str(e),
-            )
+        except Exception:
+            self.logger.exception("Failed to create database directory %s", db_dir)
             raise
 
     def _init_db(self):
@@ -327,15 +323,13 @@ class SQLiteStorage(StorageBackend):
                 conn.execute("""
                     CREATE INDEX IF NOT EXISTS idx_key_prefix ON key_value(key)
                 """)
-        except sqlite3.OperationalError as e:
-            self.logger.error(
-                "Failed to initialize database at %s: %s",
-                self.database_path,
-                str(e),
+        except sqlite3.OperationalError:
+            self.logger.exception(
+                "Failed to initialize database at %s", self.database_path
             )
             raise
-        except Exception as e:
-            self.logger.error("Unexpected error initializing database: %s", str(e))
+        except Exception:
+            self.logger.exception("Unexpected error initializing database")
             raise
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -366,8 +360,8 @@ class SQLiteStorage(StorageBackend):
                         return value
                     except json.JSONDecodeError:
                         return row[0]
-        except Exception as e:
-            self.logger.error("Error reading %s: %s", key, str(e))
+        except Exception:
+            self.logger.exception("Error reading %s", key)
         return default
 
     def set(self, key: str, value: Any) -> None:
@@ -393,8 +387,8 @@ class SQLiteStorage(StorageBackend):
                     (key, serialized, type(value).__name__),
                 )
             self.cache[key] = value
-        except Exception as e:
-            self.logger.error("Error writing %s: %s", key, str(e))
+        except Exception:
+            self.logger.exception("Error writing %s", key)
             raise
 
     def delete(self, key: str) -> None:
@@ -408,8 +402,8 @@ class SQLiteStorage(StorageBackend):
             with sqlite3.connect(self.database_path) as conn:
                 conn.execute("DELETE FROM key_value WHERE key = ?", (key,))
             self.cache.pop(key, None)
-        except Exception as e:
-            self.logger.error("Error deleting %s: %s", key, str(e))
+        except Exception:
+            self.logger.exception("Error deleting %s", key)
             raise
 
     def exists(self, key: str) -> bool:
@@ -426,8 +420,8 @@ class SQLiteStorage(StorageBackend):
             with sqlite3.connect(self.database_path) as conn:
                 cursor = conn.execute("SELECT 1 FROM key_value WHERE key = ?", (key,))
                 return cursor.fetchone() is not None
-        except Exception as e:
-            self.logger.error("Error checking existence of %s: %s", key, str(e))
+        except Exception:
+            self.logger.exception("Error checking existence of %s", key)
             return False
 
     def scan(self, prefix: str) -> list:
@@ -447,8 +441,8 @@ class SQLiteStorage(StorageBackend):
                     (f"{prefix}%",),
                 )
                 return [row[0] for row in cursor.fetchall()]
-        except Exception as e:
-            self.logger.error("Error scanning with prefix %s: %s", prefix, str(e))
+        except Exception:
+            self.logger.exception("Error scanning with prefix %s", prefix)
             return []
 
 

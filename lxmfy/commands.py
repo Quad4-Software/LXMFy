@@ -37,16 +37,16 @@ class Command:
 
     def __init__(
         self,
-        name,
-        description="No description provided",
-        admin_only=False,
+        name: str,
+        description: str = "No description provided",
+        admin_only: bool = False,
         permissions: DefaultPerms | None = None,
-        usage=None,
-        examples=None,
-        category=None,
-        aliases=None,
+        usage: str | None = None,
+        examples: list[str] | None = None,
+        category: str | None = None,
+        aliases: list[str] | None = None,
         threaded: bool = False,
-    ):
+    ) -> None:
         """Initialize a new Command.
 
         Args:

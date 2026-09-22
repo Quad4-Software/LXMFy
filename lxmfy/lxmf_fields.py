@@ -1,10 +1,14 @@
 """LXMF field constants and helpers for structured commands and results."""
 
 try:
-    from LXMF.LXMF import FIELD_COMMANDS, FIELD_RESULTS
+    from LXMF.LXMF import FIELD_COMMANDS as _fc
+    from LXMF.LXMF import FIELD_RESULTS as _fr
 except ImportError:
-    FIELD_COMMANDS = 0x09
-    FIELD_RESULTS = 0x0A
+    _fc = 0x09
+    _fr = 0x0A
+
+FIELD_COMMANDS: int = _fc
+FIELD_RESULTS: int = _fr
 
 
 def unpack_commands(fields: dict | None) -> list[dict]:

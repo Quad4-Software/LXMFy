@@ -68,7 +68,7 @@ class AnnounceMixin:
         if not self.local:
             return
         # RNS Destination.display_name is set dynamically at runtime
-        setattr(
+        setattr(  # noqa: B010 - direct assignment is untyped on Destination
             self.local,
             "display_name",
             self._effective_announce_display_name(),

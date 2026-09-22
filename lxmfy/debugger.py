@@ -316,7 +316,7 @@ def _usernames() -> list[str]:
         if gp and len(gp) > 1:
             names.append(gp)
     except Exception:
-        pass
+        logger.debug("getuser probe failed", exc_info=True)
     return sorted(set(names), key=len, reverse=True)
 
 
@@ -368,7 +368,7 @@ def redact_display_name(value: str) -> str:
     return f"<display_name len={len(value)}>"
 
 
-def redact_sensitive_text(text: str) -> str:
+def redact_sensitive_text(text: str | None) -> str:
     """Redact home paths and long hex hashes inside free-form detail text."""
     if text is None:
         return ""
@@ -401,9 +401,9 @@ def _check_to_dict(check: CheckResult) -> dict[str, Any]:
 
 def normalize_destination_hex(destination: str) -> str:
     """Normalize a destination hash string (strip separators, lowercase)."""
-    cleaned = destination.strip().lower().replace(":", "").replace("-", "")
-    cleaned = cleaned.removeprefix("0x")
-    return cleaned
+    return (
+        destination.strip().lower().replace(":", "").replace("-", "").removeprefix("0x")
+    )
 
 
 def parse_destination_hash(destination: str) -> bytes | None:
@@ -546,7 +546,7 @@ class Debugger:
                     self._reticulum_ready = True
                     return True
             except Exception:
-                pass
+                logger.debug("shared Reticulum probe failed", exc_info=True)
 
         try:
             import RNS
@@ -562,8 +562,8 @@ class Debugger:
                     raise
             self._reticulum_ready = True
             return True
-        except Exception as e:
-            logger.error("Failed to initialize Reticulum: %s", e)
+        except Exception:
+            logger.exception("Failed to initialize Reticulum")
             return False
 
     def check_environment(self) -> list[CheckResult]:
@@ -1431,7 +1431,7 @@ class Debugger:
                 outbound = prop.get("current_outbound_node")
                 peer_count = len(prop.get("discovered_peers") or [])
             except Exception:
-                pass
+                logger.debug("propagation status probe failed", exc_info=True)
 
         if outbound:
             results.append(
@@ -1685,7 +1685,7 @@ class Debugger:
                 if nh:
                     probe.next_hop = RNS.hexrep(nh, delimit=False)
             except Exception:
-                pass
+                logger.debug("next_hop probe failed", exc_info=True)
 
         try:
             app_data = RNS.Identity.recall_app_data(dest_bytes)
@@ -1695,7 +1695,7 @@ class Debugger:
                 else:
                     probe.app_data = str(app_data)
         except Exception:
-            pass
+            logger.debug("app_data probe failed", exc_info=True)
 
         if not probe.identity_known:
             probe.notes.append("Identity not recalled")
@@ -1744,7 +1744,7 @@ class Debugger:
                             hops = RNS.Transport.hops_to(dest_bytes)
                             probe.hops = int(hops) if hops is not None else None
                         except Exception:
-                            pass
+                            logger.debug("hops_to probe failed", exc_info=True)
                         probe.notes.append(
                             f"Path became available after {elapsed}s",
                         )
@@ -2013,7 +2013,7 @@ class Debugger:
                     ),
                 )
             except Exception:
-                pass
+                logger.debug("local path probe failed", exc_info=True)
 
         results.append(
             CheckResult(
@@ -2153,7 +2153,7 @@ class Debugger:
         """Compare path/identity status for two destination hashes."""
         a = self.probe_destination(left, request_path=request_path, wait=wait)
         b = self.probe_destination(right, request_path=request_path, wait=wait)
-        result = {
+        result: dict[str, Any] = {
             "left": a.to_dict(privacy=self.privacy),
             "right": b.to_dict(privacy=self.privacy),
             "both_valid": a.valid_hash and b.valid_hash,
@@ -2240,14 +2240,18 @@ class Debugger:
         lines.append("-" * 60)
         if report.send_blockers:
             lines.append("send:")
-            for b in report.send_blockers:
-                lines.append(f"  - {redact_sensitive_text(b) if report.privacy else b}")
+            lines.extend(
+                f"  - {redact_sensitive_text(b) if report.privacy else b}"
+                for b in report.send_blockers
+            )
         else:
             lines.append("send: (none)")
         if report.receive_blockers:
             lines.append("receive:")
-            for b in report.receive_blockers:
-                lines.append(f"  - {redact_sensitive_text(b) if report.privacy else b}")
+            lines.extend(
+                f"  - {redact_sensitive_text(b) if report.privacy else b}"
+                for b in report.receive_blockers
+            )
         else:
             lines.append("receive: (none)")
         lines.append("")
@@ -2260,8 +2264,7 @@ class Debugger:
         )
         lines.append("")
         lines.append("Tips:")
-        for tip in report.tips:
-            lines.append(f"  - {tip}")
+        lines.extend(f"  - {tip}" for tip in report.tips)
         lines.append("")
         lines.append(
             "Share this file when asking for help. It is privacy-redacted "

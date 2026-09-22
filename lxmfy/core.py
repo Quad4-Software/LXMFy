@@ -20,7 +20,7 @@ from ._cogs import CogMixin
 from ._dispatch import DispatchMixin
 from ._inbound import InboundMixin
 from ._links import LinkMixin
-from ._outbound import OutboundMixin, _PendingSendAnnounceHandler
+from ._outbound import OutboundMixin, PendingSendAnnounceHandler
 from ._propagation import PropagationMixin
 from ._rrc import RRCMixin
 from .cogs_core import load_cogs_from_directory
@@ -212,7 +212,8 @@ class LXMFBot(
                 display_name=self.config.name,
                 stamp_cost=self.config.stamp_cost,
             )
-            assert self.local is not None
+            if self.local is None:
+                raise RuntimeError("Failed to register delivery identity")
             self._sync_delivery_display_name()
             self.router.register_delivery_callback(self._message_received)
             self.local.set_link_established_callback(
@@ -221,7 +222,7 @@ class LXMFBot(
 
             if self.config.pending_sends_enabled:
                 RNS.Transport.register_announce_handler(
-                    _PendingSendAnnounceHandler(self),
+                    PendingSendAnnounceHandler(self),
                 )
 
         self._configure_propagation()
@@ -299,9 +300,11 @@ class LXMFBot(
         if level is None:
             return
         if isinstance(level, str):
-            level = logging.getLevelName(level.upper())
-            if not isinstance(level, int):
-                raise ValueError(f"Unknown log_level {self.config.log_level!r}")
+            level = logging.getLevelNamesMapping().get(level.upper())
+            if level is None:
+                raise ValueError(
+                    f"Unknown log_level {self.config.log_level!r}",
+                )
         logger = logging.getLogger("lxmfy")
         if not logger.handlers:
             handler = logging.StreamHandler()
@@ -403,8 +406,8 @@ class LXMFBot(
                             "Outbound send failed, requeueing",
                         )
                         if not self._enqueue_outbound(lxm):
-                            self.logger.error(
-                                "Failed to requeue after outbound error",
+                            self.logger.exception(
+                                "Failed to requeue after outbound error"
                             )
                         break
 
@@ -445,8 +448,8 @@ class LXMFBot(
         try:
             dest_hash_bytes = bytes.fromhex(destination_hash)
             return self.transport.request_page(dest_hash_bytes, page_path, field_data)
-        except Exception as e:
-            self.logger.error("Error requesting page: %s", str(e))
+        except Exception:
+            self.logger.exception("Error requesting page")
             raise
 
     def cleanup(self):
@@ -454,13 +457,13 @@ class LXMFBot(
         RNS.log("Cleaning up LXMFBot...", RNS.LOG_DEBUG)
         try:
             self._persist_queue()
-        except Exception as e:
-            self.logger.error("Failed to persist queue during cleanup: %s", e)
+        except Exception:
+            self.logger.exception("Failed to persist queue during cleanup")
         if hasattr(self, "rrc") and self.rrc:
             try:
                 self.rrc.shutdown()
-            except Exception as e:
-                self.logger.error("RRC shutdown failed: %s", e)
+            except Exception:
+                self.logger.exception("RRC shutdown failed")
         self.transport.cleanup()
         self.thread_pool.shutdown(wait=False)
         self.scheduler.stop()
