@@ -158,6 +158,7 @@ class LXMFBot(
             warning_timeout=self.config.warning_timeout,
         )
 
+        self.delivery_attempts = {}
         self._load_delivery_attempts()
 
         self.landlock_active = False
@@ -269,6 +270,8 @@ class LXMFBot(
         self.link_handlers = []
         self.links = {}  # {dest_hash: Link}
 
+        self.rrc = None
+        self.rrc_handlers = []
         self._init_rrc()
 
         self.signature_manager = SignatureManager(

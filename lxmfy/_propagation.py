@@ -1,12 +1,17 @@
 """Propagation node management for LXMFBot."""
 
+from typing import TYPE_CHECKING
+
 import RNS
+
+if TYPE_CHECKING:
+    from .core import LXMFBot
 
 
 class PropagationMixin:
     """Propagation node configuration, status, and storage limits."""
 
-    def _configure_propagation(self) -> None:
+    def _configure_propagation(self: "LXMFBot") -> None:
         if self.router and self.config.enable_propagation_node:
             try:
                 self.router.enable_propagation()
@@ -59,7 +64,7 @@ class PropagationMixin:
                 RNS.LOG_WARNING,
             )
 
-    def get_propagation_node_status(self):
+    def get_propagation_node_status(self: "LXMFBot"):
         """Get information about configured and discovered propagation nodes.
 
         Returns:
@@ -99,7 +104,7 @@ class PropagationMixin:
 
         return status
 
-    def set_propagation_node(self, node_hash: str):
+    def set_propagation_node(self: "LXMFBot", node_hash: str):
         """Manually set the outbound propagation node.
 
         Args:
@@ -129,7 +134,7 @@ class PropagationMixin:
             )
             raise
 
-    def set_message_storage_limit(self, megabytes: float):
+    def set_message_storage_limit(self: "LXMFBot", megabytes: float):
         """Set the message storage limit for propagation node mode.
 
         Args:
@@ -170,7 +175,7 @@ class PropagationMixin:
             )
             raise
 
-    def get_propagation_storage_stats(self):
+    def get_propagation_storage_stats(self: "LXMFBot"):
         """Get storage statistics for propagation node mode.
 
         Returns:

@@ -1,6 +1,7 @@
 """RRC hub connectivity for LXMFBot."""
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import RNS
 
@@ -8,11 +9,14 @@ from ._sync import run_sync
 from .events import Event
 from .rrc import DEFAULT_DEST_NAME, RRCManager, RRCMessage
 
+if TYPE_CHECKING:
+    from .core import LXMFBot
+
 
 class RRCMixin:
     """RRC session lifecycle and event fan-out."""
 
-    def _init_rrc(self) -> None:
+    def _init_rrc(self: "LXMFBot") -> None:
         self.rrc_handlers = []
         self.rrc = RRCManager(
             identity=self.identity,
@@ -103,11 +107,11 @@ class RRCMixin:
             auto_reconnect=auto_reconnect,
         )
 
-    def disconnect_rrc(self, hub_hash: str | None = None) -> None:
+    def disconnect_rrc(self: "LXMFBot", hub_hash: str | None = None) -> None:
         """Disconnect one or all RRC hub sessions."""
         self.rrc.disconnect(hub_hash)
 
-    def on_rrc(self, callback: Callable | None = None):
+    def on_rrc(self: "LXMFBot", callback: Callable | None = None):
         """Register a handler for RRC events.
 
         Handler signature: ``handler(event, client, payload)``.
@@ -122,7 +126,7 @@ class RRCMixin:
             return decorator(callback)
         return decorator
 
-    def _rrc_event(self, event: str, client, payload) -> None:
+    def _rrc_event(self: "LXMFBot", event: str, client, payload) -> None:
         """Fan RRC events to bot handlers and the event manager."""
         event_data = {
             "event": event,

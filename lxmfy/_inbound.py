@@ -1,6 +1,7 @@
 """Inbound message pipeline for LXMFBot."""
 
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
 import RNS
 
@@ -11,11 +12,14 @@ from .middleware import MiddlewareContext, MiddlewareType
 from .permissions import DefaultPerms
 from .signatures import verify_incoming_message
 
+if TYPE_CHECKING:
+    from .core import LXMFBot
+
 
 class InboundMixin:
     """Message intake, dispatch, and handler registration."""
 
-    def _register_builtin_events(self):
+    def _register_builtin_events(self: "LXMFBot"):
         """Register built-in event handlers."""
 
         @self.events.on("message_received", EventPriority.HIGHEST)
@@ -32,7 +36,7 @@ class InboundMixin:
 
             self._reset_delivery_attempts(sender)
 
-    def _process_message(self, message, sender):
+    def _process_message(self: "LXMFBot", message, sender):
         """Process an incoming message."""
         try:
             content = message.content.decode("utf-8") if message.content else ""
@@ -166,7 +170,7 @@ class InboundMixin:
         except Exception:
             self.logger.exception("Error processing message from %s", sender)
 
-    def _message_received(self, message):
+    def _message_received(self: "LXMFBot", message):
         """Handle received messages."""
         try:
             sender = RNS.hexrep(message.source_hash, delimit=False)
@@ -212,7 +216,7 @@ class InboundMixin:
         except Exception:
             self.logger.exception("Error handling received message")
 
-    def received(self, function):
+    def received(self: "LXMFBot", function):
         """Decorator for registering delivery callbacks.
 
         Args:
@@ -222,7 +226,7 @@ class InboundMixin:
         self.delivery_callbacks.append(function)
         return function
 
-    def intent(self, name: str, examples: list[str]):
+    def intent(self: "LXMFBot", name: str, examples: list[str]):
         """Decorator for registering intent handlers.
 
         Args:
@@ -238,7 +242,7 @@ class InboundMixin:
 
         return decorator
 
-    def on_first_message(self):
+    def on_first_message(self: "LXMFBot"):
         """Decorator for registering first message handlers"""
 
         def decorator(func):
@@ -248,7 +252,7 @@ class InboundMixin:
 
         return decorator
 
-    def on_message(self):
+    def on_message(self: "LXMFBot"):
         """Decorator for registering message handlers"""
 
         def decorator(func):

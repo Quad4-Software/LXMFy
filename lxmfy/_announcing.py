@@ -2,8 +2,12 @@
 
 import os
 import time
+from typing import TYPE_CHECKING
 
 import RNS
+
+if TYPE_CHECKING:
+    from .core import LXMFBot
 
 BOT_DISPLAY_NAME_FILE = "bot_display_name.txt"
 
@@ -12,16 +16,16 @@ class AnnounceMixin:
     """Display name resolution and LXMF delivery announces."""
 
     @property
-    def name(self) -> str:
+    def name(self: "LXMFBot") -> str:
         """Bot display name used for LXMF when no file override applies."""
         return self.config.name
 
     @name.setter
-    def name(self, value: str) -> None:
+    def name(self: "LXMFBot", value: str) -> None:
         self.config.name = value
         self._sync_delivery_display_name()
 
-    def _effective_announce_display_name(self) -> str:
+    def _effective_announce_display_name(self: "LXMFBot") -> str:
         """Resolve the display name for lxmf/delivery announce app_data."""
         if self.config.announce_display_name_file:
             path = os.path.join(
@@ -49,13 +53,13 @@ class AnnounceMixin:
 
         return self.config.name or "LXMFBot"
 
-    def _sync_delivery_display_name(self) -> None:
+    def _sync_delivery_display_name(self: "LXMFBot") -> None:
         if not self.local:
             return
         # RNS Destination.display_name is set dynamically at runtime
         self.local.display_name = self._effective_announce_display_name()
 
-    def announce_now(self, force: bool = False) -> None:
+    def announce_now(self: "LXMFBot", force: bool = False) -> None:
         """Send an LXMF delivery announce using the current display name.
 
         LXMF builds delivery announce app_data from the destination display name

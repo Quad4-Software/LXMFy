@@ -1,16 +1,20 @@
 """Command registration and execution for LXMFBot."""
 
 import inspect
+from typing import TYPE_CHECKING
 
 from ._sync import run_sync
 from .commands import Command
 from .middleware import MiddlewareType
 
+if TYPE_CHECKING:
+    from .core import LXMFBot
+
 
 class DispatchMixin:
     """Command decorator, admin check, and command execution."""
 
-    def command(self, *args, **kwargs):
+    def command(self: "LXMFBot", *args, **kwargs):
         """Decorator for registering commands.
 
         Args:
@@ -33,7 +37,7 @@ class DispatchMixin:
 
         return decorator
 
-    def is_admin(self, sender):
+    def is_admin(self: "LXMFBot", sender):
         """Check if a sender is an admin.
 
         Args:
@@ -45,7 +49,7 @@ class DispatchMixin:
         """
         return sender in self.admins
 
-    def _execute_command(self, cmd_name: str, args: list, msg) -> bool:
+    def _execute_command(self: "LXMFBot", cmd_name: str, args: list, msg) -> bool:
         """Execute a registered command by name.
 
         Returns:

@@ -4,12 +4,16 @@ import importlib
 import inspect
 import re
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .core import LXMFBot
 
 
 class CogMixin:
     """Extension loading, cog registration, and hot reload."""
 
-    def load_extension(self, name: str) -> None:
+    def load_extension(self: "LXMFBot", name: str) -> None:
         """Load an extension (cog) by name.
 
         Args:
@@ -46,7 +50,7 @@ class CogMixin:
                 self.cogs.pop(cog_name, None)
             raise
 
-    def add_cog(self, cog):
+    def add_cog(self: "LXMFBot", cog):
         """Add a cog to the bot.
 
         Args:
@@ -91,7 +95,7 @@ class CogMixin:
                 )
                 continue
 
-    def remove_cog(self, cog_name: str) -> None:
+    def remove_cog(self: "LXMFBot", cog_name: str) -> None:
         """Remove a cog from the bot by its class name.
 
         Args:
@@ -113,7 +117,7 @@ class CogMixin:
             for name in commands_to_remove:
                 del self.commands[name]
 
-    def reload_extension(self, name: str) -> None:
+    def reload_extension(self: "LXMFBot", name: str) -> None:
         """Reload an extension (cog) by name."""
         if not name.startswith("cogs."):
             ext_name = f"cogs.{name}"

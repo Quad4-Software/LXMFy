@@ -3,13 +3,16 @@
 import time
 from queue import Full
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import RNS
 from LXMF import LXMessage
 
 from .attachments import Attachment, pack_attachment
 from .signatures import sign_outgoing_message
+
+if TYPE_CHECKING:
+    from .core import LXMFBot
 
 
 class _PendingSendAnnounceHandler:
@@ -234,16 +237,6 @@ class OutboundMixin:
         # Sign the message (pass-through for LXMF's built-in signing)
         lxm = sign_outgoing_message(self, lxm)
 
-        # Set propagation fallback if enabled. Applies when starting with
-        # opportunistic or direct delivery and a propagation node is known.
-        if (
-            desired_method in (LXMessage.DIRECT, LXMessage.OPPORTUNISTIC)
-            and (self.config.propagation_fallback_enabled or is_opportunistic)
-            and has_prop_node
-        ):
-            # LXMF sets try_propagation_on_fail dynamically at runtime
-            lxm.try_propagation_on_fail = True
-
         if not self._enqueue_outbound(lxm):
             RNS.log(
                 f"Failed to queue message for {destination}: outbound queue full",
@@ -260,7 +253,7 @@ class OutboundMixin:
     def _destination_hash_len() -> int:
         return RNS.Reticulum.TRUNCATED_HASHLENGTH // 8
 
-    def _is_valid_destination_hex(self, destination: str) -> bool:
+    def _is_valid_destination_hex(self: "LXMFBot", destination: str) -> bool:
         if not isinstance(destination, str) or not destination:
             return False
         try:
@@ -269,7 +262,7 @@ class OutboundMixin:
             return False
         return len(raw) == self._destination_hash_len()
 
-    def _enqueue_outbound(self, lxm) -> bool:
+    def _enqueue_outbound(self: "LXMFBot", lxm) -> bool:
         """Enqueue an outbound message without blocking. Drops oldest if full."""
         try:
             self.queue.put_nowait(lxm)
@@ -288,7 +281,7 @@ class OutboundMixin:
         self._persist_queue()
         return True
 
-    def _persist_queue(self):
+    def _persist_queue(self: "LXMFBot"):
         """Persist the outgoing message queue to storage."""
         if getattr(self.config, "message_persistence_enabled", False) is not True:
             return
@@ -338,7 +331,7 @@ class OutboundMixin:
 
         self.storage.set("persisted_queue", queued_messages)
 
-    def _load_persisted_queue(self):
+    def _load_persisted_queue(self: "LXMFBot"):
         """Load persisted messages back into the queue."""
         if getattr(self.config, "message_persistence_enabled", False) is not True:
             return
@@ -437,7 +430,7 @@ class OutboundMixin:
                 )
             self.storage.set("pending_sends", pending)
 
-    def _flush_pending_sends(self, destination: str | None = None) -> None:
+    def _flush_pending_sends(self: "LXMFBot", destination: str | None = None) -> None:
         """Retry held messages. When destination is set, only that hash runs."""
         if not self.config.pending_sends_enabled:
             return
@@ -533,15 +526,15 @@ class OutboundMixin:
             include_ticket=include_ticket,
         )
 
-    def _load_delivery_attempts(self):
+    def _load_delivery_attempts(self: "LXMFBot"):
         """Load delivery attempts from storage."""
         self.delivery_attempts = self.storage.get("delivery_attempts", {})
 
-    def _save_delivery_attempts(self):
+    def _save_delivery_attempts(self: "LXMFBot"):
         """Save delivery attempts to storage."""
         self.storage.set("delivery_attempts", self.delivery_attempts)
 
-    def _reset_delivery_attempts(self, destination: str):
+    def _reset_delivery_attempts(self: "LXMFBot", destination: str):
         """Reset delivery attempts for a destination when they come back online.
 
         Args:
