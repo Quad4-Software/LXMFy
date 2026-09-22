@@ -17,7 +17,7 @@ def test_link_request_initiation():
             mock_link = MagicMock()
             mock_link_class.return_value = mock_link
 
-            dest_hash = "abc123def456"
+            dest_hash = "aa" * 16
             link = bot.request_link(dest_hash)
 
             assert link == mock_link
@@ -34,7 +34,7 @@ def test_link_request_custom_appdata():
     with patch("lxmfy.core.RNS.Identity.recall", return_value=real_identity):
         with patch("lxmfy.core.RNS.Destination") as mock_dest_class:
             with patch("lxmfy.core.RNS.Link"):
-                dest_hash = "abc123def456"
+                dest_hash = "aa" * 16
                 bot.request_link(dest_hash, None, "custom_app", "aspect1", "aspect2")
 
                 mock_dest_class.assert_called_once_with(

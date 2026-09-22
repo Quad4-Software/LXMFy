@@ -49,6 +49,12 @@ class BotConfig:
         config_path (str): The path to the bot configuration directory. If None, defaults to "config" in the current working directory. Defaults to None.
         reticulum_config_dir (str): The Reticulum config directory used for RNS shared instance/auth state. If None, uses LXMFY_RETICULUM_CONFIG_DIR when set, otherwise discovers the user/system Reticulum config (/etc/reticulum, ~/.config/reticulum, ~/.reticulum), and only then falls back to config_path. Isolated bot configs force share_instance=No to avoid RPC digest rejection with NomadNet/Columba.
         test_mode (bool): Whether to run in test mode (skips RNS initialization). Defaults to False.
+        log_level (str or int or None): Logging level for lxmfy's own logger ("DEBUG", "INFO", "WARNING", ...). None leaves logging untouched. Defaults to "INFO".
+        loglevel (int): RNS log level (0-7) passed to RNS.Reticulum. None uses the Reticulum config file setting. Defaults to None.
+        pending_sends_enabled (bool): Hold outbound messages when the destination identity is not yet known, retrying on announces and periodic sweeps. Defaults to True.
+        pending_sends_max (int): Maximum deferred messages kept for unknown destinations. Oldest are dropped beyond this. Defaults to 200.
+        pending_sends_ttl (int): Seconds a deferred message is kept before being dropped. Defaults to 604800 (7 days).
+        pending_sends_retry (int): Minimum seconds between deferred-send sweeps in run(). Defaults to 300.
         announce_display_name_file (str): Optional filename under config_path whose UTF-8 contents override the bot display name for LXMF delivery announces. If unset, ``bot_display_name.txt`` is read when present. Otherwise ``name`` is used.
 
     """
@@ -90,9 +96,15 @@ class BotConfig:
     reticulum_config_dir: str | None = None
     announce_display_name_file: str | None = None
     test_mode: bool = False
+    log_level: str | int | None = "INFO"
+    loglevel: int | None = None
     identity_pinning_enabled: bool = False
     message_persistence_enabled: bool = True
     message_queue_size: int = 50
+    pending_sends_enabled: bool = True
+    pending_sends_max: int = 200
+    pending_sends_ttl: int = 604800
+    pending_sends_retry: int = 300
     dynamic_cogs_enabled: bool = True
     external_cogs_enabled: bool = True
     external_cogs_sandbox_enabled: bool = True

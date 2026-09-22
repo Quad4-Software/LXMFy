@@ -5,7 +5,6 @@ for LXMFy bots.
 """
 
 import logging
-import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -182,16 +181,12 @@ class TaskScheduler:
         while not self.stop_event.is_set():
             current_time = datetime.now()
 
-            for task in self.tasks.values():
+            for task in list(self.tasks.values()):
                 try:
                     if task.should_run(current_time):
                         task.callback()
                         task.last_run = current_time
-                except Exception as e:
-                    self.logger.error(
-                        "Error running task %s: %s",
-                        task.name,
-                        str(e),
-                    )
+                except Exception:
+                    self.logger.exception("Error running task %s", task.name)
 
-            time.sleep(60 - datetime.now().second)
+            self.stop_event.wait(max(0, 60 - datetime.now().second))

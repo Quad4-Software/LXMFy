@@ -87,9 +87,9 @@ class TestOutboundStampTicketWiring:
             lambda _h: None,
         )
         monkeypatch.setattr("lxmfy.core.RNS.Destination", FakeDest)
-        monkeypatch.setattr("lxmfy.core.LXMessage", FakeLXMessage)
+        monkeypatch.setattr("lxmfy._outbound.LXMessage", FakeLXMessage)
         monkeypatch.setattr(
-            "lxmfy.core.sign_outgoing_message",
+            "lxmfy._outbound.sign_outgoing_message",
             lambda _bot, lxm: lxm,
         )
         monkeypatch.setattr(

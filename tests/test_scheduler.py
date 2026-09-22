@@ -1,7 +1,7 @@
 """Tests for the cron task scheduler."""
 
+import time
 from datetime import datetime
-from types import SimpleNamespace
 
 from lxmfy.scheduler import ScheduledTask, TaskScheduler
 
@@ -30,8 +30,6 @@ def test_match_field_malformed_parts():
 
 def test_scheduler_loop_survives_bad_task(monkeypatch):
     """A task that raises in should_run must not kill the loop."""
-    import lxmfy.scheduler as sched_mod
-
     scheduler = TaskScheduler(bot=None)
     ran = []
 
@@ -46,12 +44,23 @@ def test_scheduler_loop_survives_bad_task(monkeypatch):
         "* * * * *",
     )
 
-    def fast_sleep(_seconds):
+    def fast_wait(_timeout):
         scheduler.stop_event.set()
+        return True
 
-    monkeypatch.setattr(sched_mod, "time", SimpleNamespace(sleep=fast_sleep))
+    monkeypatch.setattr(scheduler.stop_event, "wait", fast_wait)
 
     scheduler.start()
     for thread in scheduler.background_tasks:
         thread.join(2)
     assert ran == [1]
+
+
+def test_scheduler_stop_does_not_block():
+    """stop() must return promptly even mid-cycle."""
+    scheduler = TaskScheduler(bot=None)
+    scheduler.tasks["noop"] = ScheduledTask("noop", lambda: None, "* * * * *")
+    scheduler.start()
+    start = time.monotonic()
+    scheduler.stop()
+    assert time.monotonic() - start < 5

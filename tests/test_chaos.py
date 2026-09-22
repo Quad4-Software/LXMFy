@@ -130,7 +130,7 @@ class TestChaosBot:
         mock_msg.signature_validated = True
 
         # Send the EXACT SAME message 50 times
-        with patch("lxmfy.core.verify_incoming_message", return_value=True):
+        with patch("lxmfy._inbound.verify_incoming_message", return_value=True):
             for _ in range(50):
                 bot._message_received(mock_msg)
 
