@@ -10,17 +10,22 @@ on:
     branches: [master]
   workflow_dispatch:
 
-permissions: read-all
+concurrency:
+  group: scorecard-${{ github.ref }}
+  cancel-in-progress: true
+
+# Scorecard requires read-all to evaluate branch protection and other settings.
+permissions: read-all  # zizmor: ignore[excessive-permissions]
 
 jobs:
   analysis:
     name: Scorecard analysis
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
-      id-token: write
-      contents: read
-      actions: read
+      security-events: write  # upload SARIF to the security tab
+      id-token: write  # OIDC token for result publication
+      contents: read  # analyze the repository contents
+      actions: read  # read workflow run metadata
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1

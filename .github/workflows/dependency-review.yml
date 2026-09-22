@@ -18,9 +18,8 @@ jobs:
     name: Dependency review
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      # comment-summary-in-pr posts a failure comment on the PR.
-      pull-requests: write
+      contents: read  # read the diff's dependency manifests
+      pull-requests: write  # comment-summary-in-pr posts a failure comment on the PR
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1

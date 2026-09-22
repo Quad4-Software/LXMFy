@@ -1,5 +1,7 @@
 """RRC hub connectivity for LXMFBot."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -10,13 +12,25 @@ from .events import Event
 from .rrc import DEFAULT_DEST_NAME, RRCManager, RRCMessage
 
 if TYPE_CHECKING:
-    from .core import LXMFBot
+    import logging
+
+    from .config import BotConfig
+    from .events import EventManager
+    from .storage import Storage
 
 
 class RRCMixin:
     """RRC session lifecycle and event fan-out."""
 
-    def _init_rrc(self: "LXMFBot") -> None:
+    config: BotConfig
+    events: EventManager
+    identity: RNS.Identity
+    logger: logging.Logger
+    rrc: RRCManager | None
+    rrc_handlers: list
+    storage: Storage
+
+    def _init_rrc(self) -> None:
         self.rrc_handlers = []
         self.rrc = RRCManager(
             identity=self.identity,
@@ -99,6 +113,8 @@ class RRCMixin:
         """
         if self.config.test_mode:
             raise RuntimeError("RRC connections are unavailable in test_mode")
+        if self.rrc is None:
+            raise RuntimeError("RRC is not initialized")
         return self.rrc.connect(
             hub_hash,
             rooms=rooms,
@@ -107,11 +123,12 @@ class RRCMixin:
             auto_reconnect=auto_reconnect,
         )
 
-    def disconnect_rrc(self: "LXMFBot", hub_hash: str | None = None) -> None:
+    def disconnect_rrc(self, hub_hash: str | None = None) -> None:
         """Disconnect one or all RRC hub sessions."""
-        self.rrc.disconnect(hub_hash)
+        if self.rrc is not None:
+            self.rrc.disconnect(hub_hash)
 
-    def on_rrc(self: "LXMFBot", callback: Callable | None = None):
+    def on_rrc(self, callback: Callable | None = None):
         """Register a handler for RRC events.
 
         Handler signature: ``handler(event, client, payload)``.
@@ -126,7 +143,7 @@ class RRCMixin:
             return decorator(callback)
         return decorator
 
-    def _rrc_event(self: "LXMFBot", event: str, client, payload) -> None:
+    def _rrc_event(self, event: str, client, payload) -> None:
         """Fan RRC events to bot handlers and the event manager."""
         event_data = {
             "event": event,

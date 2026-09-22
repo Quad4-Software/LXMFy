@@ -14,6 +14,10 @@ on:
         required: true
         type: string
 
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
@@ -83,7 +87,7 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # gh release upload attaches the pyz to the release
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -139,8 +143,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
-      contents: read
-      id-token: write
+      contents: read  # download the built distributions
+      id-token: write  # OIDC token for PyPI trusted publishing
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1

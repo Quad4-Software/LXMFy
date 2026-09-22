@@ -1,5 +1,7 @@
 """RNS link management for LXMFBot."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -8,11 +10,23 @@ import RNS
 from ._sync import run_sync
 
 if TYPE_CHECKING:
-    from .core import LXMFBot
+    import logging
+
+    from LXMF import LXMRouter
+
+    from .config import BotConfig
 
 
 class LinkMixin:
     """Outbound link requests and inbound link tracking."""
+
+    config: BotConfig
+    link_handlers: list
+    links: dict
+    logger: logging.Logger
+    router: LXMRouter | None
+
+    def _is_valid_destination_hex(self, destination: str) -> bool: ...
 
     def request_link(
         self,
@@ -68,7 +82,7 @@ class LinkMixin:
         self.links[destination_hash] = link
         return link
 
-    def _track_link_closed(self: "LXMFBot", link, destination_hash: str) -> None:
+    def _track_link_closed(self, link, destination_hash: str) -> None:
         """Drop a link from self.links when it closes, chaining any existing callback."""
         existing = getattr(link, "link_closed", None)
 
@@ -79,11 +93,11 @@ class LinkMixin:
 
         link.set_link_closed_callback(_on_link_closed)
 
-    def on_link(self: "LXMFBot", callback: Callable):
+    def on_link(self, callback: Callable):
         """Register a handler for incoming links."""
         self.link_handlers.append(callback)
 
-    def _delivery_link_established(self: "LXMFBot", link):
+    def _delivery_link_established(self, link):
         """Handle a link established on the LXMF delivery destination.
 
         The LXMF router's delivery_link_established wires up the packet and
@@ -94,7 +108,7 @@ class LinkMixin:
             self.router.delivery_link_established(link)
         self._link_established(link)
 
-    def _link_established(self: "LXMFBot", link):
+    def _link_established(self, link):
         """Handle an established RNS link."""
         sender = RNS.hexrep(link.destination.hash, delimit=False)
         self.links[sender] = link

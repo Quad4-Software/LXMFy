@@ -194,7 +194,10 @@ class LXMFBot(
                 RNS.log("No Primary Identity file found, creating new...", RNS.LOG_INFO)
                 identity = RNS.Identity(True)
                 identity.to_file(identity_file)
-            self.identity = RNS.Identity.from_file(identity_file)
+            identity = RNS.Identity.from_file(identity_file)
+            if identity is None:
+                raise RuntimeError(f"Failed to load identity from {identity_file}")
+            self.identity = identity
             RNS.log("Loaded identity from file", RNS.LOG_INFO)
 
             self.router = LXMRouter(
@@ -231,7 +234,12 @@ class LXMFBot(
         else:
             # Test mode - create mock components
             if os.path.isfile(identity_file):
-                self.identity = RNS.Identity.from_file(identity_file)
+                identity = RNS.Identity.from_file(identity_file)
+                if identity is None:
+                    raise RuntimeError(
+                        f"Failed to load identity from {identity_file}",
+                    )
+                self.identity = identity
             else:
                 self.identity = RNS.Identity()  # Create a basic identity for testing
                 if self.config.config_path:

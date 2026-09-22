@@ -1,5 +1,7 @@
 """Inbound message pipeline for LXMFBot."""
 
+from __future__ import annotations
+
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
@@ -13,13 +15,42 @@ from .permissions import DefaultPerms
 from .signatures import verify_incoming_message
 
 if TYPE_CHECKING:
-    from .core import LXMFBot
+    import logging
+    import threading
+    from collections.abc import Callable
+
+    from .config import BotConfig
+    from .events import EventManager
+    from .middleware import MiddlewareManager
+    from .moderation import SpamProtection
+    from .nlp import IntentClassifier
+    from .permissions import PermissionManager
+    from .storage import Storage
 
 
 class InboundMixin:
     """Message intake, dispatch, and handler registration."""
 
-    def _register_builtin_events(self: "LXMFBot"):
+    command_prefix: str
+    config: BotConfig
+    delivery_callbacks: list
+    events: EventManager
+    first_message_handlers: list
+    intents: dict
+    logger: logging.Logger
+    message_handlers: list
+    middleware: MiddlewareManager
+    nlp: IntentClassifier
+    permissions: PermissionManager
+    receipts: list
+    spam_protection: SpamProtection
+    storage: Storage
+    _receive_lock: threading.Lock
+    send: Callable[..., bool]
+    _execute_command: Callable[..., bool]
+    _reset_delivery_attempts: Callable[..., None]
+
+    def _register_builtin_events(self):
         """Register built-in event handlers."""
 
         @self.events.on("message_received", EventPriority.HIGHEST)
@@ -36,7 +67,7 @@ class InboundMixin:
 
             self._reset_delivery_attempts(sender)
 
-    def _process_message(self: "LXMFBot", message, sender):
+    def _process_message(self, message, sender):
         """Process an incoming message."""
         try:
             content = message.content.decode("utf-8") if message.content else ""
@@ -170,7 +201,7 @@ class InboundMixin:
         except Exception:
             self.logger.exception("Error processing message from %s", sender)
 
-    def _message_received(self: "LXMFBot", message):
+    def _message_received(self, message):
         """Handle received messages."""
         try:
             sender = RNS.hexrep(message.source_hash, delimit=False)
@@ -216,7 +247,7 @@ class InboundMixin:
         except Exception:
             self.logger.exception("Error handling received message")
 
-    def received(self: "LXMFBot", function):
+    def received(self, function):
         """Decorator for registering delivery callbacks.
 
         Args:
@@ -226,7 +257,7 @@ class InboundMixin:
         self.delivery_callbacks.append(function)
         return function
 
-    def intent(self: "LXMFBot", name: str, examples: list[str]):
+    def intent(self, name: str, examples: list[str]):
         """Decorator for registering intent handlers.
 
         Args:
@@ -242,7 +273,7 @@ class InboundMixin:
 
         return decorator
 
-    def on_first_message(self: "LXMFBot"):
+    def on_first_message(self):
         """Decorator for registering first message handlers"""
 
         def decorator(func):
@@ -252,7 +283,7 @@ class InboundMixin:
 
         return decorator
 
-    def on_message(self: "LXMFBot"):
+    def on_message(self):
         """Decorator for registering message handlers"""
 
         def decorator(func):
