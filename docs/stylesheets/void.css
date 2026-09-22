@@ -30,18 +30,18 @@
   --md-code-bg-color--lighter:     #16161a8a;
   --md-code-hl-color:              #fb923c;
   --md-code-hl-color--light:       #fb923c1a;
-  --md-code-hl-number-color:       #e4e4e7;
+  --md-code-hl-number-color:       #fb923c;
   --md-code-hl-special-color:      #fb923c;
-  --md-code-hl-function-color:     #f4f4f5;
+  --md-code-hl-function-color:     #fafafa;
   --md-code-hl-constant-color:     #d4d4d8;
   --md-code-hl-keyword-color:      #fafafa;
-  --md-code-hl-string-color:       #a1a1aa;
+  --md-code-hl-string-color:       #fb923c;
   --md-code-hl-name-color:         var(--md-code-fg-color);
-  --md-code-hl-operator-color:     var(--md-default-fg-color--light);
-  --md-code-hl-punctuation-color:  var(--md-default-fg-color--light);
+  --md-code-hl-operator-color:     #a1a1aa;
+  --md-code-hl-punctuation-color:  #a1a1aa;
   --md-code-hl-comment-color:      #71717a;
-  --md-code-hl-generic-color:      var(--md-default-fg-color--light);
-  --md-code-hl-variable-color:     var(--md-default-fg-color--light);
+  --md-code-hl-generic-color:      #a1a1aa;
+  --md-code-hl-variable-color:     #a1a1aa;
 
   --md-typeset-color:              var(--md-default-fg-color);
   --md-typeset-a-color:            #fafafa;
@@ -91,18 +91,18 @@
   --md-code-bg-color--lighter:     #f4f4f58a;
   --md-code-hl-color:              #c2410c;
   --md-code-hl-color--light:       #c2410c1a;
-  --md-code-hl-number-color:       #27272a;
+  --md-code-hl-number-color:       #c2410c;
   --md-code-hl-special-color:      #c2410c;
   --md-code-hl-function-color:     #0a0a0b;
   --md-code-hl-constant-color:     #3f3f46;
   --md-code-hl-keyword-color:      #0a0a0b;
-  --md-code-hl-string-color:       #52525b;
+  --md-code-hl-string-color:       #c2410c;
   --md-code-hl-name-color:         var(--md-code-fg-color);
-  --md-code-hl-operator-color:     var(--md-default-fg-color--light);
-  --md-code-hl-punctuation-color:  var(--md-default-fg-color--light);
+  --md-code-hl-operator-color:     #71717a;
+  --md-code-hl-punctuation-color:  #71717a;
   --md-code-hl-comment-color:      #a1a1aa;
-  --md-code-hl-generic-color:      var(--md-default-fg-color--light);
-  --md-code-hl-variable-color:     var(--md-default-fg-color--light);
+  --md-code-hl-generic-color:      #71717a;
+  --md-code-hl-variable-color:     #71717a;
 
   --md-typeset-color:              var(--md-default-fg-color);
   --md-typeset-a-color:            #0a0a0b;
@@ -148,7 +148,7 @@
 .md-typeset .highlighttable,
 .md-typeset .md-content__inner .tabbed-set,
 .md-typeset table:not([class]) {
-  border-radius: .3rem;
+  border-radius: .4rem;
 }
 
 .md-typeset .admonition,
@@ -157,9 +157,19 @@
   box-shadow: none;
 }
 
+/* Code blocks: the code element carries the background, so the border
+   lives on the .highlight wrapper. The pre inside keeps 1em margins by
+   default, which leaves unstyled strips inside the border, so move the
+   block spacing onto the wrapper and let pre hug the code. */
 .md-typeset .highlight,
 .md-typeset .highlighttable {
+  margin: 1em 0;
   border: .05rem solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset .highlight>pre,
+.md-typeset .highlighttable pre {
+  margin: 0;
 }
 
 .md-nav__link--active,

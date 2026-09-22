@@ -19,6 +19,7 @@
 - Documentation moved from Sphinx/RST to Zensical/Markdown, deployed to GitHub Pages on every docs change; PDF, EPUB, and text bundles are built at release time and attached to the GitHub release
 - Docs translated into German, Spanish, French, Portuguese, Ukrainian, Russian, and Simplified Chinese with release bundles per language
 - Docs use a dark-first quad4 "void" theme with a light "paper" scheme, system-preference detection, and a palette toggle
+- Docs are an installable PWA: service worker precaches the core pages, caches visited pages offline, and refreshes content when the browser comes back online
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes
