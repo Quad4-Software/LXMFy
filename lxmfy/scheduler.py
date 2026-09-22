@@ -94,16 +94,19 @@ class ScheduledTask:
 
         parts = pattern.split(",")
         for part in parts:
-            if "-" in part:
-                start, end = map(int, part.split("-"))
-                if min_val <= start <= value <= end <= max_val:
+            try:
+                if "-" in part:
+                    start, end = map(int, part.split("-"))
+                    if min_val <= start <= value <= end <= max_val:
+                        return True
+                elif "/" in part:
+                    step = int(part.split("/")[1])
+                    if step > 0 and value % step == 0:
+                        return True
+                elif int(part) == value:
                     return True
-            elif "/" in part:
-                step = int(part.split("/")[1])
-                if value % step == 0:
-                    return True
-            elif int(part) == value:
-                return True
+            except ValueError:
+                continue
 
         return False
 
@@ -180,15 +183,15 @@ class TaskScheduler:
             current_time = datetime.now()
 
             for task in self.tasks.values():
-                if task.should_run(current_time):
-                    try:
+                try:
+                    if task.should_run(current_time):
                         task.callback()
                         task.last_run = current_time
-                    except Exception as e:
-                        self.logger.error(
-                            "Error running task %s: %s",
-                            task.name,
-                            str(e),
-                        )
+                except Exception as e:
+                    self.logger.error(
+                        "Error running task %s: %s",
+                        task.name,
+                        str(e),
+                    )
 
             time.sleep(60 - datetime.now().second)

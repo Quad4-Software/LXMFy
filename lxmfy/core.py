@@ -192,7 +192,9 @@ class LXMFBot:
             assert self.local is not None
             self._sync_delivery_display_name()
             self.router.register_delivery_callback(self._message_received)
-            self.local.set_link_established_callback(self._link_established)
+            self.local.set_link_established_callback(
+                self._delivery_link_established,
+            )
 
         if self.router and self.config.enable_propagation_node:
             try:
@@ -266,12 +268,16 @@ class LXMFBot:
         self.announce_time = self.config.announce
 
         if self.announce_enabled and not self.config.test_mode:
-            # Schedule the announce task
-            self.scheduler.add_task(
-                "announce_task",
-                self.announce_now,
-                f"*/{self.announce_time // 60} * * * *",  # Convert seconds to minutes for cron
-            )
+            if self.announce_time > 0:
+                # Schedule the announce task. announce_now throttles on the
+                # announce interval file, so a sub-minute cron step still
+                # respects announce_time.
+                minutes = max(1, self.announce_time // 60)
+                self.scheduler.add_task(
+                    "announce_task",
+                    self.announce_now,
+                    f"*/{minutes} * * * *",  # Convert seconds to minutes for cron
+                )
             if self.config.announce_immediately:
                 self.announce_now(force=True)
                 RNS.log("Initial announce sent", RNS.LOG_INFO)
@@ -1623,6 +1629,17 @@ class LXMFBot:
     def on_link(self, callback: Callable):
         """Register a handler for incoming links."""
         self.link_handlers.append(callback)
+
+    def _delivery_link_established(self, link):
+        """Handle a link established on the LXMF delivery destination.
+
+        The LXMF router's delivery_link_established wires up the packet and
+        resource callbacks inbound deliveries need. It must run first, then
+        the lxmfy-level link tracking and user handlers run.
+        """
+        if self.router is not None:
+            self.router.delivery_link_established(link)
+        self._link_established(link)
 
     def _link_established(self, link):
         """Handle an established RNS link."""

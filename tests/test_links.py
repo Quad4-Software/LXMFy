@@ -68,3 +68,48 @@ def test_link_established_callback_routing():
 
     assert link_called is True
     assert "6d6f636b5f68617368" in bot.links  # hex of b"mock_hash"
+
+
+def test_delivery_link_established_runs_lxmf_and_lxmfy():
+    """Inbound delivery links must get LXMF callbacks and lxmfy tracking.
+
+    Regression test: assigning _link_established directly to the delivery
+    destination replaces LXMF's delivery_link_established, which wires the
+    packet and resource callbacks. Without it, inbound link-based delivery
+    stalls and the link dies.
+    """
+    config = BotConfig(link_support_enabled=True, test_mode=True)
+    bot = LXMFBot(**config.__dict__)
+
+    calls = []
+    router = MagicMock()
+    router.delivery_link_established = lambda link: calls.append("lxmf")
+    bot.router = router
+
+    handler_calls = []
+    bot.on_link(lambda link: handler_calls.append(link))
+
+    mock_link = MagicMock()
+    mock_link.destination.hash = b"mock_hash"
+
+    bot._delivery_link_established(mock_link)
+
+    assert calls == ["lxmf"]
+    assert handler_calls == [mock_link]
+    assert "6d6f636b5f68617368" in bot.links
+
+
+def test_delivery_link_established_without_router():
+    """In test mode there is no router, handlers still run."""
+    config = BotConfig(link_support_enabled=True, test_mode=True)
+    bot = LXMFBot(**config.__dict__)
+
+    handler_calls = []
+    bot.on_link(lambda link: handler_calls.append(link))
+
+    mock_link = MagicMock()
+    mock_link.destination.hash = b"mock_hash"
+
+    bot._delivery_link_established(mock_link)
+
+    assert handler_calls == [mock_link]
