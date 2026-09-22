@@ -16,16 +16,24 @@ from typing import Any
 import RNS
 from LXMF import LXMRouter
 
+from ._admin import register_admin_commands
 from ._announcing import BOT_DISPLAY_NAME_FILE, AnnounceMixin
 from ._cogs import CogMixin
 from ._dispatch import DispatchMixin
 from ._inbound import InboundMixin
 from ._links import LinkMixin
-from ._outbound import OutboundMixin, PendingSendAnnounceHandler
+from ._outbound import (
+    OutboundMixin,
+    PendingSendAnnounceHandler,
+    _delivery_dest_hex,
+    _delivery_hex,
+    _delivery_id_hex,
+)
 from ._propagation import PropagationMixin
 from ._rrc import RRCMixin
 from .cogs_core import load_cogs_from_directory
 from .config import BotConfig
+from .delivery import DeliveryTracker
 from .events import EventManager
 from .help import HelpSystem
 from .landlock_sandbox import apply_landlock_sandbox, landlock_status_dict
@@ -132,9 +140,11 @@ class LXMFBot(
                 "expected 'json', 'sqlite', or 'memory'",
             )
 
+        self.admins = set(self.config.admins or [])
         self.permissions = PermissionManager(
             storage=self.storage,
             enabled=self.config.permissions_enabled,
+            admins=self.admins,
         )
 
         self.events = EventManager(self.storage)
@@ -151,6 +161,8 @@ class LXMFBot(
                 open(init_file, "w", encoding="utf-8").close()
 
         self.transport = Transport(self, self.storage)
+        self.delivery = DeliveryTracker(storage=self.storage)
+        self.delivery.load_persisted()
         self.spam_protection = SpamProtection(
             storage=self.storage,
             bot=self,
@@ -269,11 +281,11 @@ class LXMFBot(
                 self.announce_now(force=True)
                 RNS.log("Initial announce sent", RNS.LOG_INFO)
 
-        self.admins = set(self.config.admins or [])
         self.hot_reloading = self.config.hot_reloading
         self.command_prefix = self.config.command_prefix
 
         self.help_system = HelpSystem(self)
+        register_admin_commands(self)
 
         self.nlp = IntentClassifier(threshold=self.config.nlp_threshold)
         self.intents = {}  # {intent_name: callback}
@@ -381,6 +393,19 @@ class LXMFBot(
             .to_dict()
         )
 
+    def on_delivery_event(self, callback=None):
+        """Subscribe to the outbound delivery event stream.
+
+        Usable as bot.on_delivery_event(fn) or as a decorator
+        @bot.on_delivery_event(). Subscribers receive event dicts with
+        ts, stage (queued, deferred, dispatched, delivered, failed,
+        cancelled, dropped), and destination/message_id/hash/reason
+        fields when available.
+        """
+        if callback is None:
+            return self.delivery.subscribe
+        return self.delivery.subscribe(callback)
+
     def get_landlock_status(self) -> dict[str, bool]:
         """Return Landlock LSM sandbox availability and activation state."""
         return landlock_status_dict(
@@ -402,10 +427,21 @@ class LXMFBot(
                     try:
                         if self.router:
                             self.router.handle_outbound(lxm)
+                            self.delivery.record(
+                                "dispatched",
+                                destination=_delivery_dest_hex(lxm),
+                                message_id=_delivery_id_hex(lxm),
+                                hash=_delivery_hex(lxm),
+                            )
                         self._persist_queue()
-                    except Exception:
+                    except Exception as e:
                         self.logger.exception(
                             "Outbound send failed, requeueing",
+                        )
+                        self.delivery.record(
+                            "failed",
+                            destination=_delivery_dest_hex(lxm),
+                            reason=str(e)[:120],
                         )
                         if not self._enqueue_outbound(lxm):
                             self.logger.exception(

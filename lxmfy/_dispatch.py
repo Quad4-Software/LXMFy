@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
     from .config import BotConfig
     from .middleware import MiddlewareManager
+    from .moderation import SpamProtection
     from .permissions import PermissionManager
 
 F = TypeVar("F", bound=Callable)
@@ -31,6 +32,7 @@ class DispatchMixin:
     logger: logging.Logger
     middleware: MiddlewareManager
     permissions: PermissionManager
+    spam_protection: SpamProtection
     thread_pool: ThreadPoolExecutor
     send: Callable[..., bool]
 
@@ -39,18 +41,17 @@ class DispatchMixin:
 
         Args:
             *args: Command name (optional).
-            **kwargs: Command attributes (name, description, admin_only).
+            **kwargs: Forwarded to Command: name, description, admin_only,
+                permissions, usage, examples, category, aliases,
+                threaded, rate_limit.
 
         """
 
         def decorator(func: F) -> F:
             """The actual decorator that registers the command."""
-            name = args[0] if len(args) > 0 else kwargs.get("name", func.__name__)
+            name = args[0] if len(args) > 0 else kwargs.pop("name", func.__name__)
 
-            description = kwargs.get("description", "No description provided")
-            admin_only = kwargs.get("admin_only", False)
-
-            cmd = Command(name=name, description=description, admin_only=admin_only)
+            cmd = Command(name=name, **kwargs)
             cmd.callback = func
             self.commands[name] = cmd
             return func
@@ -85,6 +86,17 @@ class DispatchMixin:
         if not self.permissions.has_permission(msg.sender, cmd.permissions):
             self.send(msg.sender, "You don't have permission to use this command.")
             return True
+
+        if cmd.rate_limit is not None and cmd.rate_limit > 0:
+            allowed, notice = self.spam_protection.check_command_limit(
+                msg.sender,
+                cmd_name,
+                cmd.rate_limit,
+            )
+            if not allowed:
+                if notice:
+                    self.send(msg.sender, notice)
+                return True
 
         try:
             sig = inspect.signature(cmd.callback)

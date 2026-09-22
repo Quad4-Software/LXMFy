@@ -11,6 +11,7 @@ import RNS
 from LXMF import LXMessage
 
 from .attachments import Attachment, pack_attachment
+from .delivery import DeliveryTracker
 from .lxmf_fields import pack_reaction
 from .signatures import sign_outgoing_message
 from .validation import destination_bytes
@@ -41,10 +42,37 @@ class PendingSendAnnounceHandler:
         )
 
 
+def _hex_or_none(value) -> str | None:
+    if isinstance(value, bytes):
+        return RNS.hexrep(value, delimit=False)
+    return None
+
+
+def _delivery_hex(lxm) -> str | None:
+    """Hex message hash for an lxm-like object, or None."""
+    return _hex_or_none(getattr(lxm, "hash", None))
+
+
+def _delivery_id_hex(lxm) -> str | None:
+    """Hex message_id for an lxm-like object, or None."""
+    return _hex_or_none(getattr(lxm, "message_id", None))
+
+
+def _delivery_dest_hex(lxm) -> str | None:
+    """Hex destination hash for an lxm-like object, or None."""
+    dest = getattr(lxm, "destination", None)
+    if dest is not None:
+        hashed = _hex_or_none(getattr(dest, "hash", None))
+        if hashed:
+            return hashed
+    return _hex_or_none(getattr(lxm, "destination_hash", None))
+
+
 class OutboundMixin:
     """Outbound queueing, delivery retries, and persistence."""
 
     config: BotConfig
+    delivery: DeliveryTracker
     delivery_attempts: dict
     local: RNS.Destination | None
     logger: logging.Logger
@@ -131,6 +159,12 @@ class OutboundMixin:
                     stamp_cost,
                     method,
                     include_ticket,
+                )
+                self.delivery.record(
+                    "deferred",
+                    destination=destination,
+                    title=title,
+                    reason="identity_unknown",
                 )
                 RNS.log(
                     f"Message for {destination} held until its identity is learned",
@@ -234,12 +268,24 @@ class OutboundMixin:
                         f"Delivery successful to {destination}, reset retry counter",
                         RNS.LOG_DEBUG,
                     )
+            self.delivery.record(
+                "delivered",
+                destination=destination,
+                hash=_delivery_hex(_message),
+            )
 
         def on_delivery_failure(_message):
             with self._delivery_lock:
                 current_attempts = self.delivery_attempts.get(destination, 0)
                 self.delivery_attempts[destination] = current_attempts + 1
                 self._save_delivery_attempts()
+
+            self.delivery.record(
+                "failed",
+                destination=destination,
+                hash=_delivery_hex(_message),
+                attempts=current_attempts + 1,
+            )
 
             if current_attempts + 1 < max_retries:
                 RNS.log(
@@ -294,12 +340,24 @@ class OutboundMixin:
                     "Outbound queue full (max=%s), dropped oldest message",
                     self.queue.maxsize,
                 )
+                self.delivery.record(
+                    "dropped",
+                    destination=_delivery_dest_hex(dropped),
+                    reason="queue_full",
+                )
                 del dropped
                 self.queue.put_nowait(lxm)
             except Exception:
                 self.logger.exception("Failed to enqueue outbound message")
                 return False
         self._persist_queue()
+        self.delivery.record(
+            "queued",
+            destination=_delivery_dest_hex(lxm),
+            message_id=_delivery_id_hex(lxm),
+            hash=_delivery_hex(lxm),
+            method=getattr(lxm, "desired_method", None),
+        )
         return True
 
     def _persist_queue(self):
@@ -449,6 +507,11 @@ class OutboundMixin:
                     "Pending send backlog full, dropped %s oldest message(s)",
                     dropped,
                 )
+                self.delivery.record(
+                    "dropped",
+                    reason="pending_backlog_full",
+                    attempts=dropped,
+                )
             self.storage.set("pending_sends", pending)
 
     def _flush_pending_sends(self, destination: str | None = None) -> None:
@@ -473,6 +536,11 @@ class OutboundMixin:
                         "Dropping expired pending send to %s",
                         entry.get("destination"),
                     )
+                    self.delivery.record(
+                        "dropped",
+                        destination=entry.get("destination"),
+                        reason="expired",
+                    )
                     continue
                 if destination is None or entry.get("destination") == destination:
                     retry.append(entry)
@@ -491,6 +559,12 @@ class OutboundMixin:
                     "Dropping pending send to %s after %s attempts",
                     dest,
                     attempts,
+                )
+                self.delivery.record(
+                    "dropped",
+                    destination=dest,
+                    reason="max_attempts",
+                    attempts=attempts,
                 )
                 continue
             entry["attempts"] = attempts
@@ -654,6 +728,7 @@ class OutboundMixin:
         """Cancel a pending outbound message by its message_id.
 
         The message_id is available from outbound_queue entries.
+        Returns False when no pending message carries that id.
         """
         if self.router is None:
             return False
@@ -661,7 +736,15 @@ class OutboundMixin:
             raw = bytes.fromhex(message_id)
         except (ValueError, TypeError):
             return False
+        pending = {entry.get("message_id") for entry in self.outbound_queue()}
+        if message_id not in pending:
+            return False
         self.router.cancel_outbound(raw)
+        self.delivery.record(
+            "cancelled",
+            message_id=message_id,
+            reason="admin_cancel",
+        )
         return True
 
     def get_outbound_ticket(self, destination: str) -> bytes | None:

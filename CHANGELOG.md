@@ -23,6 +23,15 @@
 - Docs header gains a language picker and hreflang links for all eight languages
 - Docs ship llms.txt and a generated llms-full.txt for LLM consumers
 - Docs emit Open Graph, Twitter card, theme-color, and JSON-LD (WebSite plus SoftwareSourceCode) metadata with a social card image, plus robots.txt
+- Delivery observability: bot.delivery records outbound lifecycle events (queued, deferred, dispatched, delivered, failed, cancelled, dropped) with subscribers via on_delivery_event and a persisted tail
+- Built-in admin commands: /queue, /cancel, /delivery, /loadext, /reloadext
+- Per-command rate limits via @bot.command(rate_limit=N), sharing the global cooldown window and persisted counters
+- lxmfy init scaffolds a project interactively (name, template, storage, prefix, admins, cogs) with --yes/--force/--here for scripts
+- Debugger reports a delivery timeline summary in send pipeline checks
+- Docs are versioned with mike: master deploys as dev, releases deploy their tag and the latest alias
+- Monthly dependency freshness workflow reports outdated packages to a tracking issue
+- Security workflow audits dependencies with pip-audit and uploads a CycloneDX SBOM
+- Docs tooling pins live in docs/requirements-docs.txt shared by the docs and release workflows
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes
@@ -38,6 +47,7 @@
 - disallow_destination, unprioritise_destination, and disallow_control_identity edit router lists directly because the matching LXMF 1.1.1 methods pop by index or reference unbound names
 - Identity files that fail to load raise a clear RuntimeError instead of passing None to LXMRouter
 - connect_rrc and disconnect_rrc guard against an uninitialized RRC manager
+- Configured admins now receive the admin role when permissions are enabled, so admin-only commands and spam bypasses apply to them
 
 ### Tests
 - Localhost UDP pair live test with two subprocess routers (LXMFY_LIVE_UDP=1)
@@ -46,6 +56,7 @@
 - Removed permanently skipped and tautological tests
 - Router control tests cover ignore/allow/prioritise lists, stamp costs, tickets, outbound queue and cancel, propagation sync, and URI ingestion against a real router
 - Benchmark suite for hot paths: field packing, command unpacking, hash parsing, permission checks, canonicalization, signatures, storage
+- Delivery tests cover tracker persistence and filters, outbound queued events, the /delivery command, per-command rate limits, admin permission wiring, and the init scaffold
 
 ### CI/CD
 - GitHub Actions for lint, typecheck, tests, live-local Alice/Bob, live UDP pair, and build

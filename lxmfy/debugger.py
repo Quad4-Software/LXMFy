@@ -1380,6 +1380,70 @@ class Debugger:
         )
         return results
 
+    def check_delivery_timeline(self, limit: int = 10) -> list[CheckResult]:
+        """Render recent delivery events from the live bot or disk."""
+        events: list = []
+        source = "none"
+        if self.bot and getattr(self.bot, "delivery", None) is not None:
+            try:
+                events = self.bot.delivery.recent(limit)
+                source = "live"
+            except Exception:
+                logger.debug("live delivery read failed", exc_info=True)
+        if not events:
+            events_path = os.path.join(self._storage_path, "delivery_events.json")
+            if os.path.isfile(events_path):
+                try:
+                    with open(events_path, encoding="utf-8") as f:
+                        raw = json.load(f)
+                    if isinstance(raw, list):
+                        events = [e for e in raw if isinstance(e, dict)][-limit:]
+                        source = "disk"
+                except Exception as e:
+                    return [
+                        CheckResult(
+                            name="delivery_timeline",
+                            status="warn",
+                            detail=f"delivery_events.json unreadable: {e}",
+                            category="send",
+                        ),
+                    ]
+        if not events:
+            return [
+                CheckResult(
+                    name="delivery_timeline",
+                    status="info",
+                    detail="no delivery events recorded yet",
+                    category="send",
+                ),
+            ]
+
+        counts: dict[str, int] = {}
+        for event in events:
+            stage = str(event.get("stage", "?"))
+            counts[stage] = counts.get(stage, 0) + 1
+        summary = ", ".join(f"{s}={n}" for s, n in sorted(counts.items()))
+        last = events[-1]
+        last_line = (
+            f"last: {last.get('stage', '?')} "
+            f"{str(last.get('destination') or '?')[:16]}"
+            + (f" ({last.get('reason')})" if last.get("reason") else "")
+        )
+        status = "warn" if counts.get("failed") or counts.get("dropped") else "info"
+        return [
+            CheckResult(
+                name="delivery_timeline",
+                status=status,
+                detail=f"{source}: {summary}. {last_line}",
+                hint=(
+                    "Recent delivery failures or drops in the stream."
+                    if status == "warn"
+                    else None
+                ),
+                category="send",
+            ),
+        ]
+
     def check_send_pipeline(self) -> list[CheckResult]:
         """Internal reasons messages would or would not leave the bot."""
         results: list[CheckResult] = []
@@ -2116,6 +2180,7 @@ class Debugger:
         report.checks.extend(self.check_interfaces())
         report.checks.extend(self.check_announce(try_announce=try_announce))
         report.checks.extend(self.check_send_pipeline())
+        report.checks.extend(self.check_delivery_timeline())
         report.checks.extend(self.check_bot_identity())
 
         if destination:

@@ -25,6 +25,7 @@ from .debugger import (
     diagnose_destination,
     sort_checks_by_severity,
 )
+from .delivery import DeliveryTracker
 from .events import Event, EventManager, EventPriority
 from .help import HelpFormatter, HelpSystem
 from .lxmf_fields import (
@@ -72,6 +73,7 @@ __all__ = [
     "Command",
     "Debugger",
     "DefaultPerms",
+    "DeliveryTracker",
     "DestinationProbe",
     "DoctorReport",
     "Event",

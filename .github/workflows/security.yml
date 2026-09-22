@@ -90,3 +90,46 @@ jobs:
 
       - name: Scan git history for secrets
         run: /tmp/gitleaks git --redact --verbose .
+
+  vuln-scan:
+    name: Dependency audit (pip-audit + SBOM)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: poetry
+
+      - name: Install project dependencies
+        run: |
+          pipx install poetry==2.4.1
+          poetry install --no-interaction --no-ansi
+
+      - name: Install audit tooling
+        run: poetry run pip install "pip-audit==2.10.1" "cyclonedx-bom==7.4.0"
+
+      - name: Audit dependencies for known vulnerabilities
+        run: poetry run pip-audit
+
+      - name: Generate SBOM
+        run: |
+          poetry run cyclonedx-py environment "$(poetry env info -p)/bin/python" \
+            --of JSON --pyproject pyproject.toml --mc-type library \
+            -o sbom.cdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          retention-days: 90

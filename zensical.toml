@@ -91,6 +91,9 @@ toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [project.extra]
+[project.extra.version]
+provider = "mike"
+alias = true
 [[project.extra.alternate]]
 name = "English"
 link = "https://lxmfy.quad4.io/"

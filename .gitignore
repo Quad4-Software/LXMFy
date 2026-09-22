@@ -43,6 +43,8 @@ testing/
 .coverage
 .hypothesis/.coverage
 coverage.xml
+docs/llms-full.txt
+.gh-pages-wt/
 benchmarks.json
 site/
 docs-dist/

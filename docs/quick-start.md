@@ -24,7 +24,13 @@
 
 ## Creating Your First Bot (Using the CLI)
 
-Use the LXMFy CLI to scaffold a project.
+Use the LXMFy CLI to scaffold a project. Two ways:
+
+- `lxmfy init` asks a few questions (name, template, storage, prefix,
+  admins) and writes a ready-to-run project directory.
+- `lxmfy create` writes a single bot file with defaults, no questions.
+
+This walkthrough uses `lxmfy create`.
 
 1.  **Open your terminal** in the directory where you want to create
     your bot project.

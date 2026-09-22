@@ -207,6 +207,22 @@ def add(ctx, a: int, b: int):
     ctx.reply(f"The result is {result}")
 ```
 
+### Per-Command Rate Limits
+
+Limit how often a single sender can invoke a command inside the global
+`cooldown` window. Hitting the limit rejects the invocation only; it
+never adds warnings or bans.
+
+``` python
+@bot.command(name="report", rate_limit=3)
+def report(ctx):
+    # each sender can call this 3 times per cooldown period
+    ...
+```
+
+Requires `permissions_enabled=True`, like the global rate limit. Users
+with the admin role or `BYPASS_SPAM` skip the check.
+
 ## Help System
 
 The framework includes an interactive help generator that provides
@@ -516,6 +532,44 @@ bot = LXMFBot(
     message_queue_size=50,
 )
 ```
+
+### Delivery Events
+
+`bot.delivery` records a bounded stream of outbound lifecycle events so
+you can watch message flow without reading logs. Stages: `queued`,
+`deferred`, `dispatched`, `delivered`, `failed`, `cancelled`, `dropped`.
+The recent tail is persisted to storage and restored on startup.
+
+``` python
+@bot.on_delivery_event()
+def watch(event):
+    print(event["stage"], event.get("destination"), event.get("reason"))
+
+# Or inspect directly
+recent = bot.delivery.recent(20)
+failures = bot.delivery.recent(stage="failed")
+to_peer = bot.delivery.recent(destination="aa11bb...")
+```
+
+Each event is a dict with `ts`, `stage`, and optional `destination`,
+`message_id`, `hash`, `method`, `attempts`, `reason`, `title`.
+
+Admins get a `/delivery [limit]` command that renders the same timeline
+in chat, and `lxmfy debug` shows a delivery timeline summary in the
+send pipeline checks.
+
+### Built-in Admin Commands
+
+These commands are registered automatically and require the sender to
+be in `admins` when permissions are enabled:
+
+| Command | Action |
+| --- | --- |
+| `/queue` | Show router outbound queue, internal queue, and held sends |
+| `/cancel <id|all>` | Cancel pending outbound messages |
+| `/delivery [n]` | Show the last n delivery events (default 15, max 50) |
+| `/loadext <name>` | Load a cog extension |
+| `/reloadext <name>` | Reload a loaded cog extension |
 
 ### Router Controls
 

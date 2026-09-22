@@ -6,7 +6,9 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-out="${1:-site/llms-full.txt}"
+# Written into docs/ before zensical build so the file ships with the
+# site sources; works with plain builds and mike versioned deploys.
+out="${1:-docs/llms-full.txt}"
 
 {
   printf '# LXMFy documentation\n\n'

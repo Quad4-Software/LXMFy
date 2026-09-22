@@ -740,6 +740,266 @@ Pass the saved lxmfy-debug-*.txt file when asking for help.
     return 2 if report.to_dict()["failures"] else 0
 
 
+def _ask(prompt: str, default: str, *, assume_yes: bool) -> str:
+    """Prompt for a value, or return the default non-interactively."""
+    if assume_yes or not sys.stdin.isatty():
+        return default
+    answer = input(f"{Colors.CYAN}{prompt} [{default}]: {Colors.ENDC}").strip()
+    return answer or default
+
+
+def _validate_admin_hashes(raw: str) -> list[str]:
+    """Split and validate a comma-separated admin hash list."""
+    hashes = []
+    for part in raw.split(","):
+        value = part.strip()
+        if not value:
+            continue
+        try:
+            bytes.fromhex(value)
+        except ValueError as exc:
+            raise ValueError(f"Admin hash is not hex: {value}") from exc
+        hashes.append(value)
+    return hashes
+
+
+def run_init(argv: list[str] | None = None) -> int:
+    """Interactive project scaffold.
+
+    Creates a project directory with a configured bot.py, a cogs
+    package, a README, and a .gitignore. Prompts for each option on a
+    TTY; --yes or a non-TTY stdin accepts defaults and flags.
+    """
+    parser = argparse.ArgumentParser(
+        prog="lxmfy init",
+        description="Scaffold a new bot project interactively",
+    )
+    parser.add_argument(
+        "name",
+        nargs="?",
+        default=None,
+        help="Project directory and default bot name",
+    )
+    parser.add_argument(
+        "--dir",
+        dest="directory",
+        default=None,
+        help="Parent directory for the project (default: current)",
+    )
+    parser.add_argument(
+        "--here",
+        action="store_true",
+        help="Scaffold into the current directory",
+    )
+    parser.add_argument(
+        "--bot-name",
+        default=None,
+        help="Bot display name (default: project directory name)",
+    )
+    parser.add_argument(
+        "--template",
+        choices=["basic", "echo", "reminder", "note", "cogtest", "rrc"],
+        default=None,
+        help="Bot template (default: basic)",
+    )
+    parser.add_argument(
+        "--storage",
+        choices=["json", "sqlite", "memory"],
+        default=None,
+        help="Storage backend for a basic bot (default: json)",
+    )
+    parser.add_argument(
+        "--prefix",
+        default=None,
+        help="Command prefix for a basic bot (default: /)",
+    )
+    parser.add_argument(
+        "--admins",
+        default=None,
+        help="Comma-separated admin LXMF hashes",
+    )
+    parser.add_argument(
+        "--no-cogs",
+        action="store_true",
+        help="Do not create the cogs package",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing files",
+    )
+    parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="Accept defaults for every prompt",
+    )
+    args = parser.parse_args(argv)
+
+    yes = args.yes
+
+    if args.here:
+        project_dir = os.path.abspath(args.directory or os.getcwd())
+    else:
+        dir_name = args.name or _ask(
+            "Project directory",
+            "mybot",
+            assume_yes=yes,
+        )
+        project_dir = os.path.abspath(os.path.join(args.directory or ".", dir_name))
+
+    default_bot_name = os.path.basename(project_dir.rstrip(os.sep)) or "mybot"
+    bot_name = args.bot_name or _ask(
+        "Bot name",
+        default_bot_name,
+        assume_yes=yes,
+    )
+    try:
+        bot_name = validate_bot_name(bot_name)
+    except ValueError as ve:
+        print_error(f"Invalid bot name '{bot_name}': {ve}")
+        return 1
+
+    template = args.template or _ask(
+        "Template (basic, echo, reminder, note, cogtest, rrc)",
+        "basic",
+        assume_yes=yes,
+    )
+    if template not in {"basic", "echo", "reminder", "note", "cogtest", "rrc"}:
+        print_error(f"Invalid template '{template}'")
+        return 1
+
+    storage = "json"
+    prefix = "/"
+    admins: list[str] = []
+    cogs = not args.no_cogs
+    if template == "basic":
+        storage = args.storage or _ask(
+            "Storage (json, sqlite, memory)",
+            "json",
+            assume_yes=yes,
+        )
+        if storage not in {"json", "sqlite", "memory"}:
+            print_error(f"Invalid storage backend '{storage}'")
+            return 1
+        prefix = args.prefix or _ask(
+            "Command prefix",
+            "/",
+            assume_yes=yes,
+        )
+        if not yes and sys.stdin.isatty() and not args.admins:
+            raw = input(
+                f"{Colors.CYAN}Admin LXMF hashes, comma-separated (optional): {Colors.ENDC}",
+            ).strip()
+        else:
+            raw = args.admins or ""
+        try:
+            admins = _validate_admin_hashes(raw or (args.admins or ""))
+        except ValueError as ve:
+            print_error(str(ve))
+            return 1
+        if not args.no_cogs and not yes and sys.stdin.isatty():
+            answer = (
+                input(
+                    f"{Colors.CYAN}Create example cogs package? [Y/n]: {Colors.ENDC}",
+                )
+                .strip()
+                .lower()
+            )
+            cogs = answer not in {"n", "no"}
+
+    if os.path.isdir(project_dir) and os.listdir(project_dir) and not args.force:
+        if yes or not sys.stdin.isatty():
+            print_error(
+                f"Directory {project_dir} is not empty. Use --force to overwrite.",
+            )
+            return 1
+        answer = (
+            input(
+                f"{Colors.CYAN}{project_dir} is not empty. Overwrite? [y/N]: {Colors.ENDC}",
+            )
+            .strip()
+            .lower()
+        )
+        if answer not in {"y", "yes"}:
+            print_info("Aborted.")
+            return 1
+
+    os.makedirs(project_dir, exist_ok=True)
+    bot_path = os.path.join(project_dir, "bot.py")
+
+    template_map = {
+        "echo": EchoBot,
+        "reminder": ReminderBot,
+        "note": NoteBot,
+        "cogtest": CogTestBot,
+        "rrc": RRCBot,
+    }
+
+    if template == "basic":
+        admins_block = (
+            "    admins={\n" + ",\n".join(f'        "{h}"' for h in admins) + "\n    },"
+            if admins
+            else "    # add your LXMF hash to admins\n    admins=set(),"
+        )
+        bot_source = f'''from lxmfy import LXMFBot
+
+bot = LXMFBot(
+    "{bot_name}",
+    command_prefix="{prefix}",
+    storage_type="{storage}",
+    storage_path="data",
+{admins_block}
+    cogs_enabled={cogs},
+)
+
+
+@bot.command("hello", description="Say hello")
+def hello(ctx):
+    ctx.reply(f"Hello {{ctx.sender}}!")
+
+
+if __name__ == "__main__":
+    bot.run()
+'''
+    else:
+        cls_name = template_map[template].__name__
+        bot_source = f'''from lxmfy.templates import {cls_name}
+
+if __name__ == "__main__":
+    bot = {cls_name}(name="{bot_name}")
+    bot.run()
+'''
+
+    with open(bot_path, "w", encoding="utf-8") as f:
+        f.write(bot_source)
+
+    if cogs:
+        create_example_cog(bot_path)
+
+    with open(os.path.join(project_dir, "README.md"), "w", encoding="utf-8") as f:
+        f.write(
+            f"# {bot_name}\n\n"
+            "LXMFy bot project.\n\n"
+            "## Run\n\n"
+            "```bash\n"
+            "pip install lxmfy\n"
+            "python bot.py\n"
+            "```\n\n"
+            "The bot prints its LXMF address on startup. Add that address "
+            "in your client and send `/help`.\n",
+        )
+
+    with open(os.path.join(project_dir, ".gitignore"), "w", encoding="utf-8") as f:
+        f.write("config/\ndata/\n__pycache__/\n*.pyc\n")
+
+    print_success(f"Project created in {project_dir}")
+    print_info(
+        f"Next: cd {os.path.relpath(project_dir)} && python bot.py",
+    )
+    return 0
+
+
 def main() -> None:
     """Main CLI entry point."""
     try:
@@ -749,11 +1009,14 @@ def main() -> None:
             interactive_mode()
             return
 
-        # Fast-path debug before the create/run/signatures parser
+        # Fast-path debug and init before the create/run/signatures parser
         if len(sys.argv) >= 2 and sys.argv[1] == "debug":
             if "--no-color" in sys.argv or os.environ.get("NO_COLOR"):
                 Colors.set_enabled(False)
             sys.exit(run_debug_command(sys.argv[2:]))
+
+        if len(sys.argv) >= 2 and sys.argv[1] == "init":
+            sys.exit(run_init(sys.argv[2:]))
 
         print_header("LXMFy Bot Framework")
 
