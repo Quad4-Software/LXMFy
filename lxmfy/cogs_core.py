@@ -76,8 +76,9 @@ def _get_sandbox_setup(bot, script_path: str) -> SandboxSetup | None:
                 "/proc",
                 "--dev",
                 "/dev",
+                # Fresh tmpfs, intentionally not a host path.
                 "--tmpfs",
-                "/tmp",  # noqa: S108
+                "/tmp",  # noqa: S108  # nosec B108
                 "--ro-bind",
                 "/usr",
                 "/usr",

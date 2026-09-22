@@ -18,6 +18,7 @@
 - request_link validates destination hashes and reports typed errors
 - Generated template bots accept a name argument instead of a dead attribute write
 - cogs directory is only created when cogs are enabled
+- CLI signatures test verifies against the identity it signed with instead of an unrecallable lookup
 
 ### Tests
 - Localhost UDP pair live test with two subprocess routers (LXMFY_LIVE_UDP=1)
@@ -26,7 +27,10 @@
 - Removed permanently skipped and tautological tests
 
 ### CI/CD
-- GitHub Actions for lint, typecheck, tests, live-local Alice/Bob, and build
+- GitHub Actions for lint, typecheck, tests, live-local Alice/Bob, live UDP pair, and build
+- Security workflow: zizmor workflow audit, bandit SAST, gitleaks secret scan
+- Coverage XML artifact on the 3.13 test leg
+- Releases build a self-contained .pyz zipapp (shiv) alongside the wheel and attach it to the GitHub release
 - Secure defaults: SHA-pinned actions, least-privilege token, Dependabot, dependency review, Scorecard, CODEOWNERS
 - OIDC publish to PyPI on GitHub release (or confirmed manual run)
 

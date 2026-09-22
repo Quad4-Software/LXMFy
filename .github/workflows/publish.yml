@@ -63,7 +63,6 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.13"
-          cache: poetry
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
@@ -78,6 +77,61 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 7
+
+  zipapp:
+    name: Build zipapp (pyz)
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: Download dist artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Build zipapp
+        run: |
+          pipx install shiv==1.0.8
+          whl=$(ls dist/lxmfy-*-py3-none-any.whl)
+          ver=$(basename "$whl" | cut -d- -f2)
+          shiv --compressed \
+            -c lxmfy \
+            -p "/usr/bin/env python3" \
+            -o "dist/lxmfy-${ver}.pyz" \
+            "$whl"
+          ls -lh dist/
+
+      - name: Smoke test zipapp
+        run: |
+          pyz=$(ls dist/lxmfy-*.pyz)
+          python3 "$pyz" --help | head -5
+
+      - name: Upload pyz artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lxmfy-zipapp
+          path: dist/*.pyz
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach pyz to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" dist/*.pyz --clobber
 
   publish-pypi:
     name: Publish to PyPI

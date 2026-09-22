@@ -7,14 +7,20 @@ on:
   pull_request:
     branches: [master]
 
-permissions:
-  contents: read
-  pull-requests: write
+concurrency:
+  group: dependency-review-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
 
 jobs:
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # comment-summary-in-pr posts a failure comment on the PR.
+      pull-requests: write
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1

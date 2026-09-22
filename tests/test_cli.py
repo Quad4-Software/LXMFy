@@ -440,8 +440,9 @@ class TestMainFunction:
     def test_main_signatures_test(self, mock_print):
         """Test main function signatures test command."""
         main()
-        # Should print signature test messages
-        assert mock_print.call_count > 5
+        printed = " ".join(str(c.args[0]) for c in mock_print.call_args_list if c.args)
+        assert "Signature verification successful" in printed
+        assert "Signature verification failed" not in printed
 
     @patch("sys.argv", ["lxmfy", "signatures", "enable"])
     @patch("builtins.print")

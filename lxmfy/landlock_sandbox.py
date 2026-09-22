@@ -262,8 +262,8 @@ def _collect_rw_roots(
             cogs_dir,
             log_dir,
             tempfile.gettempdir(),
-            "/dev/shm",
-            "/run",
+            "/dev/shm",  # nosec B108
+            "/run",  # nosec B108
         ]
     for candidate in candidates:
         existing = _existing_dir(candidate)

@@ -108,7 +108,24 @@ jobs:
         run: poetry install --no-interaction --no-ansi
 
       - name: Pytest
+        if: matrix.python-version != '3.13'
         run: poetry run pytest tests/ -v --tb=short -m "not slow and not integration"
+
+      - name: Pytest with coverage (3.13)
+        if: matrix.python-version == '3.13'
+        run: >
+          poetry run pytest tests/ -v --tb=short
+          -m "not slow and not integration"
+          --cov=lxmfy --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.13'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: error
+          retention-days: 14
 
   reticulum-isolation:
     name: Reticulum shared-instance isolation
@@ -172,6 +189,11 @@ jobs:
         env:
           LXMFY_LIVE_LOCAL: "1"
         run: poetry run pytest tests/test_live_local_alice_bob.py -v --tb=short
+
+      - name: UDP pair live LXMF
+        env:
+          LXMFY_LIVE_UDP: "1"
+        run: poetry run pytest tests/test_live_udp_pair.py -v --tb=short
 
   build:
     name: Build

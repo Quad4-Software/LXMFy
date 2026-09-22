@@ -92,7 +92,8 @@ class SignatureManager:
                     )
                     return False
 
-            if getattr(self.bot.config, "identity_pinning_enabled", False) is True:
+            bot_config = getattr(self.bot, "config", None)
+            if getattr(bot_config, "identity_pinning_enabled", False) is True:
                 pin_key = f"pin:{sender_hash}"
                 pinned_pub_key = self.bot.storage.get(pin_key)
                 current_pub_key = identity_to_use.get_public_key()

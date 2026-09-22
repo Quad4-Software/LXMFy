@@ -965,6 +965,10 @@ Examples:
                         class MockBot:
                             def __init__(self):
                                 self.permissions = MockPermissions()
+                                self.config = MockConfig()
+
+                        class MockConfig:
+                            identity_pinning_enabled = False
 
                         class MockPermissions:
                             @staticmethod
@@ -1010,11 +1014,13 @@ Examples:
                             test_msg,
                             signature,
                             RNS.hexrep(identity1.hash, delimit=False),
+                            sender_identity=identity1,
                         )
                         if is_valid:
                             print_success("OK Signature verification successful")
                         else:
                             print_error("FAIL Signature verification failed")
+                            sys.exit(1)
 
                         print_info("Signature test completed successfully!")
 

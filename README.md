@@ -39,6 +39,14 @@ cd LXMFy
 poetry install
 ```
 
+### Standalone zipapp
+
+Each GitHub release ships a `lxmfy-x.y.z.pyz` with all dependencies bundled:
+
+```bash
+python3 lxmfy-2.0.4.pyz --help
+```
+
 ## Usage
 
 ```bash
