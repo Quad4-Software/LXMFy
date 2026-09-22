@@ -1217,6 +1217,102 @@ def on_reaction(sender, reaction):
 Reaction text is capped at 16 printable characters. The raw field stays
 available in `ctx.fields` and `msg.fields` for compatibility.
 
+## Reply Threading
+
+Replies can carry the LXMF `FIELD_REPLY_TO` (`0x30`), `FIELD_REPLY_QUOTE`
+(`0x31`), and `FIELD_THREAD` (`0x08`) fields. Clients that render
+threads, like MeshChatX and Sideband, show these as proper quote
+replies instead of flat messages.
+
+`msg.reply()` threads automatically: it sets `FIELD_REPLY_TO` to the
+inbound message hash and `FIELD_THREAD` to the conversation root.
+
+``` python
+@bot.command("status")
+def status(msg):
+    msg.reply("all systems nominal")          # threaded reply
+    msg.reply("flat", reply_to=None)          # opt out of threading
+    msg.reply("noted", quote=True)            # quote the inbound text
+```
+
+For sends that are not replies, pass the fields explicitly:
+
+``` python
+bot.send(dest, "see above", reply_to=msg_hash_hex, quote="earlier text")
+```
+
+Inbound replies are parsed onto the message context:
+
+``` python
+@bot.command("ctx")
+def ctx_cmd(msg):
+    msg.reply_to      # hex hash this message replies to, or None
+    msg.reply_quote   # quoted text carried by the reply, or None
+    msg.thread        # hex thread root hash, or None
+```
+
+`pack_reply(message_hash, quote=..., thread=...)` and
+`unpack_reply(fields)` are exported for manual field handling.
+
+## Conversations
+
+Commands can ask the sender a question and treat their next message as
+the answer, instead of dispatching it as a command:
+
+``` python
+@bot.command("report")
+def report(msg):
+    title = msg.ask("Report title?", timeout=300)
+    if title is None:
+        msg.reply("Timed out.")
+        return
+    body = msg.ask("Describe the issue.", timeout=600)
+    if body is None:
+        msg.reply("Timed out.")
+        return
+    msg.reply(f"Filed: {title.content}")
+```
+
+`msg.ask(prompt, timeout=..., validator=...)` blocks the handler until
+the answer arrives, the timeout fires, or the conversation is
+cancelled. It returns an `Answer` with `content`, `fields`, `hash`,
+`sender`, and a `reply(text)` shortcut.
+
+A validator rejects bad answers and re-prompts:
+
+``` python
+num = msg.ask(
+    "Pick a number",
+    validator=lambda a: None if a.content.isdigit() else "Digits only",
+)
+```
+
+In async command handlers use `await msg.ask_async(...)`. For long
+waits, or when many conversations may be open, use the callback style so
+no thread stays parked:
+
+``` python
+msg.ask(
+    "Send the log file",
+    on_answer=lambda ans: ans.reply("received"),
+    on_timeout=lambda sender: bot.send(sender, "Too slow."),
+    timeout=3600,
+)
+```
+
+Notes:
+
+- Sending a registered command while a question is pending cancels the
+  question and runs the command. Users always have an escape hatch.
+- `bot.conversations.pending_count()` and
+  `bot.conversations.cancel(sender)` expose the registry for
+  diagnostics and admin tools.
+- The registry is capped at 1024 pending questions. `ask` returns `None`
+  when it is full.
+- Blocking `ask` parks the delivery thread handling that message. That
+  is safe for direct deliveries, but bots that sync large batches from a
+  propagation node should prefer `on_answer` callbacks.
+
 ## Storage
 
 The framework provides three storage backends:
@@ -1330,8 +1426,39 @@ def handle_message(event):
 
 ## Testing
 
-Project tests include reliability and stress scenarios in the repository
-test suite. Use the repository's test runner to execute them.
+`lxmfy.testing.TestBot` is an `LXMFBot` preconfigured for tests. No
+Reticulum instance starts. Inbound messages go through the real receive
+pipeline (middleware, spam checks, permissions, dispatch) and outbound
+sends are captured for assertions.
+
+``` python
+from lxmfy import TestBot
+
+def test_ping():
+    with TestBot() as bot:
+        @bot.command("ping")
+        def ping(msg):
+            msg.reply("pong")
+
+        sent = bot.receive("/ping", sender="alice")
+        assert sent[0].content == "pong"
+        assert sent[0].destination == bot.sender_hex("alice")
+```
+
+- `bot.receive(content, sender=..., fields=..., message_hash=...)`
+  injects a message and returns the `SentMessage` objects it produced.
+  Senders are named: `"alice"` maps to a stable fake hash, or pass a hex
+  destination hash directly.
+- `bot.drain()` pops queued outbound messages. `bot.outbox` accumulates
+  everything sent. `bot.last_sent(sender=...)` fetches the latest.
+- `bot.wait_sent(n, timeout=...)` waits for threaded commands.
+- `bot.receive_later(content, sender=..., delay=...)` answers blocking
+  `msg.ask` calls from a daemon thread.
+- `fake_message(content, source_hash=..., ...)` builds an inbound
+  message for driving `bot._message_received` directly.
+
+The repository test suite also includes reliability and stress
+scenarios. Use the repository's test runner to execute them.
 
 ### Advanced Reliability Suite
 
@@ -1627,6 +1754,7 @@ be in `admins` when permissions are enabled:
 | --- | --- |
 | `/queue` | Show router outbound queue, internal queue, and held sends |
 | `/cancel <id|all>` | Cancel pending outbound messages |
+| `/inbox [cancel <hash|all>]` | List or cancel active inbound transfers |
 | `/delivery [n]` | Show the last n delivery events (default 15, max 50) |
 | `/loadext <name>` | Load a cog extension |
 | `/reloadext <name>` | Reload a loaded cog extension |
@@ -1669,6 +1797,29 @@ not running (for example in `test_mode`).
   delivery
 - `delivery_link_available(destination)`: Whether an active RNS link
   exists to the destination
+
+**Inbound queue**
+
+- `has_message(message_hash)`: Whether an inbound LXM hash was already
+  delivered
+- `inbound_count()`: Active inbound resource transfers in progress
+- `inbound_transfers()`: Snapshot of each transfer with hash, size,
+  progress, and status
+- `cancel_inbound(resource_hash)`: Abort an active inbound transfer
+- `cancel_all_inbound()`: Abort every active inbound transfer, returns
+  the count cancelled
+
+**Peer discovery**
+
+Announce metadata for destinations this node has heard:
+
+- `get_peer_app_data(destination)`: Raw announced app_data bytes
+- `get_peer_lxmf_data(destination)`: Decoded LXMF announce metadata
+  (`display_name`, `stamp_cost`, `capabilities`), or `None` when the
+  peer has not announced valid LXMF data
+- `get_peer_announce(destination)`: Full announce record with hops,
+  received_at, interface, and app_data
+- `list_peer_announces(limit=100)`: All heard announces, newest first
 
 **Propagation**
 
@@ -1929,6 +2080,7 @@ including command handling, storage management, moderation features, and role-ba
 - [**colors**](#lxmfy.colors) – Color support module for LXMFy CLI.
 - [**commands**](#lxmfy.commands) – Command handling module for LXMFy.
 - [**config**](#lxmfy.config) – Configuration module for LXMFy.
+- [**conversations**](#lxmfy.conversations) – Multi-step conversations for LXMFBot.
 - [**core**](#lxmfy.core) – Core module for LXMFy bot framework.
 - [**debugger**](#lxmfy.debugger) – Message send/receive debugger for LXMFy.
 - [**delivery**](#lxmfy.delivery) – Delivery event stream for LXMFy.
@@ -1946,16 +2098,19 @@ including command handling, storage management, moderation features, and role-ba
 - [**signatures**](#lxmfy.signatures) – Signature management module for LXMFy.
 - [**storage**](#lxmfy.storage) – Storage module for LXMFy bot framework.
 - [**templates**](#lxmfy.templates) – Templates module for LXMFy bot framework.
+- [**testing**](#lxmfy.testing) – In-process test harness for LXMFy bots.
 - [**transport**](#lxmfy.transport) – Transport module for LXMFy bot framework.
 - [**validation**](#lxmfy.validation) – Validation module for LXMFy configuration and best practices.
 
 **Classes:**
 
+- [**Answer**](#lxmfy.Answer) – The message that answered a pending question.
 - [**Attachment**](#lxmfy.Attachment) – Represents a generic attachment.
 - [**AttachmentType**](#lxmfy.AttachmentType) – Enumerates the different types of attachments supported.
 - [**BotConfig**](#lxmfy.BotConfig) – Configuration settings for LXMFBot.
 - [**CheckResult**](#lxmfy.CheckResult) – One diagnostic check result.
 - [**Command**](#lxmfy.Command) – A decorator class for bot commands.
+- [**ConversationManager**](#lxmfy.ConversationManager) – Tracks pending questions per sender and resolves them on reply.
 - [**Debugger**](#lxmfy.Debugger) – Diagnose LXMF send/receive connectivity problems.
 - [**DefaultPerms**](#lxmfy.DefaultPerms) – Default permission set
 - [**DeliveryTracker**](#lxmfy.DeliveryTracker) – Bounded delivery event stream with subscribers and persistence.
@@ -1979,8 +2134,10 @@ including command handling, storage management, moderation features, and role-ba
 - [**Role**](#lxmfy.Role) – Role definition with permissions
 - [**SQLiteStorage**](#lxmfy.SQLiteStorage) – SQLite database storage backend.
 - [**ScheduledTask**](#lxmfy.ScheduledTask) – A scheduled task with cron-style timing.
+- [**SentMessage**](#lxmfy.SentMessage) – An outbound message captured from the bot queue.
 - [**Storage**](#lxmfy.Storage) – Facade for the underlying storage backend.
 - [**TaskScheduler**](#lxmfy.TaskScheduler) – Manages scheduled tasks and background processes.
+- [**TestBot**](#lxmfy.TestBot) – LXMFBot preconfigured for tests, with message injection.
 
 **Functions:**
 
@@ -1989,6 +2146,7 @@ including command handling, storage management, moderation features, and role-ba
 - [**decode_envelope**](#lxmfy.decode_envelope) – Decode CBOR bytes into an RRC envelope map.
 - [**diagnose_destination**](#lxmfy.diagnose_destination) – Convenience helper to probe a destination.
 - [**encode_envelope**](#lxmfy.encode_envelope) – Encode an RRC envelope to CBOR bytes.
+- [**fake_message**](#lxmfy.fake_message) – Build an LXMessage-shaped object for inbound injection.
 - [**format_validation_results**](#lxmfy.format_validation_results) – Format validation results into a readable string.
 - [**load_cogs_from_directory**](#lxmfy.load_cogs_from_directory) – Loads all Python modules and executable scripts from a directory.
 - [**make_envelope**](#lxmfy.make_envelope) – Build a canonical RRC envelope map with integer keys.
@@ -1996,10 +2154,12 @@ including command handling, storage management, moderation features, and role-ba
 - [**pack_attachment**](#lxmfy.pack_attachment) – Packs an Attachment object into a dictionary suitable for LXMF transmission.
 - [**pack_icon_appearance_field**](#lxmfy.pack_icon_appearance_field) – Packs an IconAppearance object into a dictionary suitable for LXMF transmission.
 - [**pack_reaction**](#lxmfy.pack_reaction) – Build a FIELD_REACTION dict for a target message hash.
+- [**pack_reply**](#lxmfy.pack_reply) – Build reply threading fields for an outbound LXMF message.
 - [**pack_result**](#lxmfy.pack_result) – Pack a result into a ``FIELD_RESULTS``-compatible dict.
 - [**sort_checks_by_severity**](#lxmfy.sort_checks_by_severity) – Sort checks fail-first within their existing relative order.
 - [**unpack_commands**](#lxmfy.unpack_commands) – Extract command entries from LXMF message fields.
 - [**unpack_reaction**](#lxmfy.unpack_reaction) – Parse a FIELD_REACTION dict from LXMF message fields.
+- [**unpack_reply**](#lxmfy.unpack_reply) – Parse reply threading fields from an inbound LXMF message.
 - [**validate_bot**](#lxmfy.validate_bot) – Run all validation checks on a bot instance.
 - [**validate_envelope**](#lxmfy.validate_envelope) – Return True when required envelope fields are present and well-formed.
 
@@ -2009,11 +2169,72 @@ including command handling, storage management, moderation features, and role-ba
 - [**DEFAULT_DEST_NAME**](#lxmfy.DEFAULT_DEST_NAME) – 
 - [**FIELD_COMMANDS**](#lxmfy.FIELD_COMMANDS) (<code>[int](#int)</code>) – 
 - [**FIELD_REACTION**](#lxmfy.FIELD_REACTION) (<code>[int](#int)</code>) – 
+- [**FIELD_REPLY_QUOTE**](#lxmfy.FIELD_REPLY_QUOTE) (<code>[int](#int)</code>) – 
+- [**FIELD_REPLY_TO**](#lxmfy.FIELD_REPLY_TO) (<code>[int](#int)</code>) – 
 - [**FIELD_RESULTS**](#lxmfy.FIELD_RESULTS) (<code>[int](#int)</code>) – 
+- [**FIELD_THREAD**](#lxmfy.FIELD_THREAD) (<code>[int](#int)</code>) – 
 - [**MessageDebugger**](#lxmfy.MessageDebugger) – 
 - [**REACTION_CONTENT**](#lxmfy.REACTION_CONTENT) (<code>[int](#int)</code>) – 
 - [**REACTION_TO**](#lxmfy.REACTION_TO) (<code>[int](#int)</code>) – 
 - [**RRC_VERSION**](#lxmfy.RRC_VERSION) – 
+
+### `lxmfy.Answer`
+
+```python
+Answer(sender, message, bot=None)
+```
+
+The message that answered a pending question.
+
+**Functions:**
+
+- [**reply**](#lxmfy.Answer.reply) – Reply to the sender who answered, threading to their message.
+
+**Attributes:**
+
+- [**content**](#lxmfy.Answer.content) – 
+- [**fields**](#lxmfy.Answer.fields) – 
+- [**hash**](#lxmfy.Answer.hash) – 
+- [**message**](#lxmfy.Answer.message) – 
+- [**sender**](#lxmfy.Answer.sender) – 
+
+#### `lxmfy.Answer.content`
+
+```python
+content = raw.decode('utf-8') if isinstance(raw, (bytes, bytearray)) else str(raw)
+```
+
+#### `lxmfy.Answer.fields`
+
+```python
+fields = getattr(message, 'fields', None) or {}
+```
+
+#### `lxmfy.Answer.hash`
+
+```python
+hash = msg_hash.hex() if isinstance(msg_hash, (bytes, bytearray)) else None
+```
+
+#### `lxmfy.Answer.message`
+
+```python
+message = message
+```
+
+#### `lxmfy.Answer.reply`
+
+```python
+reply(text, **kwargs)
+```
+
+Reply to the sender who answered, threading to their message.
+
+#### `lxmfy.Answer.sender`
+
+```python
+sender = sender
+```
 
 ### `lxmfy.Attachment`
 
@@ -2664,6 +2885,121 @@ rate_limit = rate_limit
 ```python
 threaded = threaded
 ```
+
+### `lxmfy.ConversationManager`
+
+```python
+ConversationManager(bot)
+```
+
+Tracks pending questions per sender and resolves them on reply.
+
+**Functions:**
+
+- [**ask**](#lxmfy.ConversationManager.ask) – Send a prompt and block until the sender replies.
+- [**ask_async**](#lxmfy.ConversationManager.ask_async) – Send a prompt and await the sender's reply.
+- [**ask_callback**](#lxmfy.ConversationManager.ask_callback) – Send a prompt and invoke on_answer(answer) when the reply arrives.
+- [**cancel**](#lxmfy.ConversationManager.cancel) – Cancel a pending question for a sender.
+- [**cancel_all**](#lxmfy.ConversationManager.cancel_all) – Cancel every pending question.
+- [**has_pending**](#lxmfy.ConversationManager.has_pending) – True when a question is waiting on this sender.
+- [**pending_count**](#lxmfy.ConversationManager.pending_count) – Number of senders with a pending question.
+- [**pending_senders**](#lxmfy.ConversationManager.pending_senders) – Senders with a pending question.
+- [**resolve**](#lxmfy.ConversationManager.resolve) – Feed an inbound message to a pending question.
+
+**Attributes:**
+
+- [**bot**](#lxmfy.ConversationManager.bot) – 
+
+#### `lxmfy.ConversationManager.ask`
+
+```python
+ask(sender, prompt, *, timeout=DEFAULT_TIMEOUT, title=None, validator=None)
+```
+
+Send a prompt and block until the sender replies.
+
+Returns an Answer with content, fields, and hash, or None on
+timeout or cancellation. In async command handlers use
+``await msg.ask_async(...)`` instead. For long waits prefer the
+callback style with ``on_answer`` so no thread stays parked.
+
+#### `lxmfy.ConversationManager.ask_async`
+
+```python
+ask_async(sender, prompt, *, timeout=DEFAULT_TIMEOUT, title=None, validator=None)
+```
+
+Send a prompt and await the sender's reply.
+
+Same contract as ask, for async command handlers.
+
+#### `lxmfy.ConversationManager.ask_callback`
+
+```python
+ask_callback(sender, prompt, on_answer, *, timeout=DEFAULT_TIMEOUT, title=None, validator=None, on_timeout=None)
+```
+
+Send a prompt and invoke on_answer(answer) when the reply arrives.
+
+Non-blocking. on_timeout(sender) fires if the sender never
+answers. Returns False when the pending limit is reached.
+
+#### `lxmfy.ConversationManager.bot`
+
+```python
+bot = bot
+```
+
+#### `lxmfy.ConversationManager.cancel`
+
+```python
+cancel(sender)
+```
+
+Cancel a pending question for a sender.
+
+#### `lxmfy.ConversationManager.cancel_all`
+
+```python
+cancel_all()
+```
+
+Cancel every pending question.
+
+#### `lxmfy.ConversationManager.has_pending`
+
+```python
+has_pending(sender)
+```
+
+True when a question is waiting on this sender.
+
+#### `lxmfy.ConversationManager.pending_count`
+
+```python
+pending_count()
+```
+
+Number of senders with a pending question.
+
+#### `lxmfy.ConversationManager.pending_senders`
+
+```python
+pending_senders()
+```
+
+Senders with a pending question.
+
+#### `lxmfy.ConversationManager.resolve`
+
+```python
+resolve(sender, message)
+```
+
+Feed an inbound message to a pending question.
+
+Returns True when the message was consumed as an answer. When a
+validator rejects the answer the question stays pending.
 
 ### `lxmfy.DEFAULT_DEST_NAME`
 
@@ -3512,10 +3848,28 @@ FIELD_COMMANDS: int = _fc
 FIELD_REACTION: int = _frc
 ```
 
+### `lxmfy.FIELD_REPLY_QUOTE`
+
+```python
+FIELD_REPLY_QUOTE: int = _frq
+```
+
+### `lxmfy.FIELD_REPLY_TO`
+
+```python
+FIELD_REPLY_TO: int = _frt
+```
+
 ### `lxmfy.FIELD_RESULTS`
 
 ```python
 FIELD_RESULTS: int = _fr
+```
+
+### `lxmfy.FIELD_THREAD`
+
+```python
+FIELD_THREAD: int = _ft
 ```
 
 ### `lxmfy.HelpFormatter`
@@ -3787,6 +4141,8 @@ This class manages the bot's lifecycle, including:
 - [**allow_destination**](#lxmfy.LXMFBot.allow_destination) – Add an identity to the router allow list.
 - [**announce_now**](#lxmfy.LXMFBot.announce_now) – Send an LXMF delivery announce using the current display name.
 - [**announce_propagation_node**](#lxmfy.LXMFBot.announce_propagation_node) – Announce this node as a propagation node.
+- [**cancel_all_inbound**](#lxmfy.LXMFBot.cancel_all_inbound) – Cancel all active inbound resource transfers.
+- [**cancel_inbound**](#lxmfy.LXMFBot.cancel_inbound) – Cancel an active inbound resource transfer by its hash.
 - [**cancel_outbound**](#lxmfy.LXMFBot.cancel_outbound) – Cancel a pending outbound message by its message_id.
 - [**cancel_propagation_sync**](#lxmfy.LXMFBot.cancel_propagation_sync) – Tear down an in-progress propagation node sync.
 - [**cleanup**](#lxmfy.LXMFBot.cleanup) – Clean up resources.
@@ -3807,15 +4163,22 @@ This class manages the bot's lifecycle, including:
 - [**get_outbound_stamp_cost**](#lxmfy.LXMFBot.get_outbound_stamp_cost) – Get the stamp cost a destination announced it requires, or None.
 - [**get_outbound_ticket**](#lxmfy.LXMFBot.get_outbound_ticket) – Get a valid outbound ticket held for a destination, or None.
 - [**get_outbound_ticket_expiry**](#lxmfy.LXMFBot.get_outbound_ticket_expiry) – Get the expiry timestamp of the outbound ticket for a destination.
+- [**get_peer_announce**](#lxmfy.LXMFBot.get_peer_announce) – Return announce metadata held for a destination, or None.
+- [**get_peer_app_data**](#lxmfy.LXMFBot.get_peer_app_data) – Recall the app_data a destination last announced, or None.
+- [**get_peer_lxmf_data**](#lxmfy.LXMFBot.get_peer_lxmf_data) – Decode an LXMF peer's announced metadata, or None.
 - [**get_propagation_node_status**](#lxmfy.LXMFBot.get_propagation_node_status) – Get information about configured and discovered propagation nodes.
 - [**get_propagation_stats**](#lxmfy.LXMFBot.get_propagation_stats) – Compile propagation node statistics.
 - [**get_propagation_storage_stats**](#lxmfy.LXMFBot.get_propagation_storage_stats) – Get storage statistics for propagation node mode.
+- [**has_message**](#lxmfy.LXMFBot.has_message) – Check whether an inbound LXM hash was already delivered.
 - [**ignore_destination**](#lxmfy.LXMFBot.ignore_destination) – Silently drop all inbound LXMF traffic from a destination.
 - [**ignore_stamps**](#lxmfy.LXMFBot.ignore_stamps) – Disable stamp enforcement for inbound deliveries.
+- [**inbound_count**](#lxmfy.LXMFBot.inbound_count) – Number of inbound resource transfers currently in progress.
+- [**inbound_transfers**](#lxmfy.LXMFBot.inbound_transfers) – Snapshot active inbound resource transfers.
 - [**ingest_lxm_uri**](#lxmfy.LXMFBot.ingest_lxm_uri) – Import an LXM from an lxm:// URI as if it arrived off the wire.
 - [**intent**](#lxmfy.LXMFBot.intent) – Decorator for registering intent handlers.
 - [**is_admin**](#lxmfy.LXMFBot.is_admin) – Check if a sender is an admin.
 - [**is_ignored**](#lxmfy.LXMFBot.is_ignored) – Check whether inbound traffic from a destination is dropped.
+- [**list_peer_announces**](#lxmfy.LXMFBot.list_peer_announces) – List destinations whose announces this node has heard.
 - [**load_extension**](#lxmfy.LXMFBot.load_extension) – Load an extension (cog) by name.
 - [**on_delivery_event**](#lxmfy.LXMFBot.on_delivery_event) – Subscribe to the outbound delivery event stream.
 - [**on_first_message**](#lxmfy.LXMFBot.on_first_message) – Decorator for registering first message handlers
@@ -3853,6 +4216,7 @@ This class manages the bot's lifecycle, including:
 - [**commands**](#lxmfy.LXMFBot.commands) – 
 - [**config**](#lxmfy.LXMFBot.config) – 
 - [**config_path**](#lxmfy.LXMFBot.config_path) – 
+- [**conversations**](#lxmfy.LXMFBot.conversations) – 
 - [**delivery**](#lxmfy.LXMFBot.delivery) – 
 - [**delivery_attempts**](#lxmfy.LXMFBot.delivery_attempts) – 
 - [**delivery_callbacks**](#lxmfy.LXMFBot.delivery_callbacks) – 
@@ -3975,6 +4339,27 @@ enabled, since the announce requires the propagation destination.
 announce_time = self.config.announce
 ```
 
+#### `lxmfy.LXMFBot.cancel_all_inbound`
+
+```python
+cancel_all_inbound()
+```
+
+Cancel all active inbound resource transfers.
+
+Returns the number of transfers that were in progress.
+
+#### `lxmfy.LXMFBot.cancel_inbound`
+
+```python
+cancel_inbound(resource_hash)
+```
+
+Cancel an active inbound resource transfer by its hash.
+
+The hash is available from inbound_transfers. Returns False when
+no active transfer carries that hash.
+
 #### `lxmfy.LXMFBot.cancel_outbound`
 
 ```python
@@ -4072,6 +4457,12 @@ Connect to an RRC hub as a client.
 **Returns:**
 
 -  – The RRCClient session.
+
+#### `lxmfy.LXMFBot.conversations`
+
+```python
+conversations = ConversationManager(self)
+```
 
 #### `lxmfy.LXMFBot.delivery`
 
@@ -4267,6 +4658,41 @@ get_outbound_ticket_expiry(destination)
 
 Get the expiry timestamp of the outbound ticket for a destination.
 
+#### `lxmfy.LXMFBot.get_peer_announce`
+
+```python
+get_peer_announce(destination)
+```
+
+Return announce metadata held for a destination, or None.
+
+Includes hop count, when the announce was heard, which interface
+delivered it, and the announced app_data.
+
+#### `lxmfy.LXMFBot.get_peer_app_data`
+
+```python
+get_peer_app_data(destination)
+```
+
+Recall the app_data a destination last announced, or None.
+
+App data is whatever the announcing app attached to its announce.
+LXMF delivery announces carry the peer display name; other apps
+publish their own metadata.
+
+#### `lxmfy.LXMFBot.get_peer_lxmf_data`
+
+```python
+get_peer_lxmf_data(destination)
+```
+
+Decode an LXMF peer's announced metadata, or None.
+
+LXMF delivery announces pack app_data as msgpack:
+[display_name, stamp_cost, supported_functionality]. Returns a
+dict with those keys when the peer announced a valid LXMF entry.
+
 #### `lxmfy.LXMFBot.get_propagation_node_status`
 
 ```python
@@ -4300,6 +4726,14 @@ Get storage statistics for propagation node mode.
 **Returns:**
 
 - **dict** – Dictionary with storage statistics or None if not a propagation node.
+
+#### `lxmfy.LXMFBot.has_message`
+
+```python
+has_message(message_hash)
+```
+
+Check whether an inbound LXM hash was already delivered.
 
 #### `lxmfy.LXMFBot.help_system`
 
@@ -4336,6 +4770,26 @@ ignore_stamps()
 ```
 
 Disable stamp enforcement for inbound deliveries.
+
+#### `lxmfy.LXMFBot.inbound_count`
+
+```python
+inbound_count()
+```
+
+Number of inbound resource transfers currently in progress.
+
+#### `lxmfy.LXMFBot.inbound_transfers`
+
+```python
+inbound_transfers()
+```
+
+Snapshot active inbound resource transfers.
+
+Each entry carries the resource hash, byte sizes, transfer
+progress, and status so callers can monitor or cancel large
+inbound deliveries.
 
 #### `lxmfy.LXMFBot.ingest_lxm_uri`
 
@@ -4405,6 +4859,18 @@ link_handlers = []
 ```python
 links = {}
 ```
+
+#### `lxmfy.LXMFBot.list_peer_announces`
+
+```python
+list_peer_announces(limit=100)
+```
+
+List destinations whose announces this node has heard.
+
+Returns up to limit entries sorted newest first, each shaped like
+get_peer_announce output. Useful for discovering propagation
+nodes, peers, and services on the reachable mesh.
 
 #### `lxmfy.LXMFBot.load_extension`
 
@@ -5972,6 +6438,73 @@ Check if the task should run at the given time.
 
 - **bool** (<code>[bool](#bool)</code>) – True if the task should run, False otherwise.
 
+### `lxmfy.SentMessage`
+
+```python
+SentMessage(lxm)
+```
+
+An outbound message captured from the bot queue.
+
+**Attributes:**
+
+- [**content**](#lxmfy.SentMessage.content) – 
+- [**destination**](#lxmfy.SentMessage.destination) – 
+- [**fields**](#lxmfy.SentMessage.fields) – 
+- [**include_ticket**](#lxmfy.SentMessage.include_ticket) – 
+- [**method**](#lxmfy.SentMessage.method) – 
+- [**raw**](#lxmfy.SentMessage.raw) – 
+- [**stamp_cost**](#lxmfy.SentMessage.stamp_cost) – 
+- [**title**](#lxmfy.SentMessage.title) – 
+
+#### `lxmfy.SentMessage.content`
+
+```python
+content = content.decode('utf-8', errors='replace') if isinstance(content, (bytes, bytearray)) else str(content)
+```
+
+#### `lxmfy.SentMessage.destination`
+
+```python
+destination = dest.hex() if isinstance(dest, (bytes, bytearray)) else str(dest)
+```
+
+#### `lxmfy.SentMessage.fields`
+
+```python
+fields = getattr(lxm, 'fields', None) or {}
+```
+
+#### `lxmfy.SentMessage.include_ticket`
+
+```python
+include_ticket = getattr(lxm, 'include_ticket', None)
+```
+
+#### `lxmfy.SentMessage.method`
+
+```python
+method = getattr(lxm, 'desired_method', None)
+```
+
+#### `lxmfy.SentMessage.raw`
+
+```python
+raw = lxm
+```
+
+#### `lxmfy.SentMessage.stamp_cost`
+
+```python
+stamp_cost = getattr(lxm, 'stamp_cost', None)
+```
+
+#### `lxmfy.SentMessage.title`
+
+```python
+title = title.decode('utf-8', errors='replace') if isinstance(title, (bytes, bytearray)) else title
+```
+
 ### `lxmfy.Storage`
 
 ```python
@@ -6250,6 +6783,1272 @@ stop_event = Event()
 ```python
 tasks: dict[str, ScheduledTask] = {}
 ```
+
+### `lxmfy.TestBot`
+
+```python
+TestBot(name='TestBot', **overrides)
+```
+
+Bases: <code>[LXMFBot](#lxmfy.core.LXMFBot)</code>
+
+LXMFBot preconfigured for tests, with message injection.
+
+**Parameters:**
+
+- **name** (<code>[str](#str)</code>) – Bot name.
+- ****overrides** – Any LXMFBot/BotConfig keyword. Test-friendly defaults
+apply unless overridden.
+
+**Functions:**
+
+- [**add_cog**](#lxmfy.TestBot.add_cog) – Add a cog to the bot.
+- [**allow_control_identity**](#lxmfy.TestBot.allow_control_identity) – Allow an identity to issue control requests to this node.
+- [**allow_destination**](#lxmfy.TestBot.allow_destination) – Add an identity to the router allow list.
+- [**announce_now**](#lxmfy.TestBot.announce_now) – Send an LXMF delivery announce using the current display name.
+- [**announce_propagation_node**](#lxmfy.TestBot.announce_propagation_node) – Announce this node as a propagation node.
+- [**cancel_all_inbound**](#lxmfy.TestBot.cancel_all_inbound) – Cancel all active inbound resource transfers.
+- [**cancel_inbound**](#lxmfy.TestBot.cancel_inbound) – Cancel an active inbound resource transfer by its hash.
+- [**cancel_outbound**](#lxmfy.TestBot.cancel_outbound) – Cancel a pending outbound message by its message_id.
+- [**cancel_propagation_sync**](#lxmfy.TestBot.cancel_propagation_sync) – Tear down an in-progress propagation node sync.
+- [**cleanup**](#lxmfy.TestBot.cleanup) – Clean up resources.
+- [**close**](#lxmfy.TestBot.close) – Shut down the bot and remove temporary storage.
+- [**command**](#lxmfy.TestBot.command) – Decorator for registering commands.
+- [**connect_rrc**](#lxmfy.TestBot.connect_rrc) – Connect to an RRC hub as a client.
+- [**delivery_link_available**](#lxmfy.TestBot.delivery_link_available) – Check whether a direct link is up for a destination.
+- [**diagnose_connectivity**](#lxmfy.TestBot.diagnose_connectivity) – Run a connectivity doctor report for this bot.
+- [**diagnose_destination**](#lxmfy.TestBot.diagnose_destination) – Probe path and identity for a destination hash.
+- [**disallow_control_identity**](#lxmfy.TestBot.disallow_control_identity) – Revoke control request access for an identity.
+- [**disallow_destination**](#lxmfy.TestBot.disallow_destination) – Remove an identity from the router allow list.
+- [**disconnect_rrc**](#lxmfy.TestBot.disconnect_rrc) – Disconnect one or all RRC hub sessions.
+- [**drain**](#lxmfy.TestBot.drain) – Pop all queued outbound messages and append them to outbox.
+- [**enforce_stamps**](#lxmfy.TestBot.enforce_stamps) – Enforce stamp requirements for inbound deliveries.
+- [**generate_ticket**](#lxmfy.TestBot.generate_ticket) – Generate an LXMF ticket that lets a destination bypass stamp costs.
+- [**get_debugger**](#lxmfy.TestBot.get_debugger) – Return a Debugger bound to this bot.
+- [**get_inbound_tickets**](#lxmfy.TestBot.get_inbound_tickets) – List valid inbound tickets held for a destination, or None.
+- [**get_landlock_status**](#lxmfy.TestBot.get_landlock_status) – Return Landlock LSM sandbox availability and activation state.
+- [**get_outbound_progress**](#lxmfy.TestBot.get_outbound_progress) – Get transfer progress (0.0-1.0) for a pending outbound LXM.
+- [**get_outbound_stamp_cost**](#lxmfy.TestBot.get_outbound_stamp_cost) – Get the stamp cost a destination announced it requires, or None.
+- [**get_outbound_ticket**](#lxmfy.TestBot.get_outbound_ticket) – Get a valid outbound ticket held for a destination, or None.
+- [**get_outbound_ticket_expiry**](#lxmfy.TestBot.get_outbound_ticket_expiry) – Get the expiry timestamp of the outbound ticket for a destination.
+- [**get_peer_announce**](#lxmfy.TestBot.get_peer_announce) – Return announce metadata held for a destination, or None.
+- [**get_peer_app_data**](#lxmfy.TestBot.get_peer_app_data) – Recall the app_data a destination last announced, or None.
+- [**get_peer_lxmf_data**](#lxmfy.TestBot.get_peer_lxmf_data) – Decode an LXMF peer's announced metadata, or None.
+- [**get_propagation_node_status**](#lxmfy.TestBot.get_propagation_node_status) – Get information about configured and discovered propagation nodes.
+- [**get_propagation_stats**](#lxmfy.TestBot.get_propagation_stats) – Compile propagation node statistics.
+- [**get_propagation_storage_stats**](#lxmfy.TestBot.get_propagation_storage_stats) – Get storage statistics for propagation node mode.
+- [**has_message**](#lxmfy.TestBot.has_message) – Check whether an inbound LXM hash was already delivered.
+- [**ignore_destination**](#lxmfy.TestBot.ignore_destination) – Silently drop all inbound LXMF traffic from a destination.
+- [**ignore_stamps**](#lxmfy.TestBot.ignore_stamps) – Disable stamp enforcement for inbound deliveries.
+- [**inbound_count**](#lxmfy.TestBot.inbound_count) – Number of inbound resource transfers currently in progress.
+- [**inbound_transfers**](#lxmfy.TestBot.inbound_transfers) – Snapshot active inbound resource transfers.
+- [**ingest_lxm_uri**](#lxmfy.TestBot.ingest_lxm_uri) – Import an LXM from an lxm:// URI as if it arrived off the wire.
+- [**intent**](#lxmfy.TestBot.intent) – Decorator for registering intent handlers.
+- [**is_admin**](#lxmfy.TestBot.is_admin) – Check if a sender is an admin.
+- [**is_ignored**](#lxmfy.TestBot.is_ignored) – Check whether inbound traffic from a destination is dropped.
+- [**last_sent**](#lxmfy.TestBot.last_sent) – Most recent outbound message, optionally filtered by sender.
+- [**list_peer_announces**](#lxmfy.TestBot.list_peer_announces) – List destinations whose announces this node has heard.
+- [**load_extension**](#lxmfy.TestBot.load_extension) – Load an extension (cog) by name.
+- [**on_delivery_event**](#lxmfy.TestBot.on_delivery_event) – Subscribe to the outbound delivery event stream.
+- [**on_first_message**](#lxmfy.TestBot.on_first_message) – Decorator for registering first message handlers
+- [**on_link**](#lxmfy.TestBot.on_link) – Register a handler for incoming links.
+- [**on_message**](#lxmfy.TestBot.on_message) – Decorator for registering message handlers
+- [**on_reaction**](#lxmfy.TestBot.on_reaction) – Decorator for registering reaction handlers.
+- [**on_rrc**](#lxmfy.TestBot.on_rrc) – Register a handler for RRC events.
+- [**outbound_queue**](#lxmfy.TestBot.outbound_queue) – Snapshot pending outbound messages.
+- [**prioritise_destination**](#lxmfy.TestBot.prioritise_destination) – Mark a destination for prioritised outbound processing.
+- [**react**](#lxmfy.TestBot.react) – Send a reaction to a message.
+- [**receive**](#lxmfy.TestBot.receive) – Inject an inbound message through the real receive pipeline.
+- [**receive_later**](#lxmfy.TestBot.receive_later) – Deliver an inbound message on a daemon thread after a delay.
+- [**received**](#lxmfy.TestBot.received) – Decorator for registering delivery callbacks.
+- [**reload_extension**](#lxmfy.TestBot.reload_extension) – Reload an extension (cog) by name.
+- [**remove_cog**](#lxmfy.TestBot.remove_cog) – Remove a cog from the bot by its class name.
+- [**request_link**](#lxmfy.TestBot.request_link) – Request an RNS link to a destination.
+- [**request_page**](#lxmfy.TestBot.request_page) – Request a page from a destination.
+- [**run**](#lxmfy.TestBot.run) – Run the bot
+- [**send_with_attachment**](#lxmfy.TestBot.send_with_attachment) – Send a message with an attachment to a destination.
+- [**sender_hash**](#lxmfy.TestBot.sender_hash) – Stable source hash for a named fake sender.
+- [**sender_hex**](#lxmfy.TestBot.sender_hex) – Hex source hash for a named fake sender.
+- [**set_inbound_stamp_cost**](#lxmfy.TestBot.set_inbound_stamp_cost) – Require a proof-of-work stamp for inbound deliveries.
+- [**set_message_storage_limit**](#lxmfy.TestBot.set_message_storage_limit) – Set the message storage limit for propagation node mode.
+- [**set_propagation_node**](#lxmfy.TestBot.set_propagation_node) – Manually set the outbound propagation node.
+- [**set_retain_on_node**](#lxmfy.TestBot.set_retain_on_node) – Keep copies of synced messages on the propagation node.
+- [**sync_propagation_node**](#lxmfy.TestBot.sync_propagation_node) – Request stored messages from the outbound propagation node.
+- [**unignore_destination**](#lxmfy.TestBot.unignore_destination) – Stop dropping inbound traffic from a destination.
+- [**unprioritise_destination**](#lxmfy.TestBot.unprioritise_destination) – Remove a destination from the prioritised list.
+- [**validate**](#lxmfy.TestBot.validate) – Run validation checks and return formatted results.
+- [**wait_sent**](#lxmfy.TestBot.wait_sent) – Wait until at least count new outbound messages are queued.
+
+**Attributes:**
+
+- [**admins**](#lxmfy.TestBot.admins) – 
+- [**announce_enabled**](#lxmfy.TestBot.announce_enabled) – 
+- [**announce_time**](#lxmfy.TestBot.announce_time) – 
+- [**cogs**](#lxmfy.TestBot.cogs) – 
+- [**cogs_dir**](#lxmfy.TestBot.cogs_dir) – 
+- [**command_prefix**](#lxmfy.TestBot.command_prefix) – 
+- [**commands**](#lxmfy.TestBot.commands) – 
+- [**config**](#lxmfy.TestBot.config) – 
+- [**config_path**](#lxmfy.TestBot.config_path) – 
+- [**conversations**](#lxmfy.TestBot.conversations) – 
+- [**delivery**](#lxmfy.TestBot.delivery) – 
+- [**delivery_attempts**](#lxmfy.TestBot.delivery_attempts) – 
+- [**delivery_callbacks**](#lxmfy.TestBot.delivery_callbacks) – 
+- [**events**](#lxmfy.TestBot.events) – 
+- [**first_message_handlers**](#lxmfy.TestBot.first_message_handlers) – 
+- [**help_system**](#lxmfy.TestBot.help_system) – 
+- [**hot_reloading**](#lxmfy.TestBot.hot_reloading) – 
+- [**identity**](#lxmfy.TestBot.identity) – 
+- [**intents**](#lxmfy.TestBot.intents) – 
+- [**landlock_active**](#lxmfy.TestBot.landlock_active) – 
+- [**link_handlers**](#lxmfy.TestBot.link_handlers) – 
+- [**links**](#lxmfy.TestBot.links) – 
+- [**local**](#lxmfy.TestBot.local) – 
+- [**logger**](#lxmfy.TestBot.logger) – 
+- [**message_handlers**](#lxmfy.TestBot.message_handlers) – 
+- [**middleware**](#lxmfy.TestBot.middleware) – 
+- [**name**](#lxmfy.TestBot.name) (<code>[str](#str)</code>) – Bot display name used for LXMF when no file override applies.
+- [**nlp**](#lxmfy.TestBot.nlp) – 
+- [**outbox**](#lxmfy.TestBot.outbox) (<code>[list](#list)[[SentMessage](#lxmfy.testing.SentMessage)]</code>) – 
+- [**permissions**](#lxmfy.TestBot.permissions) – 
+- [**queue**](#lxmfy.TestBot.queue) – 
+- [**reaction_handlers**](#lxmfy.TestBot.reaction_handlers) – 
+- [**receipts**](#lxmfy.TestBot.receipts) – 
+- [**reticulum_config_dir**](#lxmfy.TestBot.reticulum_config_dir) – 
+- [**router**](#lxmfy.TestBot.router) – 
+- [**rrc**](#lxmfy.TestBot.rrc) – 
+- [**rrc_handlers**](#lxmfy.TestBot.rrc_handlers) – 
+- [**scheduler**](#lxmfy.TestBot.scheduler) – 
+- [**send**](#lxmfy.TestBot.send) (<code>[Callable](#collections.abc.Callable)[..., [bool](#bool)]</code>) – 
+- [**signature_manager**](#lxmfy.TestBot.signature_manager) – 
+- [**spam_protection**](#lxmfy.TestBot.spam_protection) – 
+- [**storage**](#lxmfy.TestBot.storage) – 
+- [**thread_pool**](#lxmfy.TestBot.thread_pool) – 
+- [**transport**](#lxmfy.TestBot.transport) – 
+
+#### `lxmfy.TestBot.add_cog`
+
+```python
+add_cog(cog)
+```
+
+Add a cog to the bot.
+
+**Parameters:**
+
+- **cog** – The cog instance to add.
+
+#### `lxmfy.TestBot.admins`
+
+```python
+admins = set(self.config.admins or [])
+```
+
+#### `lxmfy.TestBot.allow_control_identity`
+
+```python
+allow_control_identity(destination)
+```
+
+Allow an identity to issue control requests to this node.
+
+Control requests include peer sync and unpeer operations on a
+propagation node. Returns False on an invalid hash.
+
+#### `lxmfy.TestBot.allow_destination`
+
+```python
+allow_destination(destination)
+```
+
+Add an identity to the router allow list.
+
+When the allow list is non-empty, LXMF only accepts deliveries
+from listed identities. Returns False on an invalid hash.
+
+#### `lxmfy.TestBot.announce_enabled`
+
+```python
+announce_enabled = self.config.announce_enabled
+```
+
+#### `lxmfy.TestBot.announce_now`
+
+```python
+announce_now(force=False)
+```
+
+Send an LXMF delivery announce using the current display name.
+
+LXMF builds delivery announce app_data from the destination display name
+at announce time; this method refreshes that from :attr:`name`, optional
+``announce_display_name_file``, or ``bot_display_name.txt`` before
+sending.
+
+**Parameters:**
+
+- **force** (<code>[bool](#bool)</code>) – If True, send now and skip the on-disk announce interval
+throttle (still respects ``announce_enabled`` and requires a
+running router). If False, behave like the periodic announce
+task (honours ``announce_time`` and the throttle file).
+
+#### `lxmfy.TestBot.announce_propagation_node`
+
+```python
+announce_propagation_node()
+```
+
+Announce this node as a propagation node.
+
+Returns False unless the router is running with propagation
+enabled, since the announce requires the propagation destination.
+
+#### `lxmfy.TestBot.announce_time`
+
+```python
+announce_time = self.config.announce
+```
+
+#### `lxmfy.TestBot.cancel_all_inbound`
+
+```python
+cancel_all_inbound()
+```
+
+Cancel all active inbound resource transfers.
+
+Returns the number of transfers that were in progress.
+
+#### `lxmfy.TestBot.cancel_inbound`
+
+```python
+cancel_inbound(resource_hash)
+```
+
+Cancel an active inbound resource transfer by its hash.
+
+The hash is available from inbound_transfers. Returns False when
+no active transfer carries that hash.
+
+#### `lxmfy.TestBot.cancel_outbound`
+
+```python
+cancel_outbound(message_id)
+```
+
+Cancel a pending outbound message by its message_id.
+
+The message_id is available from outbound_queue entries.
+Returns False when no pending message carries that id.
+
+#### `lxmfy.TestBot.cancel_propagation_sync`
+
+```python
+cancel_propagation_sync()
+```
+
+Tear down an in-progress propagation node sync.
+
+#### `lxmfy.TestBot.cleanup`
+
+```python
+cleanup()
+```
+
+Clean up resources.
+
+#### `lxmfy.TestBot.close`
+
+```python
+close()
+```
+
+Shut down the bot and remove temporary storage.
+
+#### `lxmfy.TestBot.cogs`
+
+```python
+cogs = {}
+```
+
+#### `lxmfy.TestBot.cogs_dir`
+
+```python
+cogs_dir = os.path.join(self.config_path, self.config.cogs_dir)
+```
+
+#### `lxmfy.TestBot.command`
+
+```python
+command(*args, **kwargs)
+```
+
+Decorator for registering commands.
+
+**Parameters:**
+
+- ***args** – Command name (optional).
+- ****kwargs** – Forwarded to Command: name, description, admin_only,
+permissions, usage, examples, category, aliases,
+threaded, rate_limit.
+
+#### `lxmfy.TestBot.command_prefix`
+
+```python
+command_prefix = self.config.command_prefix
+```
+
+#### `lxmfy.TestBot.commands`
+
+```python
+commands = {}
+```
+
+#### `lxmfy.TestBot.config`
+
+```python
+config = BotConfig(**kwargs)
+```
+
+#### `lxmfy.TestBot.config_path`
+
+```python
+config_path = self.config.config_path
+```
+
+#### `lxmfy.TestBot.connect_rrc`
+
+```python
+connect_rrc(hub_hash, rooms=None, nick=None, dest_name=None, auto_reconnect=None)
+```
+
+Connect to an RRC hub as a client.
+
+**Parameters:**
+
+- **hub_hash** (<code>[str](#str)</code>) – Hub destination hash as hex.
+- **rooms** (<code>[list](#list)[[str](#str)] | None</code>) – Optional rooms to join after WELCOME.
+- **nick** (<code>[str](#str) | None</code>) – Optional nickname override for this hub.
+- **dest_name** (<code>[str](#str) | None</code>) – Destination name (default rrc.hub).
+- **auto_reconnect** (<code>[bool](#bool) | None</code>) – Override auto-reconnect for this session.
+
+**Returns:**
+
+-  – The RRCClient session.
+
+#### `lxmfy.TestBot.conversations`
+
+```python
+conversations = ConversationManager(self)
+```
+
+#### `lxmfy.TestBot.delivery`
+
+```python
+delivery = DeliveryTracker(storage=self.storage)
+```
+
+#### `lxmfy.TestBot.delivery_attempts`
+
+```python
+delivery_attempts = {}
+```
+
+#### `lxmfy.TestBot.delivery_callbacks`
+
+```python
+delivery_callbacks = []
+```
+
+#### `lxmfy.TestBot.delivery_link_available`
+
+```python
+delivery_link_available(destination)
+```
+
+Check whether a direct link is up for a destination.
+
+When True, outbound messages to this destination can deliver over
+an established link instead of opportunistic packets or a
+propagation node.
+
+#### `lxmfy.TestBot.diagnose_connectivity`
+
+```python
+diagnose_connectivity(destination=None, *, request_path=False, wait=0.0)
+```
+
+Run a connectivity doctor report for this bot.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str) | None</code>) – Optional peer hash to include in send diagnosis.
+- **request_path** (<code>[bool](#bool)</code>) – Request a path when probing destination.
+- **wait** (<code>[float](#float)</code>) – Seconds to wait for path discovery.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – Structured doctor report dict.
+
+#### `lxmfy.TestBot.diagnose_destination`
+
+```python
+diagnose_destination(destination, *, request_path=False, wait=0.0)
+```
+
+Probe path and identity for a destination hash.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – Hex destination hash.
+- **request_path** (<code>[bool](#bool)</code>) – Whether to request a path if missing.
+- **wait** (<code>[float](#float)</code>) – Seconds to wait for a path after requesting.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – Dict describing identity/path status and hints.
+
+#### `lxmfy.TestBot.disallow_control_identity`
+
+```python
+disallow_control_identity(destination)
+```
+
+Revoke control request access for an identity.
+
+Operates on the list directly because LXMRouter.disallow_control
+pops by index in LXMF 1.1.1 and raises instead of removing.
+
+#### `lxmfy.TestBot.disallow_destination`
+
+```python
+disallow_destination(destination)
+```
+
+Remove an identity from the router allow list.
+
+Operates on the list directly because LXMRouter.disallow pops by
+index in LXMF 1.1.1 and raises instead of removing the entry.
+
+#### `lxmfy.TestBot.disconnect_rrc`
+
+```python
+disconnect_rrc(hub_hash=None)
+```
+
+Disconnect one or all RRC hub sessions.
+
+#### `lxmfy.TestBot.drain`
+
+```python
+drain()
+```
+
+Pop all queued outbound messages and append them to outbox.
+
+#### `lxmfy.TestBot.enforce_stamps`
+
+```python
+enforce_stamps()
+```
+
+Enforce stamp requirements for inbound deliveries.
+
+#### `lxmfy.TestBot.events`
+
+```python
+events = EventManager(self.storage)
+```
+
+#### `lxmfy.TestBot.first_message_handlers`
+
+```python
+first_message_handlers = []
+```
+
+#### `lxmfy.TestBot.generate_ticket`
+
+```python
+generate_ticket(destination, expiry=None)
+```
+
+Generate an LXMF ticket that lets a destination bypass stamp costs.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – The destination hash the ticket is valid for.
+- **expiry** (<code>[int](#int) | None</code>) – Seconds until expiry. None uses the LXMF default.
+
+Returns a dict with expires and ticket keys, or None when a valid
+ticket was recently delivered or the hash is invalid.
+
+#### `lxmfy.TestBot.get_debugger`
+
+```python
+get_debugger()
+```
+
+Return a Debugger bound to this bot.
+
+#### `lxmfy.TestBot.get_inbound_tickets`
+
+```python
+get_inbound_tickets(destination)
+```
+
+List valid inbound tickets held for a destination, or None.
+
+#### `lxmfy.TestBot.get_landlock_status`
+
+```python
+get_landlock_status()
+```
+
+Return Landlock LSM sandbox availability and activation state.
+
+#### `lxmfy.TestBot.get_outbound_progress`
+
+```python
+get_outbound_progress(lxm_hash)
+```
+
+Get transfer progress (0.0-1.0) for a pending outbound LXM.
+
+Accepts a hex hash from outbound_queue. Returns None when the
+message is not in the outbound queue.
+
+#### `lxmfy.TestBot.get_outbound_stamp_cost`
+
+```python
+get_outbound_stamp_cost(destination)
+```
+
+Get the stamp cost a destination announced it requires, or None.
+
+#### `lxmfy.TestBot.get_outbound_ticket`
+
+```python
+get_outbound_ticket(destination)
+```
+
+Get a valid outbound ticket held for a destination, or None.
+
+Outbound tickets are tickets a peer sent us so our deliveries to
+them satisfy their stamp requirement.
+
+#### `lxmfy.TestBot.get_outbound_ticket_expiry`
+
+```python
+get_outbound_ticket_expiry(destination)
+```
+
+Get the expiry timestamp of the outbound ticket for a destination.
+
+#### `lxmfy.TestBot.get_peer_announce`
+
+```python
+get_peer_announce(destination)
+```
+
+Return announce metadata held for a destination, or None.
+
+Includes hop count, when the announce was heard, which interface
+delivered it, and the announced app_data.
+
+#### `lxmfy.TestBot.get_peer_app_data`
+
+```python
+get_peer_app_data(destination)
+```
+
+Recall the app_data a destination last announced, or None.
+
+App data is whatever the announcing app attached to its announce.
+LXMF delivery announces carry the peer display name; other apps
+publish their own metadata.
+
+#### `lxmfy.TestBot.get_peer_lxmf_data`
+
+```python
+get_peer_lxmf_data(destination)
+```
+
+Decode an LXMF peer's announced metadata, or None.
+
+LXMF delivery announces pack app_data as msgpack:
+[display_name, stamp_cost, supported_functionality]. Returns a
+dict with those keys when the peer announced a valid LXMF entry.
+
+#### `lxmfy.TestBot.get_propagation_node_status`
+
+```python
+get_propagation_node_status()
+```
+
+Get information about configured and discovered propagation nodes.
+
+**Returns:**
+
+- **dict** – Dictionary with propagation node configuration and status.
+
+#### `lxmfy.TestBot.get_propagation_stats`
+
+```python
+get_propagation_stats()
+```
+
+Compile propagation node statistics.
+
+Returns None when this bot is not running as a propagation node.
+
+#### `lxmfy.TestBot.get_propagation_storage_stats`
+
+```python
+get_propagation_storage_stats()
+```
+
+Get storage statistics for propagation node mode.
+
+**Returns:**
+
+- **dict** – Dictionary with storage statistics or None if not a propagation node.
+
+#### `lxmfy.TestBot.has_message`
+
+```python
+has_message(message_hash)
+```
+
+Check whether an inbound LXM hash was already delivered.
+
+#### `lxmfy.TestBot.help_system`
+
+```python
+help_system = HelpSystem(self)
+```
+
+#### `lxmfy.TestBot.hot_reloading`
+
+```python
+hot_reloading = self.config.hot_reloading
+```
+
+#### `lxmfy.TestBot.identity`
+
+```python
+identity = identity
+```
+
+#### `lxmfy.TestBot.ignore_destination`
+
+```python
+ignore_destination(destination)
+```
+
+Silently drop all inbound LXMF traffic from a destination.
+
+Returns False when the router is not running or the hash is invalid.
+
+#### `lxmfy.TestBot.ignore_stamps`
+
+```python
+ignore_stamps()
+```
+
+Disable stamp enforcement for inbound deliveries.
+
+#### `lxmfy.TestBot.inbound_count`
+
+```python
+inbound_count()
+```
+
+Number of inbound resource transfers currently in progress.
+
+#### `lxmfy.TestBot.inbound_transfers`
+
+```python
+inbound_transfers()
+```
+
+Snapshot active inbound resource transfers.
+
+Each entry carries the resource hash, byte sizes, transfer
+progress, and status so callers can monitor or cancel large
+inbound deliveries.
+
+#### `lxmfy.TestBot.ingest_lxm_uri`
+
+```python
+ingest_lxm_uri(uri)
+```
+
+Import an LXM from an lxm:// URI as if it arrived off the wire.
+
+#### `lxmfy.TestBot.intent`
+
+```python
+intent(name, examples)
+```
+
+Decorator for registering intent handlers.
+
+**Parameters:**
+
+- **name** (<code>[str](#str)</code>) – The name of the intent.
+- **examples** (<code>[list](#list)[[str](#str)]</code>) – A list of example phrases for this intent.
+
+#### `lxmfy.TestBot.intents`
+
+```python
+intents = {}
+```
+
+#### `lxmfy.TestBot.is_admin`
+
+```python
+is_admin(sender)
+```
+
+Check if a sender is an admin.
+
+**Parameters:**
+
+- **sender** – The sender's identity hash.
+
+**Returns:**
+
+-  – True if the sender is an admin, False otherwise.
+
+#### `lxmfy.TestBot.is_ignored`
+
+```python
+is_ignored(destination)
+```
+
+Check whether inbound traffic from a destination is dropped.
+
+#### `lxmfy.TestBot.landlock_active`
+
+```python
+landlock_active = False
+```
+
+#### `lxmfy.TestBot.last_sent`
+
+```python
+last_sent(sender=None)
+```
+
+Most recent outbound message, optionally filtered by sender.
+
+#### `lxmfy.TestBot.link_handlers`
+
+```python
+link_handlers = []
+```
+
+#### `lxmfy.TestBot.links`
+
+```python
+links = {}
+```
+
+#### `lxmfy.TestBot.list_peer_announces`
+
+```python
+list_peer_announces(limit=100)
+```
+
+List destinations whose announces this node has heard.
+
+Returns up to limit entries sorted newest first, each shaped like
+get_peer_announce output. Useful for discovering propagation
+nodes, peers, and services on the reachable mesh.
+
+#### `lxmfy.TestBot.load_extension`
+
+```python
+load_extension(name)
+```
+
+Load an extension (cog) by name.
+
+**Parameters:**
+
+- **name** (<code>[str](#str)</code>) – The name of the extension to load.
+
+**Raises:**
+
+- <code>[ValueError](#ValueError)</code> – If the module name contains invalid characters.
+- <code>[ImportError](#ImportError)</code> – If the extension is missing setup function or fails to load.
+
+#### `lxmfy.TestBot.local`
+
+```python
+local = None
+```
+
+#### `lxmfy.TestBot.logger`
+
+```python
+logger = logging.getLogger('lxmfy')
+```
+
+#### `lxmfy.TestBot.message_handlers`
+
+```python
+message_handlers = []
+```
+
+#### `lxmfy.TestBot.middleware`
+
+```python
+middleware = MiddlewareManager()
+```
+
+#### `lxmfy.TestBot.name`
+
+```python
+name: str
+```
+
+Bot display name used for LXMF when no file override applies.
+
+#### `lxmfy.TestBot.nlp`
+
+```python
+nlp = IntentClassifier(threshold=self.config.nlp_threshold)
+```
+
+#### `lxmfy.TestBot.on_delivery_event`
+
+```python
+on_delivery_event(callback=None)
+```
+
+Subscribe to the outbound delivery event stream.
+
+Usable as bot.on_delivery_event(fn) or as a decorator
+@bot.on_delivery_event(). Subscribers receive event dicts with
+ts, stage (queued, deferred, dispatched, delivered, failed,
+cancelled, dropped), and destination/message_id/hash/reason
+fields when available.
+
+#### `lxmfy.TestBot.on_first_message`
+
+```python
+on_first_message()
+```
+
+Decorator for registering first message handlers
+
+#### `lxmfy.TestBot.on_link`
+
+```python
+on_link(callback)
+```
+
+Register a handler for incoming links.
+
+#### `lxmfy.TestBot.on_message`
+
+```python
+on_message()
+```
+
+Decorator for registering message handlers
+
+#### `lxmfy.TestBot.on_reaction`
+
+```python
+on_reaction()
+```
+
+Decorator for registering reaction handlers.
+
+Handlers are called as handler(sender, reaction) where reaction
+carries reaction_to, reaction_emoji, and reaction_sender.
+
+#### `lxmfy.TestBot.on_rrc`
+
+```python
+on_rrc(callback=None)
+```
+
+Register a handler for RRC events.
+
+Handler signature: ``handler(event, client, payload)``.
+Payload is an RRCMessage for room events, or a dict for status/welcome.
+
+#### `lxmfy.TestBot.outbound_queue`
+
+```python
+outbound_queue()
+```
+
+Snapshot pending outbound messages.
+
+Each entry carries hash, message_id, destination, state, and
+progress so callers can feed hashes back into cancel_outbound or
+get_outbound_progress.
+
+#### `lxmfy.TestBot.outbox`
+
+```python
+outbox: list[SentMessage] = []
+```
+
+#### `lxmfy.TestBot.permissions`
+
+```python
+permissions = PermissionManager(storage=self.storage, enabled=self.config.permissions_enabled, admins=self.admins)
+```
+
+#### `lxmfy.TestBot.prioritise_destination`
+
+```python
+prioritise_destination(destination)
+```
+
+Mark a destination for prioritised outbound processing.
+
+#### `lxmfy.TestBot.queue`
+
+```python
+queue = Queue(maxsize=queue_size)
+```
+
+#### `lxmfy.TestBot.react`
+
+```python
+react(destination, message_hash, reaction)
+```
+
+Send a reaction to a message.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – The destination hash of the message author.
+- **message_hash** (<code>[str](#str)</code>) – The full LXMessage hash being reacted to, hex.
+- **reaction** (<code>[str](#str)</code>) – The reaction content, usually a single emoji.
+
+Reactions travel as an LXMF FIELD_REACTION dict on an otherwise
+empty message. Clients that understand the field attach it to the
+target message; clients that do not see a short empty delivery.
+
+#### `lxmfy.TestBot.reaction_handlers`
+
+```python
+reaction_handlers = []
+```
+
+#### `lxmfy.TestBot.receipts`
+
+```python
+receipts = []
+```
+
+#### `lxmfy.TestBot.receive`
+
+```python
+receive(content, *, sender='alice', title=None, fields=None, message_hash=None)
+```
+
+Inject an inbound message through the real receive pipeline.
+
+Returns the outbound messages produced while handling it. For
+threaded commands use wait_sent after receive.
+
+#### `lxmfy.TestBot.receive_later`
+
+```python
+receive_later(content, *, sender='alice', delay=0.05, **kwargs)
+```
+
+Deliver an inbound message on a daemon thread after a delay.
+
+Used to answer blocking msg.ask calls inside command handlers.
+
+#### `lxmfy.TestBot.received`
+
+```python
+received(function)
+```
+
+Decorator for registering delivery callbacks.
+
+**Parameters:**
+
+- **function** – The function to call when a message is delivered.
+
+#### `lxmfy.TestBot.reload_extension`
+
+```python
+reload_extension(name)
+```
+
+Reload an extension (cog) by name.
+
+#### `lxmfy.TestBot.remove_cog`
+
+```python
+remove_cog(cog_name)
+```
+
+Remove a cog from the bot by its class name.
+
+**Parameters:**
+
+- **cog_name** (<code>[str](#str)</code>) – The name of the cog class to remove.
+
+#### `lxmfy.TestBot.request_link`
+
+```python
+request_link(destination_hash, callback=None, app_name='lxmf', *aspects)
+```
+
+Request an RNS link to a destination.
+
+**Parameters:**
+
+- **destination_hash** (<code>[str](#str)</code>) – The destination hash string.
+- **callback** (<code>[Callable](#collections.abc.Callable) | None</code>) – Optional callback when link is established.
+- **app_name** (<code>[str](#str)</code>) – The app name for the destination (default: "lxmf").
+- ***aspects** (<code>[str](#str)</code>) – Additional aspects for the destination (default: "delivery" if none provided).
+
+#### `lxmfy.TestBot.request_page`
+
+```python
+request_page(destination_hash, page_path, field_data=None)
+```
+
+Request a page from a destination.
+
+**Parameters:**
+
+- **destination_hash** (<code>[str](#str)</code>) – The destination hash.
+- **page_path** (<code>[str](#str)</code>) – The path to the page.
+- **field_data** (<code>[dict](#dict) | None</code>) – Optional field data to send with the request.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – The response from the destination.
+
+#### `lxmfy.TestBot.reticulum_config_dir`
+
+```python
+reticulum_config_dir = os.path.abspath(self.config_path)
+```
+
+#### `lxmfy.TestBot.router`
+
+```python
+router = None
+```
+
+#### `lxmfy.TestBot.rrc`
+
+```python
+rrc = None
+```
+
+#### `lxmfy.TestBot.rrc_handlers`
+
+```python
+rrc_handlers = []
+```
+
+#### `lxmfy.TestBot.run`
+
+```python
+run(delay=10)
+```
+
+Run the bot
+
+#### `lxmfy.TestBot.scheduler`
+
+```python
+scheduler = TaskScheduler(self)
+```
+
+#### `lxmfy.TestBot.send`
+
+```python
+send: Callable[..., bool]
+```
+
+#### `lxmfy.TestBot.send_with_attachment`
+
+```python
+send_with_attachment(destination, message, attachment, title='Reply', stamp_cost=None, opportunistic=None, include_ticket=None)
+```
+
+Send a message with an attachment to a destination.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – The destination hash.
+- **message** (<code>[str](#str)</code>) – The message content.
+- **attachment** (<code>[Attachment](#lxmfy.attachments.Attachment)</code>) – The attachment to send.
+- **title** (<code>[str](#str)</code>) – The message title.
+- **stamp_cost** (<code>[int](#int) | None</code>) – Optional outbound stamp cost for this message.
+- **opportunistic** (<code>[bool](#bool) | None</code>) – Whether to use opportunistic sending.
+- **include_ticket** (<code>[bool](#bool) | None</code>) – Whether to include an LXMF reply ticket.
+
+#### `lxmfy.TestBot.sender_hash`
+
+```python
+sender_hash(sender='alice')
+```
+
+Stable source hash for a named fake sender.
+
+Accepts a name (mapped to a fixed random hash per bot) or a hex
+destination hash.
+
+#### `lxmfy.TestBot.sender_hex`
+
+```python
+sender_hex(sender='alice')
+```
+
+Hex source hash for a named fake sender.
+
+#### `lxmfy.TestBot.set_inbound_stamp_cost`
+
+```python
+set_inbound_stamp_cost(stamp_cost)
+```
+
+Require a proof-of-work stamp for inbound deliveries.
+
+**Parameters:**
+
+- **stamp_cost** (<code>[int](#int) | None</code>) – Required stamp value between 1 and 254, or None
+to clear the requirement.
+
+Returns False when the bot's delivery destination is not
+registered or LXMF rejects the cost.
+
+#### `lxmfy.TestBot.set_message_storage_limit`
+
+```python
+set_message_storage_limit(megabytes)
+```
+
+Set the message storage limit for propagation node mode.
+
+**Parameters:**
+
+- **megabytes** (<code>[float](#float)</code>) – Storage limit in megabytes. Set to 0 for unlimited.
+
+#### `lxmfy.TestBot.set_propagation_node`
+
+```python
+set_propagation_node(node_hash)
+```
+
+Manually set the outbound propagation node.
+
+**Parameters:**
+
+- **node_hash** (<code>[str](#str)</code>) – The destination hash of the propagation node.
+
+#### `lxmfy.TestBot.set_retain_on_node`
+
+```python
+set_retain_on_node(retain)
+```
+
+Keep copies of synced messages on the propagation node.
+
+Only meaningful when this bot runs as a propagation node.
+
+#### `lxmfy.TestBot.signature_manager`
+
+```python
+signature_manager = SignatureManager(self, verification_enabled=self.config.signature_verification_enabled, require_signatures=self.config.require_message_signatures, request_unknown_identities=self.config.request_unknown_identities)
+```
+
+#### `lxmfy.TestBot.spam_protection`
+
+```python
+spam_protection = SpamProtection(storage=self.storage, bot=self, rate_limit=self.config.rate_limit, cooldown=self.config.cooldown, max_warnings=self.config.max_warnings, warning_timeout=self.config.warning_timeout)
+```
+
+#### `lxmfy.TestBot.storage`
+
+```python
+storage = Storage(JSONStorage(self.config.storage_path))
+```
+
+#### `lxmfy.TestBot.sync_propagation_node`
+
+```python
+sync_propagation_node(max_messages=None)
+```
+
+Request stored messages from the outbound propagation node.
+
+Establishes a link to the configured propagation node if needed
+and downloads messages held for this bot's identity. Delivery
+completes asynchronously through the normal inbound pipeline.
+
+**Parameters:**
+
+- **max_messages** (<code>[int](#int) | None</code>) – Maximum messages to request. None requests all.
+
+Returns False when no router, identity, or outbound propagation
+node is configured.
+
+#### `lxmfy.TestBot.thread_pool`
+
+```python
+thread_pool = ThreadPoolExecutor(max_workers=5)
+```
+
+#### `lxmfy.TestBot.transport`
+
+```python
+transport = Transport(self, self.storage)
+```
+
+#### `lxmfy.TestBot.unignore_destination`
+
+```python
+unignore_destination(destination)
+```
+
+Stop dropping inbound traffic from a destination.
+
+#### `lxmfy.TestBot.unprioritise_destination`
+
+```python
+unprioritise_destination(destination)
+```
+
+Remove a destination from the prioritised list.
+
+Operates on the list directly because LXMRouter.unprioritise in
+LXMF 1.1.1 references an unbound name and always fails.
+
+#### `lxmfy.TestBot.validate`
+
+```python
+validate()
+```
+
+Run validation checks and return formatted results.
+
+#### `lxmfy.TestBot.wait_sent`
+
+```python
+wait_sent(count=1, timeout=5.0)
+```
+
+Wait until at least count new outbound messages are queued.
 
 ### `lxmfy.attachments`
 
@@ -7733,6 +9532,209 @@ test_mode: bool = False
 warning_timeout: int = 300
 ```
 
+### `lxmfy.conversations`
+
+Multi-step conversations for LXMFBot.
+
+Commands can ask a sender a question and consume their next message as the
+answer instead of dispatching it as a command. Supports blocking, awaited,
+and callback styles.
+
+**Classes:**
+
+- [**Answer**](#lxmfy.conversations.Answer) – The message that answered a pending question.
+- [**ConversationManager**](#lxmfy.conversations.ConversationManager) – Tracks pending questions per sender and resolves them on reply.
+
+**Attributes:**
+
+- [**DEFAULT_TIMEOUT**](#lxmfy.conversations.DEFAULT_TIMEOUT) – 
+- [**MAX_PENDING**](#lxmfy.conversations.MAX_PENDING) – 
+
+#### `lxmfy.conversations.Answer`
+
+```python
+Answer(sender, message, bot=None)
+```
+
+The message that answered a pending question.
+
+**Functions:**
+
+- [**reply**](#lxmfy.conversations.Answer.reply) – Reply to the sender who answered, threading to their message.
+
+**Attributes:**
+
+- [**content**](#lxmfy.conversations.Answer.content) – 
+- [**fields**](#lxmfy.conversations.Answer.fields) – 
+- [**hash**](#lxmfy.conversations.Answer.hash) – 
+- [**message**](#lxmfy.conversations.Answer.message) – 
+- [**sender**](#lxmfy.conversations.Answer.sender) – 
+
+##### `lxmfy.conversations.Answer.content`
+
+```python
+content = raw.decode('utf-8') if isinstance(raw, (bytes, bytearray)) else str(raw)
+```
+
+##### `lxmfy.conversations.Answer.fields`
+
+```python
+fields = getattr(message, 'fields', None) or {}
+```
+
+##### `lxmfy.conversations.Answer.hash`
+
+```python
+hash = msg_hash.hex() if isinstance(msg_hash, (bytes, bytearray)) else None
+```
+
+##### `lxmfy.conversations.Answer.message`
+
+```python
+message = message
+```
+
+##### `lxmfy.conversations.Answer.reply`
+
+```python
+reply(text, **kwargs)
+```
+
+Reply to the sender who answered, threading to their message.
+
+##### `lxmfy.conversations.Answer.sender`
+
+```python
+sender = sender
+```
+
+#### `lxmfy.conversations.ConversationManager`
+
+```python
+ConversationManager(bot)
+```
+
+Tracks pending questions per sender and resolves them on reply.
+
+**Functions:**
+
+- [**ask**](#lxmfy.conversations.ConversationManager.ask) – Send a prompt and block until the sender replies.
+- [**ask_async**](#lxmfy.conversations.ConversationManager.ask_async) – Send a prompt and await the sender's reply.
+- [**ask_callback**](#lxmfy.conversations.ConversationManager.ask_callback) – Send a prompt and invoke on_answer(answer) when the reply arrives.
+- [**cancel**](#lxmfy.conversations.ConversationManager.cancel) – Cancel a pending question for a sender.
+- [**cancel_all**](#lxmfy.conversations.ConversationManager.cancel_all) – Cancel every pending question.
+- [**has_pending**](#lxmfy.conversations.ConversationManager.has_pending) – True when a question is waiting on this sender.
+- [**pending_count**](#lxmfy.conversations.ConversationManager.pending_count) – Number of senders with a pending question.
+- [**pending_senders**](#lxmfy.conversations.ConversationManager.pending_senders) – Senders with a pending question.
+- [**resolve**](#lxmfy.conversations.ConversationManager.resolve) – Feed an inbound message to a pending question.
+
+**Attributes:**
+
+- [**bot**](#lxmfy.conversations.ConversationManager.bot) – 
+
+##### `lxmfy.conversations.ConversationManager.ask`
+
+```python
+ask(sender, prompt, *, timeout=DEFAULT_TIMEOUT, title=None, validator=None)
+```
+
+Send a prompt and block until the sender replies.
+
+Returns an Answer with content, fields, and hash, or None on
+timeout or cancellation. In async command handlers use
+``await msg.ask_async(...)`` instead. For long waits prefer the
+callback style with ``on_answer`` so no thread stays parked.
+
+##### `lxmfy.conversations.ConversationManager.ask_async`
+
+```python
+ask_async(sender, prompt, *, timeout=DEFAULT_TIMEOUT, title=None, validator=None)
+```
+
+Send a prompt and await the sender's reply.
+
+Same contract as ask, for async command handlers.
+
+##### `lxmfy.conversations.ConversationManager.ask_callback`
+
+```python
+ask_callback(sender, prompt, on_answer, *, timeout=DEFAULT_TIMEOUT, title=None, validator=None, on_timeout=None)
+```
+
+Send a prompt and invoke on_answer(answer) when the reply arrives.
+
+Non-blocking. on_timeout(sender) fires if the sender never
+answers. Returns False when the pending limit is reached.
+
+##### `lxmfy.conversations.ConversationManager.bot`
+
+```python
+bot = bot
+```
+
+##### `lxmfy.conversations.ConversationManager.cancel`
+
+```python
+cancel(sender)
+```
+
+Cancel a pending question for a sender.
+
+##### `lxmfy.conversations.ConversationManager.cancel_all`
+
+```python
+cancel_all()
+```
+
+Cancel every pending question.
+
+##### `lxmfy.conversations.ConversationManager.has_pending`
+
+```python
+has_pending(sender)
+```
+
+True when a question is waiting on this sender.
+
+##### `lxmfy.conversations.ConversationManager.pending_count`
+
+```python
+pending_count()
+```
+
+Number of senders with a pending question.
+
+##### `lxmfy.conversations.ConversationManager.pending_senders`
+
+```python
+pending_senders()
+```
+
+Senders with a pending question.
+
+##### `lxmfy.conversations.ConversationManager.resolve`
+
+```python
+resolve(sender, message)
+```
+
+Feed an inbound message to a pending question.
+
+Returns True when the message was consumed as an answer. When a
+validator rejects the answer the question stays pending.
+
+#### `lxmfy.conversations.DEFAULT_TIMEOUT`
+
+```python
+DEFAULT_TIMEOUT = 300.0
+```
+
+#### `lxmfy.conversations.MAX_PENDING`
+
+```python
+MAX_PENDING = 1024
+```
+
 ### `lxmfy.core`
 
 Core module for LXMFy bot framework.
@@ -7779,6 +9781,8 @@ This class manages the bot's lifecycle, including:
 - [**allow_destination**](#lxmfy.core.LXMFBot.allow_destination) – Add an identity to the router allow list.
 - [**announce_now**](#lxmfy.core.LXMFBot.announce_now) – Send an LXMF delivery announce using the current display name.
 - [**announce_propagation_node**](#lxmfy.core.LXMFBot.announce_propagation_node) – Announce this node as a propagation node.
+- [**cancel_all_inbound**](#lxmfy.core.LXMFBot.cancel_all_inbound) – Cancel all active inbound resource transfers.
+- [**cancel_inbound**](#lxmfy.core.LXMFBot.cancel_inbound) – Cancel an active inbound resource transfer by its hash.
 - [**cancel_outbound**](#lxmfy.core.LXMFBot.cancel_outbound) – Cancel a pending outbound message by its message_id.
 - [**cancel_propagation_sync**](#lxmfy.core.LXMFBot.cancel_propagation_sync) – Tear down an in-progress propagation node sync.
 - [**cleanup**](#lxmfy.core.LXMFBot.cleanup) – Clean up resources.
@@ -7799,15 +9803,22 @@ This class manages the bot's lifecycle, including:
 - [**get_outbound_stamp_cost**](#lxmfy.core.LXMFBot.get_outbound_stamp_cost) – Get the stamp cost a destination announced it requires, or None.
 - [**get_outbound_ticket**](#lxmfy.core.LXMFBot.get_outbound_ticket) – Get a valid outbound ticket held for a destination, or None.
 - [**get_outbound_ticket_expiry**](#lxmfy.core.LXMFBot.get_outbound_ticket_expiry) – Get the expiry timestamp of the outbound ticket for a destination.
+- [**get_peer_announce**](#lxmfy.core.LXMFBot.get_peer_announce) – Return announce metadata held for a destination, or None.
+- [**get_peer_app_data**](#lxmfy.core.LXMFBot.get_peer_app_data) – Recall the app_data a destination last announced, or None.
+- [**get_peer_lxmf_data**](#lxmfy.core.LXMFBot.get_peer_lxmf_data) – Decode an LXMF peer's announced metadata, or None.
 - [**get_propagation_node_status**](#lxmfy.core.LXMFBot.get_propagation_node_status) – Get information about configured and discovered propagation nodes.
 - [**get_propagation_stats**](#lxmfy.core.LXMFBot.get_propagation_stats) – Compile propagation node statistics.
 - [**get_propagation_storage_stats**](#lxmfy.core.LXMFBot.get_propagation_storage_stats) – Get storage statistics for propagation node mode.
+- [**has_message**](#lxmfy.core.LXMFBot.has_message) – Check whether an inbound LXM hash was already delivered.
 - [**ignore_destination**](#lxmfy.core.LXMFBot.ignore_destination) – Silently drop all inbound LXMF traffic from a destination.
 - [**ignore_stamps**](#lxmfy.core.LXMFBot.ignore_stamps) – Disable stamp enforcement for inbound deliveries.
+- [**inbound_count**](#lxmfy.core.LXMFBot.inbound_count) – Number of inbound resource transfers currently in progress.
+- [**inbound_transfers**](#lxmfy.core.LXMFBot.inbound_transfers) – Snapshot active inbound resource transfers.
 - [**ingest_lxm_uri**](#lxmfy.core.LXMFBot.ingest_lxm_uri) – Import an LXM from an lxm:// URI as if it arrived off the wire.
 - [**intent**](#lxmfy.core.LXMFBot.intent) – Decorator for registering intent handlers.
 - [**is_admin**](#lxmfy.core.LXMFBot.is_admin) – Check if a sender is an admin.
 - [**is_ignored**](#lxmfy.core.LXMFBot.is_ignored) – Check whether inbound traffic from a destination is dropped.
+- [**list_peer_announces**](#lxmfy.core.LXMFBot.list_peer_announces) – List destinations whose announces this node has heard.
 - [**load_extension**](#lxmfy.core.LXMFBot.load_extension) – Load an extension (cog) by name.
 - [**on_delivery_event**](#lxmfy.core.LXMFBot.on_delivery_event) – Subscribe to the outbound delivery event stream.
 - [**on_first_message**](#lxmfy.core.LXMFBot.on_first_message) – Decorator for registering first message handlers
@@ -7845,6 +9856,7 @@ This class manages the bot's lifecycle, including:
 - [**commands**](#lxmfy.core.LXMFBot.commands) – 
 - [**config**](#lxmfy.core.LXMFBot.config) – 
 - [**config_path**](#lxmfy.core.LXMFBot.config_path) – 
+- [**conversations**](#lxmfy.core.LXMFBot.conversations) – 
 - [**delivery**](#lxmfy.core.LXMFBot.delivery) – 
 - [**delivery_attempts**](#lxmfy.core.LXMFBot.delivery_attempts) – 
 - [**delivery_callbacks**](#lxmfy.core.LXMFBot.delivery_callbacks) – 
@@ -7967,6 +9979,27 @@ enabled, since the announce requires the propagation destination.
 announce_time = self.config.announce
 ```
 
+##### `lxmfy.core.LXMFBot.cancel_all_inbound`
+
+```python
+cancel_all_inbound()
+```
+
+Cancel all active inbound resource transfers.
+
+Returns the number of transfers that were in progress.
+
+##### `lxmfy.core.LXMFBot.cancel_inbound`
+
+```python
+cancel_inbound(resource_hash)
+```
+
+Cancel an active inbound resource transfer by its hash.
+
+The hash is available from inbound_transfers. Returns False when
+no active transfer carries that hash.
+
 ##### `lxmfy.core.LXMFBot.cancel_outbound`
 
 ```python
@@ -8064,6 +10097,12 @@ Connect to an RRC hub as a client.
 **Returns:**
 
 -  – The RRCClient session.
+
+##### `lxmfy.core.LXMFBot.conversations`
+
+```python
+conversations = ConversationManager(self)
+```
 
 ##### `lxmfy.core.LXMFBot.delivery`
 
@@ -8259,6 +10298,41 @@ get_outbound_ticket_expiry(destination)
 
 Get the expiry timestamp of the outbound ticket for a destination.
 
+##### `lxmfy.core.LXMFBot.get_peer_announce`
+
+```python
+get_peer_announce(destination)
+```
+
+Return announce metadata held for a destination, or None.
+
+Includes hop count, when the announce was heard, which interface
+delivered it, and the announced app_data.
+
+##### `lxmfy.core.LXMFBot.get_peer_app_data`
+
+```python
+get_peer_app_data(destination)
+```
+
+Recall the app_data a destination last announced, or None.
+
+App data is whatever the announcing app attached to its announce.
+LXMF delivery announces carry the peer display name; other apps
+publish their own metadata.
+
+##### `lxmfy.core.LXMFBot.get_peer_lxmf_data`
+
+```python
+get_peer_lxmf_data(destination)
+```
+
+Decode an LXMF peer's announced metadata, or None.
+
+LXMF delivery announces pack app_data as msgpack:
+[display_name, stamp_cost, supported_functionality]. Returns a
+dict with those keys when the peer announced a valid LXMF entry.
+
 ##### `lxmfy.core.LXMFBot.get_propagation_node_status`
 
 ```python
@@ -8292,6 +10366,14 @@ Get storage statistics for propagation node mode.
 **Returns:**
 
 - **dict** – Dictionary with storage statistics or None if not a propagation node.
+
+##### `lxmfy.core.LXMFBot.has_message`
+
+```python
+has_message(message_hash)
+```
+
+Check whether an inbound LXM hash was already delivered.
 
 ##### `lxmfy.core.LXMFBot.help_system`
 
@@ -8328,6 +10410,26 @@ ignore_stamps()
 ```
 
 Disable stamp enforcement for inbound deliveries.
+
+##### `lxmfy.core.LXMFBot.inbound_count`
+
+```python
+inbound_count()
+```
+
+Number of inbound resource transfers currently in progress.
+
+##### `lxmfy.core.LXMFBot.inbound_transfers`
+
+```python
+inbound_transfers()
+```
+
+Snapshot active inbound resource transfers.
+
+Each entry carries the resource hash, byte sizes, transfer
+progress, and status so callers can monitor or cancel large
+inbound deliveries.
 
 ##### `lxmfy.core.LXMFBot.ingest_lxm_uri`
 
@@ -8397,6 +10499,18 @@ link_handlers = []
 ```python
 links = {}
 ```
+
+##### `lxmfy.core.LXMFBot.list_peer_announces`
+
+```python
+list_peer_announces(limit=100)
+```
+
+List destinations whose announces this node has heard.
+
+Returns up to limit entries sorted newest first, each shaped like
+get_peer_announce output. Useful for discovering propagation
+nodes, peers, and services on the reachable mesh.
 
 ##### `lxmfy.core.LXMFBot.load_extension`
 
@@ -9884,6 +11998,14 @@ NORMAL = 1
 logger = logging.getLogger(__name__)
 ```
 
+### `lxmfy.fake_message`
+
+```python
+fake_message(content, *, source_hash, title=None, fields=None, message_hash=None)
+```
+
+Build an LXMessage-shaped object for inbound injection.
+
 ### `lxmfy.format_validation_results`
 
 ```python
@@ -10089,15 +12211,21 @@ LXMF field constants and helpers for structured commands and results.
 **Functions:**
 
 - [**pack_reaction**](#lxmfy.lxmf_fields.pack_reaction) – Build a FIELD_REACTION dict for a target message hash.
+- [**pack_reply**](#lxmfy.lxmf_fields.pack_reply) – Build reply threading fields for an outbound LXMF message.
 - [**pack_result**](#lxmfy.lxmf_fields.pack_result) – Pack a result into a ``FIELD_RESULTS``-compatible dict.
 - [**unpack_commands**](#lxmfy.lxmf_fields.unpack_commands) – Extract command entries from LXMF message fields.
 - [**unpack_reaction**](#lxmfy.lxmf_fields.unpack_reaction) – Parse a FIELD_REACTION dict from LXMF message fields.
+- [**unpack_reply**](#lxmfy.lxmf_fields.unpack_reply) – Parse reply threading fields from an inbound LXMF message.
 
 **Attributes:**
 
 - [**FIELD_COMMANDS**](#lxmfy.lxmf_fields.FIELD_COMMANDS) (<code>[int](#int)</code>) – 
 - [**FIELD_REACTION**](#lxmfy.lxmf_fields.FIELD_REACTION) (<code>[int](#int)</code>) – 
+- [**FIELD_REPLY_QUOTE**](#lxmfy.lxmf_fields.FIELD_REPLY_QUOTE) (<code>[int](#int)</code>) – 
+- [**FIELD_REPLY_TO**](#lxmfy.lxmf_fields.FIELD_REPLY_TO) (<code>[int](#int)</code>) – 
 - [**FIELD_RESULTS**](#lxmfy.lxmf_fields.FIELD_RESULTS) (<code>[int](#int)</code>) – 
+- [**FIELD_THREAD**](#lxmfy.lxmf_fields.FIELD_THREAD) (<code>[int](#int)</code>) – 
+- [**QUOTE_MAX_LEN**](#lxmfy.lxmf_fields.QUOTE_MAX_LEN) – 
 - [**REACTION_CONTENT**](#lxmfy.lxmf_fields.REACTION_CONTENT) (<code>[int](#int)</code>) – 
 - [**REACTION_MAX_LEN**](#lxmfy.lxmf_fields.REACTION_MAX_LEN) – 
 - [**REACTION_TO**](#lxmfy.lxmf_fields.REACTION_TO) (<code>[int](#int)</code>) – 
@@ -10114,10 +12242,34 @@ FIELD_COMMANDS: int = _fc
 FIELD_REACTION: int = _frc
 ```
 
+#### `lxmfy.lxmf_fields.FIELD_REPLY_QUOTE`
+
+```python
+FIELD_REPLY_QUOTE: int = _frq
+```
+
+#### `lxmfy.lxmf_fields.FIELD_REPLY_TO`
+
+```python
+FIELD_REPLY_TO: int = _frt
+```
+
 #### `lxmfy.lxmf_fields.FIELD_RESULTS`
 
 ```python
 FIELD_RESULTS: int = _fr
+```
+
+#### `lxmfy.lxmf_fields.FIELD_THREAD`
+
+```python
+FIELD_THREAD: int = _ft
+```
+
+#### `lxmfy.lxmf_fields.QUOTE_MAX_LEN`
+
+```python
+QUOTE_MAX_LEN = 200
 ```
 
 #### `lxmfy.lxmf_fields.REACTION_CONTENT`
@@ -10150,6 +12302,27 @@ Build a FIELD_REACTION dict for a target message hash.
 
 - **message_hash** (<code>[bytes](#bytes) | [str](#str)</code>) – The full LXMessage hash, bytes or hex string.
 - **reaction** (<code>[str](#str)</code>) – The reaction content, usually a single emoji.
+
+#### `lxmfy.lxmf_fields.pack_reply`
+
+```python
+pack_reply(message_hash, quote=None, thread=None)
+```
+
+Build reply threading fields for an outbound LXMF message.
+
+**Parameters:**
+
+- **message_hash** (<code>[bytes](#bytes) | [str](#str) | None</code>) – Hash of the LXMessage being replied to, bytes or hex.
+Sets FIELD_REPLY_TO. Ignored when it cannot be parsed.
+- **quote** (<code>[bytes](#bytes) | [str](#str) | None</code>) – Quoted content shown by clients that render replies.
+Sets FIELD_REPLY_QUOTE. ``True`` is not accepted; pass text.
+- **thread** (<code>[bytes](#bytes) | [str](#str) | None</code>) – Thread root hash, bytes or hex. Sets FIELD_THREAD so all
+messages in a conversation share the root identifier.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – A dict of LXMF fields suitable for merging into ``lxmf_fields``.
 
 #### `lxmfy.lxmf_fields.pack_result`
 
@@ -10200,6 +12373,17 @@ Tolerates int keys, string keys, and common name variants the way
 clients like MeshChatX encode them. Returns a dict with
 reaction_to, reaction_emoji, and reaction_sender, or None when the
 fields carry no parseable reaction.
+
+#### `lxmfy.lxmf_fields.unpack_reply`
+
+```python
+unpack_reply(fields)
+```
+
+Parse reply threading fields from an inbound LXMF message.
+
+Returns a dict with reply_to (hex), quote (str), and thread (hex)
+keys, or None when no reply fields are present.
 
 ### `lxmfy.make_envelope`
 
@@ -10835,6 +13019,27 @@ Build a FIELD_REACTION dict for a target message hash.
 
 - **message_hash** (<code>[bytes](#bytes) | [str](#str)</code>) – The full LXMessage hash, bytes or hex string.
 - **reaction** (<code>[str](#str)</code>) – The reaction content, usually a single emoji.
+
+### `lxmfy.pack_reply`
+
+```python
+pack_reply(message_hash, quote=None, thread=None)
+```
+
+Build reply threading fields for an outbound LXMF message.
+
+**Parameters:**
+
+- **message_hash** (<code>[bytes](#bytes) | [str](#str) | None</code>) – Hash of the LXMessage being replied to, bytes or hex.
+Sets FIELD_REPLY_TO. Ignored when it cannot be parsed.
+- **quote** (<code>[bytes](#bytes) | [str](#str) | None</code>) – Quoted content shown by clients that render replies.
+Sets FIELD_REPLY_QUOTE. ``True`` is not accepted; pass text.
+- **thread** (<code>[bytes](#bytes) | [str](#str) | None</code>) – Thread root hash, bytes or hex. Sets FIELD_THREAD so all
+messages in a conversation share the root identifier.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – A dict of LXMF fields suitable for merging into ``lxmf_fields``.
 
 ### `lxmfy.pack_result`
 
@@ -14905,6 +17110,1364 @@ setup_handlers()
 
 Register LXMF and RRC handlers.
 
+### `lxmfy.testing`
+
+In-process test harness for LXMFy bots.
+
+TestBot runs a real LXMFBot in test mode: inbound messages go through the
+full pipeline (middleware, spam checks, permissions, dispatch) and outbound
+sends are captured for assertions. No Reticulum instance is started.
+
+**Classes:**
+
+- [**SentMessage**](#lxmfy.testing.SentMessage) – An outbound message captured from the bot queue.
+- [**TestBot**](#lxmfy.testing.TestBot) – LXMFBot preconfigured for tests, with message injection.
+
+**Functions:**
+
+- [**fake_message**](#lxmfy.testing.fake_message) – Build an LXMessage-shaped object for inbound injection.
+
+#### `lxmfy.testing.SentMessage`
+
+```python
+SentMessage(lxm)
+```
+
+An outbound message captured from the bot queue.
+
+**Attributes:**
+
+- [**content**](#lxmfy.testing.SentMessage.content) – 
+- [**destination**](#lxmfy.testing.SentMessage.destination) – 
+- [**fields**](#lxmfy.testing.SentMessage.fields) – 
+- [**include_ticket**](#lxmfy.testing.SentMessage.include_ticket) – 
+- [**method**](#lxmfy.testing.SentMessage.method) – 
+- [**raw**](#lxmfy.testing.SentMessage.raw) – 
+- [**stamp_cost**](#lxmfy.testing.SentMessage.stamp_cost) – 
+- [**title**](#lxmfy.testing.SentMessage.title) – 
+
+##### `lxmfy.testing.SentMessage.content`
+
+```python
+content = content.decode('utf-8', errors='replace') if isinstance(content, (bytes, bytearray)) else str(content)
+```
+
+##### `lxmfy.testing.SentMessage.destination`
+
+```python
+destination = dest.hex() if isinstance(dest, (bytes, bytearray)) else str(dest)
+```
+
+##### `lxmfy.testing.SentMessage.fields`
+
+```python
+fields = getattr(lxm, 'fields', None) or {}
+```
+
+##### `lxmfy.testing.SentMessage.include_ticket`
+
+```python
+include_ticket = getattr(lxm, 'include_ticket', None)
+```
+
+##### `lxmfy.testing.SentMessage.method`
+
+```python
+method = getattr(lxm, 'desired_method', None)
+```
+
+##### `lxmfy.testing.SentMessage.raw`
+
+```python
+raw = lxm
+```
+
+##### `lxmfy.testing.SentMessage.stamp_cost`
+
+```python
+stamp_cost = getattr(lxm, 'stamp_cost', None)
+```
+
+##### `lxmfy.testing.SentMessage.title`
+
+```python
+title = title.decode('utf-8', errors='replace') if isinstance(title, (bytes, bytearray)) else title
+```
+
+#### `lxmfy.testing.TestBot`
+
+```python
+TestBot(name='TestBot', **overrides)
+```
+
+Bases: <code>[LXMFBot](#lxmfy.core.LXMFBot)</code>
+
+LXMFBot preconfigured for tests, with message injection.
+
+**Parameters:**
+
+- **name** (<code>[str](#str)</code>) – Bot name.
+- ****overrides** – Any LXMFBot/BotConfig keyword. Test-friendly defaults
+apply unless overridden.
+
+**Functions:**
+
+- [**add_cog**](#lxmfy.testing.TestBot.add_cog) – Add a cog to the bot.
+- [**allow_control_identity**](#lxmfy.testing.TestBot.allow_control_identity) – Allow an identity to issue control requests to this node.
+- [**allow_destination**](#lxmfy.testing.TestBot.allow_destination) – Add an identity to the router allow list.
+- [**announce_now**](#lxmfy.testing.TestBot.announce_now) – Send an LXMF delivery announce using the current display name.
+- [**announce_propagation_node**](#lxmfy.testing.TestBot.announce_propagation_node) – Announce this node as a propagation node.
+- [**cancel_all_inbound**](#lxmfy.testing.TestBot.cancel_all_inbound) – Cancel all active inbound resource transfers.
+- [**cancel_inbound**](#lxmfy.testing.TestBot.cancel_inbound) – Cancel an active inbound resource transfer by its hash.
+- [**cancel_outbound**](#lxmfy.testing.TestBot.cancel_outbound) – Cancel a pending outbound message by its message_id.
+- [**cancel_propagation_sync**](#lxmfy.testing.TestBot.cancel_propagation_sync) – Tear down an in-progress propagation node sync.
+- [**cleanup**](#lxmfy.testing.TestBot.cleanup) – Clean up resources.
+- [**close**](#lxmfy.testing.TestBot.close) – Shut down the bot and remove temporary storage.
+- [**command**](#lxmfy.testing.TestBot.command) – Decorator for registering commands.
+- [**connect_rrc**](#lxmfy.testing.TestBot.connect_rrc) – Connect to an RRC hub as a client.
+- [**delivery_link_available**](#lxmfy.testing.TestBot.delivery_link_available) – Check whether a direct link is up for a destination.
+- [**diagnose_connectivity**](#lxmfy.testing.TestBot.diagnose_connectivity) – Run a connectivity doctor report for this bot.
+- [**diagnose_destination**](#lxmfy.testing.TestBot.diagnose_destination) – Probe path and identity for a destination hash.
+- [**disallow_control_identity**](#lxmfy.testing.TestBot.disallow_control_identity) – Revoke control request access for an identity.
+- [**disallow_destination**](#lxmfy.testing.TestBot.disallow_destination) – Remove an identity from the router allow list.
+- [**disconnect_rrc**](#lxmfy.testing.TestBot.disconnect_rrc) – Disconnect one or all RRC hub sessions.
+- [**drain**](#lxmfy.testing.TestBot.drain) – Pop all queued outbound messages and append them to outbox.
+- [**enforce_stamps**](#lxmfy.testing.TestBot.enforce_stamps) – Enforce stamp requirements for inbound deliveries.
+- [**generate_ticket**](#lxmfy.testing.TestBot.generate_ticket) – Generate an LXMF ticket that lets a destination bypass stamp costs.
+- [**get_debugger**](#lxmfy.testing.TestBot.get_debugger) – Return a Debugger bound to this bot.
+- [**get_inbound_tickets**](#lxmfy.testing.TestBot.get_inbound_tickets) – List valid inbound tickets held for a destination, or None.
+- [**get_landlock_status**](#lxmfy.testing.TestBot.get_landlock_status) – Return Landlock LSM sandbox availability and activation state.
+- [**get_outbound_progress**](#lxmfy.testing.TestBot.get_outbound_progress) – Get transfer progress (0.0-1.0) for a pending outbound LXM.
+- [**get_outbound_stamp_cost**](#lxmfy.testing.TestBot.get_outbound_stamp_cost) – Get the stamp cost a destination announced it requires, or None.
+- [**get_outbound_ticket**](#lxmfy.testing.TestBot.get_outbound_ticket) – Get a valid outbound ticket held for a destination, or None.
+- [**get_outbound_ticket_expiry**](#lxmfy.testing.TestBot.get_outbound_ticket_expiry) – Get the expiry timestamp of the outbound ticket for a destination.
+- [**get_peer_announce**](#lxmfy.testing.TestBot.get_peer_announce) – Return announce metadata held for a destination, or None.
+- [**get_peer_app_data**](#lxmfy.testing.TestBot.get_peer_app_data) – Recall the app_data a destination last announced, or None.
+- [**get_peer_lxmf_data**](#lxmfy.testing.TestBot.get_peer_lxmf_data) – Decode an LXMF peer's announced metadata, or None.
+- [**get_propagation_node_status**](#lxmfy.testing.TestBot.get_propagation_node_status) – Get information about configured and discovered propagation nodes.
+- [**get_propagation_stats**](#lxmfy.testing.TestBot.get_propagation_stats) – Compile propagation node statistics.
+- [**get_propagation_storage_stats**](#lxmfy.testing.TestBot.get_propagation_storage_stats) – Get storage statistics for propagation node mode.
+- [**has_message**](#lxmfy.testing.TestBot.has_message) – Check whether an inbound LXM hash was already delivered.
+- [**ignore_destination**](#lxmfy.testing.TestBot.ignore_destination) – Silently drop all inbound LXMF traffic from a destination.
+- [**ignore_stamps**](#lxmfy.testing.TestBot.ignore_stamps) – Disable stamp enforcement for inbound deliveries.
+- [**inbound_count**](#lxmfy.testing.TestBot.inbound_count) – Number of inbound resource transfers currently in progress.
+- [**inbound_transfers**](#lxmfy.testing.TestBot.inbound_transfers) – Snapshot active inbound resource transfers.
+- [**ingest_lxm_uri**](#lxmfy.testing.TestBot.ingest_lxm_uri) – Import an LXM from an lxm:// URI as if it arrived off the wire.
+- [**intent**](#lxmfy.testing.TestBot.intent) – Decorator for registering intent handlers.
+- [**is_admin**](#lxmfy.testing.TestBot.is_admin) – Check if a sender is an admin.
+- [**is_ignored**](#lxmfy.testing.TestBot.is_ignored) – Check whether inbound traffic from a destination is dropped.
+- [**last_sent**](#lxmfy.testing.TestBot.last_sent) – Most recent outbound message, optionally filtered by sender.
+- [**list_peer_announces**](#lxmfy.testing.TestBot.list_peer_announces) – List destinations whose announces this node has heard.
+- [**load_extension**](#lxmfy.testing.TestBot.load_extension) – Load an extension (cog) by name.
+- [**on_delivery_event**](#lxmfy.testing.TestBot.on_delivery_event) – Subscribe to the outbound delivery event stream.
+- [**on_first_message**](#lxmfy.testing.TestBot.on_first_message) – Decorator for registering first message handlers
+- [**on_link**](#lxmfy.testing.TestBot.on_link) – Register a handler for incoming links.
+- [**on_message**](#lxmfy.testing.TestBot.on_message) – Decorator for registering message handlers
+- [**on_reaction**](#lxmfy.testing.TestBot.on_reaction) – Decorator for registering reaction handlers.
+- [**on_rrc**](#lxmfy.testing.TestBot.on_rrc) – Register a handler for RRC events.
+- [**outbound_queue**](#lxmfy.testing.TestBot.outbound_queue) – Snapshot pending outbound messages.
+- [**prioritise_destination**](#lxmfy.testing.TestBot.prioritise_destination) – Mark a destination for prioritised outbound processing.
+- [**react**](#lxmfy.testing.TestBot.react) – Send a reaction to a message.
+- [**receive**](#lxmfy.testing.TestBot.receive) – Inject an inbound message through the real receive pipeline.
+- [**receive_later**](#lxmfy.testing.TestBot.receive_later) – Deliver an inbound message on a daemon thread after a delay.
+- [**received**](#lxmfy.testing.TestBot.received) – Decorator for registering delivery callbacks.
+- [**reload_extension**](#lxmfy.testing.TestBot.reload_extension) – Reload an extension (cog) by name.
+- [**remove_cog**](#lxmfy.testing.TestBot.remove_cog) – Remove a cog from the bot by its class name.
+- [**request_link**](#lxmfy.testing.TestBot.request_link) – Request an RNS link to a destination.
+- [**request_page**](#lxmfy.testing.TestBot.request_page) – Request a page from a destination.
+- [**run**](#lxmfy.testing.TestBot.run) – Run the bot
+- [**send_with_attachment**](#lxmfy.testing.TestBot.send_with_attachment) – Send a message with an attachment to a destination.
+- [**sender_hash**](#lxmfy.testing.TestBot.sender_hash) – Stable source hash for a named fake sender.
+- [**sender_hex**](#lxmfy.testing.TestBot.sender_hex) – Hex source hash for a named fake sender.
+- [**set_inbound_stamp_cost**](#lxmfy.testing.TestBot.set_inbound_stamp_cost) – Require a proof-of-work stamp for inbound deliveries.
+- [**set_message_storage_limit**](#lxmfy.testing.TestBot.set_message_storage_limit) – Set the message storage limit for propagation node mode.
+- [**set_propagation_node**](#lxmfy.testing.TestBot.set_propagation_node) – Manually set the outbound propagation node.
+- [**set_retain_on_node**](#lxmfy.testing.TestBot.set_retain_on_node) – Keep copies of synced messages on the propagation node.
+- [**sync_propagation_node**](#lxmfy.testing.TestBot.sync_propagation_node) – Request stored messages from the outbound propagation node.
+- [**unignore_destination**](#lxmfy.testing.TestBot.unignore_destination) – Stop dropping inbound traffic from a destination.
+- [**unprioritise_destination**](#lxmfy.testing.TestBot.unprioritise_destination) – Remove a destination from the prioritised list.
+- [**validate**](#lxmfy.testing.TestBot.validate) – Run validation checks and return formatted results.
+- [**wait_sent**](#lxmfy.testing.TestBot.wait_sent) – Wait until at least count new outbound messages are queued.
+
+**Attributes:**
+
+- [**admins**](#lxmfy.testing.TestBot.admins) – 
+- [**announce_enabled**](#lxmfy.testing.TestBot.announce_enabled) – 
+- [**announce_time**](#lxmfy.testing.TestBot.announce_time) – 
+- [**cogs**](#lxmfy.testing.TestBot.cogs) – 
+- [**cogs_dir**](#lxmfy.testing.TestBot.cogs_dir) – 
+- [**command_prefix**](#lxmfy.testing.TestBot.command_prefix) – 
+- [**commands**](#lxmfy.testing.TestBot.commands) – 
+- [**config**](#lxmfy.testing.TestBot.config) – 
+- [**config_path**](#lxmfy.testing.TestBot.config_path) – 
+- [**conversations**](#lxmfy.testing.TestBot.conversations) – 
+- [**delivery**](#lxmfy.testing.TestBot.delivery) – 
+- [**delivery_attempts**](#lxmfy.testing.TestBot.delivery_attempts) – 
+- [**delivery_callbacks**](#lxmfy.testing.TestBot.delivery_callbacks) – 
+- [**events**](#lxmfy.testing.TestBot.events) – 
+- [**first_message_handlers**](#lxmfy.testing.TestBot.first_message_handlers) – 
+- [**help_system**](#lxmfy.testing.TestBot.help_system) – 
+- [**hot_reloading**](#lxmfy.testing.TestBot.hot_reloading) – 
+- [**identity**](#lxmfy.testing.TestBot.identity) – 
+- [**intents**](#lxmfy.testing.TestBot.intents) – 
+- [**landlock_active**](#lxmfy.testing.TestBot.landlock_active) – 
+- [**link_handlers**](#lxmfy.testing.TestBot.link_handlers) – 
+- [**links**](#lxmfy.testing.TestBot.links) – 
+- [**local**](#lxmfy.testing.TestBot.local) – 
+- [**logger**](#lxmfy.testing.TestBot.logger) – 
+- [**message_handlers**](#lxmfy.testing.TestBot.message_handlers) – 
+- [**middleware**](#lxmfy.testing.TestBot.middleware) – 
+- [**name**](#lxmfy.testing.TestBot.name) (<code>[str](#str)</code>) – Bot display name used for LXMF when no file override applies.
+- [**nlp**](#lxmfy.testing.TestBot.nlp) – 
+- [**outbox**](#lxmfy.testing.TestBot.outbox) (<code>[list](#list)[[SentMessage](#lxmfy.testing.SentMessage)]</code>) – 
+- [**permissions**](#lxmfy.testing.TestBot.permissions) – 
+- [**queue**](#lxmfy.testing.TestBot.queue) – 
+- [**reaction_handlers**](#lxmfy.testing.TestBot.reaction_handlers) – 
+- [**receipts**](#lxmfy.testing.TestBot.receipts) – 
+- [**reticulum_config_dir**](#lxmfy.testing.TestBot.reticulum_config_dir) – 
+- [**router**](#lxmfy.testing.TestBot.router) – 
+- [**rrc**](#lxmfy.testing.TestBot.rrc) – 
+- [**rrc_handlers**](#lxmfy.testing.TestBot.rrc_handlers) – 
+- [**scheduler**](#lxmfy.testing.TestBot.scheduler) – 
+- [**send**](#lxmfy.testing.TestBot.send) (<code>[Callable](#collections.abc.Callable)[..., [bool](#bool)]</code>) – 
+- [**signature_manager**](#lxmfy.testing.TestBot.signature_manager) – 
+- [**spam_protection**](#lxmfy.testing.TestBot.spam_protection) – 
+- [**storage**](#lxmfy.testing.TestBot.storage) – 
+- [**thread_pool**](#lxmfy.testing.TestBot.thread_pool) – 
+- [**transport**](#lxmfy.testing.TestBot.transport) – 
+
+##### `lxmfy.testing.TestBot.add_cog`
+
+```python
+add_cog(cog)
+```
+
+Add a cog to the bot.
+
+**Parameters:**
+
+- **cog** – The cog instance to add.
+
+##### `lxmfy.testing.TestBot.admins`
+
+```python
+admins = set(self.config.admins or [])
+```
+
+##### `lxmfy.testing.TestBot.allow_control_identity`
+
+```python
+allow_control_identity(destination)
+```
+
+Allow an identity to issue control requests to this node.
+
+Control requests include peer sync and unpeer operations on a
+propagation node. Returns False on an invalid hash.
+
+##### `lxmfy.testing.TestBot.allow_destination`
+
+```python
+allow_destination(destination)
+```
+
+Add an identity to the router allow list.
+
+When the allow list is non-empty, LXMF only accepts deliveries
+from listed identities. Returns False on an invalid hash.
+
+##### `lxmfy.testing.TestBot.announce_enabled`
+
+```python
+announce_enabled = self.config.announce_enabled
+```
+
+##### `lxmfy.testing.TestBot.announce_now`
+
+```python
+announce_now(force=False)
+```
+
+Send an LXMF delivery announce using the current display name.
+
+LXMF builds delivery announce app_data from the destination display name
+at announce time; this method refreshes that from :attr:`name`, optional
+``announce_display_name_file``, or ``bot_display_name.txt`` before
+sending.
+
+**Parameters:**
+
+- **force** (<code>[bool](#bool)</code>) – If True, send now and skip the on-disk announce interval
+throttle (still respects ``announce_enabled`` and requires a
+running router). If False, behave like the periodic announce
+task (honours ``announce_time`` and the throttle file).
+
+##### `lxmfy.testing.TestBot.announce_propagation_node`
+
+```python
+announce_propagation_node()
+```
+
+Announce this node as a propagation node.
+
+Returns False unless the router is running with propagation
+enabled, since the announce requires the propagation destination.
+
+##### `lxmfy.testing.TestBot.announce_time`
+
+```python
+announce_time = self.config.announce
+```
+
+##### `lxmfy.testing.TestBot.cancel_all_inbound`
+
+```python
+cancel_all_inbound()
+```
+
+Cancel all active inbound resource transfers.
+
+Returns the number of transfers that were in progress.
+
+##### `lxmfy.testing.TestBot.cancel_inbound`
+
+```python
+cancel_inbound(resource_hash)
+```
+
+Cancel an active inbound resource transfer by its hash.
+
+The hash is available from inbound_transfers. Returns False when
+no active transfer carries that hash.
+
+##### `lxmfy.testing.TestBot.cancel_outbound`
+
+```python
+cancel_outbound(message_id)
+```
+
+Cancel a pending outbound message by its message_id.
+
+The message_id is available from outbound_queue entries.
+Returns False when no pending message carries that id.
+
+##### `lxmfy.testing.TestBot.cancel_propagation_sync`
+
+```python
+cancel_propagation_sync()
+```
+
+Tear down an in-progress propagation node sync.
+
+##### `lxmfy.testing.TestBot.cleanup`
+
+```python
+cleanup()
+```
+
+Clean up resources.
+
+##### `lxmfy.testing.TestBot.close`
+
+```python
+close()
+```
+
+Shut down the bot and remove temporary storage.
+
+##### `lxmfy.testing.TestBot.cogs`
+
+```python
+cogs = {}
+```
+
+##### `lxmfy.testing.TestBot.cogs_dir`
+
+```python
+cogs_dir = os.path.join(self.config_path, self.config.cogs_dir)
+```
+
+##### `lxmfy.testing.TestBot.command`
+
+```python
+command(*args, **kwargs)
+```
+
+Decorator for registering commands.
+
+**Parameters:**
+
+- ***args** – Command name (optional).
+- ****kwargs** – Forwarded to Command: name, description, admin_only,
+permissions, usage, examples, category, aliases,
+threaded, rate_limit.
+
+##### `lxmfy.testing.TestBot.command_prefix`
+
+```python
+command_prefix = self.config.command_prefix
+```
+
+##### `lxmfy.testing.TestBot.commands`
+
+```python
+commands = {}
+```
+
+##### `lxmfy.testing.TestBot.config`
+
+```python
+config = BotConfig(**kwargs)
+```
+
+##### `lxmfy.testing.TestBot.config_path`
+
+```python
+config_path = self.config.config_path
+```
+
+##### `lxmfy.testing.TestBot.connect_rrc`
+
+```python
+connect_rrc(hub_hash, rooms=None, nick=None, dest_name=None, auto_reconnect=None)
+```
+
+Connect to an RRC hub as a client.
+
+**Parameters:**
+
+- **hub_hash** (<code>[str](#str)</code>) – Hub destination hash as hex.
+- **rooms** (<code>[list](#list)[[str](#str)] | None</code>) – Optional rooms to join after WELCOME.
+- **nick** (<code>[str](#str) | None</code>) – Optional nickname override for this hub.
+- **dest_name** (<code>[str](#str) | None</code>) – Destination name (default rrc.hub).
+- **auto_reconnect** (<code>[bool](#bool) | None</code>) – Override auto-reconnect for this session.
+
+**Returns:**
+
+-  – The RRCClient session.
+
+##### `lxmfy.testing.TestBot.conversations`
+
+```python
+conversations = ConversationManager(self)
+```
+
+##### `lxmfy.testing.TestBot.delivery`
+
+```python
+delivery = DeliveryTracker(storage=self.storage)
+```
+
+##### `lxmfy.testing.TestBot.delivery_attempts`
+
+```python
+delivery_attempts = {}
+```
+
+##### `lxmfy.testing.TestBot.delivery_callbacks`
+
+```python
+delivery_callbacks = []
+```
+
+##### `lxmfy.testing.TestBot.delivery_link_available`
+
+```python
+delivery_link_available(destination)
+```
+
+Check whether a direct link is up for a destination.
+
+When True, outbound messages to this destination can deliver over
+an established link instead of opportunistic packets or a
+propagation node.
+
+##### `lxmfy.testing.TestBot.diagnose_connectivity`
+
+```python
+diagnose_connectivity(destination=None, *, request_path=False, wait=0.0)
+```
+
+Run a connectivity doctor report for this bot.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str) | None</code>) – Optional peer hash to include in send diagnosis.
+- **request_path** (<code>[bool](#bool)</code>) – Request a path when probing destination.
+- **wait** (<code>[float](#float)</code>) – Seconds to wait for path discovery.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – Structured doctor report dict.
+
+##### `lxmfy.testing.TestBot.diagnose_destination`
+
+```python
+diagnose_destination(destination, *, request_path=False, wait=0.0)
+```
+
+Probe path and identity for a destination hash.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – Hex destination hash.
+- **request_path** (<code>[bool](#bool)</code>) – Whether to request a path if missing.
+- **wait** (<code>[float](#float)</code>) – Seconds to wait for a path after requesting.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – Dict describing identity/path status and hints.
+
+##### `lxmfy.testing.TestBot.disallow_control_identity`
+
+```python
+disallow_control_identity(destination)
+```
+
+Revoke control request access for an identity.
+
+Operates on the list directly because LXMRouter.disallow_control
+pops by index in LXMF 1.1.1 and raises instead of removing.
+
+##### `lxmfy.testing.TestBot.disallow_destination`
+
+```python
+disallow_destination(destination)
+```
+
+Remove an identity from the router allow list.
+
+Operates on the list directly because LXMRouter.disallow pops by
+index in LXMF 1.1.1 and raises instead of removing the entry.
+
+##### `lxmfy.testing.TestBot.disconnect_rrc`
+
+```python
+disconnect_rrc(hub_hash=None)
+```
+
+Disconnect one or all RRC hub sessions.
+
+##### `lxmfy.testing.TestBot.drain`
+
+```python
+drain()
+```
+
+Pop all queued outbound messages and append them to outbox.
+
+##### `lxmfy.testing.TestBot.enforce_stamps`
+
+```python
+enforce_stamps()
+```
+
+Enforce stamp requirements for inbound deliveries.
+
+##### `lxmfy.testing.TestBot.events`
+
+```python
+events = EventManager(self.storage)
+```
+
+##### `lxmfy.testing.TestBot.first_message_handlers`
+
+```python
+first_message_handlers = []
+```
+
+##### `lxmfy.testing.TestBot.generate_ticket`
+
+```python
+generate_ticket(destination, expiry=None)
+```
+
+Generate an LXMF ticket that lets a destination bypass stamp costs.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – The destination hash the ticket is valid for.
+- **expiry** (<code>[int](#int) | None</code>) – Seconds until expiry. None uses the LXMF default.
+
+Returns a dict with expires and ticket keys, or None when a valid
+ticket was recently delivered or the hash is invalid.
+
+##### `lxmfy.testing.TestBot.get_debugger`
+
+```python
+get_debugger()
+```
+
+Return a Debugger bound to this bot.
+
+##### `lxmfy.testing.TestBot.get_inbound_tickets`
+
+```python
+get_inbound_tickets(destination)
+```
+
+List valid inbound tickets held for a destination, or None.
+
+##### `lxmfy.testing.TestBot.get_landlock_status`
+
+```python
+get_landlock_status()
+```
+
+Return Landlock LSM sandbox availability and activation state.
+
+##### `lxmfy.testing.TestBot.get_outbound_progress`
+
+```python
+get_outbound_progress(lxm_hash)
+```
+
+Get transfer progress (0.0-1.0) for a pending outbound LXM.
+
+Accepts a hex hash from outbound_queue. Returns None when the
+message is not in the outbound queue.
+
+##### `lxmfy.testing.TestBot.get_outbound_stamp_cost`
+
+```python
+get_outbound_stamp_cost(destination)
+```
+
+Get the stamp cost a destination announced it requires, or None.
+
+##### `lxmfy.testing.TestBot.get_outbound_ticket`
+
+```python
+get_outbound_ticket(destination)
+```
+
+Get a valid outbound ticket held for a destination, or None.
+
+Outbound tickets are tickets a peer sent us so our deliveries to
+them satisfy their stamp requirement.
+
+##### `lxmfy.testing.TestBot.get_outbound_ticket_expiry`
+
+```python
+get_outbound_ticket_expiry(destination)
+```
+
+Get the expiry timestamp of the outbound ticket for a destination.
+
+##### `lxmfy.testing.TestBot.get_peer_announce`
+
+```python
+get_peer_announce(destination)
+```
+
+Return announce metadata held for a destination, or None.
+
+Includes hop count, when the announce was heard, which interface
+delivered it, and the announced app_data.
+
+##### `lxmfy.testing.TestBot.get_peer_app_data`
+
+```python
+get_peer_app_data(destination)
+```
+
+Recall the app_data a destination last announced, or None.
+
+App data is whatever the announcing app attached to its announce.
+LXMF delivery announces carry the peer display name; other apps
+publish their own metadata.
+
+##### `lxmfy.testing.TestBot.get_peer_lxmf_data`
+
+```python
+get_peer_lxmf_data(destination)
+```
+
+Decode an LXMF peer's announced metadata, or None.
+
+LXMF delivery announces pack app_data as msgpack:
+[display_name, stamp_cost, supported_functionality]. Returns a
+dict with those keys when the peer announced a valid LXMF entry.
+
+##### `lxmfy.testing.TestBot.get_propagation_node_status`
+
+```python
+get_propagation_node_status()
+```
+
+Get information about configured and discovered propagation nodes.
+
+**Returns:**
+
+- **dict** – Dictionary with propagation node configuration and status.
+
+##### `lxmfy.testing.TestBot.get_propagation_stats`
+
+```python
+get_propagation_stats()
+```
+
+Compile propagation node statistics.
+
+Returns None when this bot is not running as a propagation node.
+
+##### `lxmfy.testing.TestBot.get_propagation_storage_stats`
+
+```python
+get_propagation_storage_stats()
+```
+
+Get storage statistics for propagation node mode.
+
+**Returns:**
+
+- **dict** – Dictionary with storage statistics or None if not a propagation node.
+
+##### `lxmfy.testing.TestBot.has_message`
+
+```python
+has_message(message_hash)
+```
+
+Check whether an inbound LXM hash was already delivered.
+
+##### `lxmfy.testing.TestBot.help_system`
+
+```python
+help_system = HelpSystem(self)
+```
+
+##### `lxmfy.testing.TestBot.hot_reloading`
+
+```python
+hot_reloading = self.config.hot_reloading
+```
+
+##### `lxmfy.testing.TestBot.identity`
+
+```python
+identity = identity
+```
+
+##### `lxmfy.testing.TestBot.ignore_destination`
+
+```python
+ignore_destination(destination)
+```
+
+Silently drop all inbound LXMF traffic from a destination.
+
+Returns False when the router is not running or the hash is invalid.
+
+##### `lxmfy.testing.TestBot.ignore_stamps`
+
+```python
+ignore_stamps()
+```
+
+Disable stamp enforcement for inbound deliveries.
+
+##### `lxmfy.testing.TestBot.inbound_count`
+
+```python
+inbound_count()
+```
+
+Number of inbound resource transfers currently in progress.
+
+##### `lxmfy.testing.TestBot.inbound_transfers`
+
+```python
+inbound_transfers()
+```
+
+Snapshot active inbound resource transfers.
+
+Each entry carries the resource hash, byte sizes, transfer
+progress, and status so callers can monitor or cancel large
+inbound deliveries.
+
+##### `lxmfy.testing.TestBot.ingest_lxm_uri`
+
+```python
+ingest_lxm_uri(uri)
+```
+
+Import an LXM from an lxm:// URI as if it arrived off the wire.
+
+##### `lxmfy.testing.TestBot.intent`
+
+```python
+intent(name, examples)
+```
+
+Decorator for registering intent handlers.
+
+**Parameters:**
+
+- **name** (<code>[str](#str)</code>) – The name of the intent.
+- **examples** (<code>[list](#list)[[str](#str)]</code>) – A list of example phrases for this intent.
+
+##### `lxmfy.testing.TestBot.intents`
+
+```python
+intents = {}
+```
+
+##### `lxmfy.testing.TestBot.is_admin`
+
+```python
+is_admin(sender)
+```
+
+Check if a sender is an admin.
+
+**Parameters:**
+
+- **sender** – The sender's identity hash.
+
+**Returns:**
+
+-  – True if the sender is an admin, False otherwise.
+
+##### `lxmfy.testing.TestBot.is_ignored`
+
+```python
+is_ignored(destination)
+```
+
+Check whether inbound traffic from a destination is dropped.
+
+##### `lxmfy.testing.TestBot.landlock_active`
+
+```python
+landlock_active = False
+```
+
+##### `lxmfy.testing.TestBot.last_sent`
+
+```python
+last_sent(sender=None)
+```
+
+Most recent outbound message, optionally filtered by sender.
+
+##### `lxmfy.testing.TestBot.link_handlers`
+
+```python
+link_handlers = []
+```
+
+##### `lxmfy.testing.TestBot.links`
+
+```python
+links = {}
+```
+
+##### `lxmfy.testing.TestBot.list_peer_announces`
+
+```python
+list_peer_announces(limit=100)
+```
+
+List destinations whose announces this node has heard.
+
+Returns up to limit entries sorted newest first, each shaped like
+get_peer_announce output. Useful for discovering propagation
+nodes, peers, and services on the reachable mesh.
+
+##### `lxmfy.testing.TestBot.load_extension`
+
+```python
+load_extension(name)
+```
+
+Load an extension (cog) by name.
+
+**Parameters:**
+
+- **name** (<code>[str](#str)</code>) – The name of the extension to load.
+
+**Raises:**
+
+- <code>[ValueError](#ValueError)</code> – If the module name contains invalid characters.
+- <code>[ImportError](#ImportError)</code> – If the extension is missing setup function or fails to load.
+
+##### `lxmfy.testing.TestBot.local`
+
+```python
+local = None
+```
+
+##### `lxmfy.testing.TestBot.logger`
+
+```python
+logger = logging.getLogger('lxmfy')
+```
+
+##### `lxmfy.testing.TestBot.message_handlers`
+
+```python
+message_handlers = []
+```
+
+##### `lxmfy.testing.TestBot.middleware`
+
+```python
+middleware = MiddlewareManager()
+```
+
+##### `lxmfy.testing.TestBot.name`
+
+```python
+name: str
+```
+
+Bot display name used for LXMF when no file override applies.
+
+##### `lxmfy.testing.TestBot.nlp`
+
+```python
+nlp = IntentClassifier(threshold=self.config.nlp_threshold)
+```
+
+##### `lxmfy.testing.TestBot.on_delivery_event`
+
+```python
+on_delivery_event(callback=None)
+```
+
+Subscribe to the outbound delivery event stream.
+
+Usable as bot.on_delivery_event(fn) or as a decorator
+@bot.on_delivery_event(). Subscribers receive event dicts with
+ts, stage (queued, deferred, dispatched, delivered, failed,
+cancelled, dropped), and destination/message_id/hash/reason
+fields when available.
+
+##### `lxmfy.testing.TestBot.on_first_message`
+
+```python
+on_first_message()
+```
+
+Decorator for registering first message handlers
+
+##### `lxmfy.testing.TestBot.on_link`
+
+```python
+on_link(callback)
+```
+
+Register a handler for incoming links.
+
+##### `lxmfy.testing.TestBot.on_message`
+
+```python
+on_message()
+```
+
+Decorator for registering message handlers
+
+##### `lxmfy.testing.TestBot.on_reaction`
+
+```python
+on_reaction()
+```
+
+Decorator for registering reaction handlers.
+
+Handlers are called as handler(sender, reaction) where reaction
+carries reaction_to, reaction_emoji, and reaction_sender.
+
+##### `lxmfy.testing.TestBot.on_rrc`
+
+```python
+on_rrc(callback=None)
+```
+
+Register a handler for RRC events.
+
+Handler signature: ``handler(event, client, payload)``.
+Payload is an RRCMessage for room events, or a dict for status/welcome.
+
+##### `lxmfy.testing.TestBot.outbound_queue`
+
+```python
+outbound_queue()
+```
+
+Snapshot pending outbound messages.
+
+Each entry carries hash, message_id, destination, state, and
+progress so callers can feed hashes back into cancel_outbound or
+get_outbound_progress.
+
+##### `lxmfy.testing.TestBot.outbox`
+
+```python
+outbox: list[SentMessage] = []
+```
+
+##### `lxmfy.testing.TestBot.permissions`
+
+```python
+permissions = PermissionManager(storage=self.storage, enabled=self.config.permissions_enabled, admins=self.admins)
+```
+
+##### `lxmfy.testing.TestBot.prioritise_destination`
+
+```python
+prioritise_destination(destination)
+```
+
+Mark a destination for prioritised outbound processing.
+
+##### `lxmfy.testing.TestBot.queue`
+
+```python
+queue = Queue(maxsize=queue_size)
+```
+
+##### `lxmfy.testing.TestBot.react`
+
+```python
+react(destination, message_hash, reaction)
+```
+
+Send a reaction to a message.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – The destination hash of the message author.
+- **message_hash** (<code>[str](#str)</code>) – The full LXMessage hash being reacted to, hex.
+- **reaction** (<code>[str](#str)</code>) – The reaction content, usually a single emoji.
+
+Reactions travel as an LXMF FIELD_REACTION dict on an otherwise
+empty message. Clients that understand the field attach it to the
+target message; clients that do not see a short empty delivery.
+
+##### `lxmfy.testing.TestBot.reaction_handlers`
+
+```python
+reaction_handlers = []
+```
+
+##### `lxmfy.testing.TestBot.receipts`
+
+```python
+receipts = []
+```
+
+##### `lxmfy.testing.TestBot.receive`
+
+```python
+receive(content, *, sender='alice', title=None, fields=None, message_hash=None)
+```
+
+Inject an inbound message through the real receive pipeline.
+
+Returns the outbound messages produced while handling it. For
+threaded commands use wait_sent after receive.
+
+##### `lxmfy.testing.TestBot.receive_later`
+
+```python
+receive_later(content, *, sender='alice', delay=0.05, **kwargs)
+```
+
+Deliver an inbound message on a daemon thread after a delay.
+
+Used to answer blocking msg.ask calls inside command handlers.
+
+##### `lxmfy.testing.TestBot.received`
+
+```python
+received(function)
+```
+
+Decorator for registering delivery callbacks.
+
+**Parameters:**
+
+- **function** – The function to call when a message is delivered.
+
+##### `lxmfy.testing.TestBot.reload_extension`
+
+```python
+reload_extension(name)
+```
+
+Reload an extension (cog) by name.
+
+##### `lxmfy.testing.TestBot.remove_cog`
+
+```python
+remove_cog(cog_name)
+```
+
+Remove a cog from the bot by its class name.
+
+**Parameters:**
+
+- **cog_name** (<code>[str](#str)</code>) – The name of the cog class to remove.
+
+##### `lxmfy.testing.TestBot.request_link`
+
+```python
+request_link(destination_hash, callback=None, app_name='lxmf', *aspects)
+```
+
+Request an RNS link to a destination.
+
+**Parameters:**
+
+- **destination_hash** (<code>[str](#str)</code>) – The destination hash string.
+- **callback** (<code>[Callable](#collections.abc.Callable) | None</code>) – Optional callback when link is established.
+- **app_name** (<code>[str](#str)</code>) – The app name for the destination (default: "lxmf").
+- ***aspects** (<code>[str](#str)</code>) – Additional aspects for the destination (default: "delivery" if none provided).
+
+##### `lxmfy.testing.TestBot.request_page`
+
+```python
+request_page(destination_hash, page_path, field_data=None)
+```
+
+Request a page from a destination.
+
+**Parameters:**
+
+- **destination_hash** (<code>[str](#str)</code>) – The destination hash.
+- **page_path** (<code>[str](#str)</code>) – The path to the page.
+- **field_data** (<code>[dict](#dict) | None</code>) – Optional field data to send with the request.
+
+**Returns:**
+
+- <code>[dict](#dict)</code> – The response from the destination.
+
+##### `lxmfy.testing.TestBot.reticulum_config_dir`
+
+```python
+reticulum_config_dir = os.path.abspath(self.config_path)
+```
+
+##### `lxmfy.testing.TestBot.router`
+
+```python
+router = None
+```
+
+##### `lxmfy.testing.TestBot.rrc`
+
+```python
+rrc = None
+```
+
+##### `lxmfy.testing.TestBot.rrc_handlers`
+
+```python
+rrc_handlers = []
+```
+
+##### `lxmfy.testing.TestBot.run`
+
+```python
+run(delay=10)
+```
+
+Run the bot
+
+##### `lxmfy.testing.TestBot.scheduler`
+
+```python
+scheduler = TaskScheduler(self)
+```
+
+##### `lxmfy.testing.TestBot.send`
+
+```python
+send: Callable[..., bool]
+```
+
+##### `lxmfy.testing.TestBot.send_with_attachment`
+
+```python
+send_with_attachment(destination, message, attachment, title='Reply', stamp_cost=None, opportunistic=None, include_ticket=None)
+```
+
+Send a message with an attachment to a destination.
+
+**Parameters:**
+
+- **destination** (<code>[str](#str)</code>) – The destination hash.
+- **message** (<code>[str](#str)</code>) – The message content.
+- **attachment** (<code>[Attachment](#lxmfy.attachments.Attachment)</code>) – The attachment to send.
+- **title** (<code>[str](#str)</code>) – The message title.
+- **stamp_cost** (<code>[int](#int) | None</code>) – Optional outbound stamp cost for this message.
+- **opportunistic** (<code>[bool](#bool) | None</code>) – Whether to use opportunistic sending.
+- **include_ticket** (<code>[bool](#bool) | None</code>) – Whether to include an LXMF reply ticket.
+
+##### `lxmfy.testing.TestBot.sender_hash`
+
+```python
+sender_hash(sender='alice')
+```
+
+Stable source hash for a named fake sender.
+
+Accepts a name (mapped to a fixed random hash per bot) or a hex
+destination hash.
+
+##### `lxmfy.testing.TestBot.sender_hex`
+
+```python
+sender_hex(sender='alice')
+```
+
+Hex source hash for a named fake sender.
+
+##### `lxmfy.testing.TestBot.set_inbound_stamp_cost`
+
+```python
+set_inbound_stamp_cost(stamp_cost)
+```
+
+Require a proof-of-work stamp for inbound deliveries.
+
+**Parameters:**
+
+- **stamp_cost** (<code>[int](#int) | None</code>) – Required stamp value between 1 and 254, or None
+to clear the requirement.
+
+Returns False when the bot's delivery destination is not
+registered or LXMF rejects the cost.
+
+##### `lxmfy.testing.TestBot.set_message_storage_limit`
+
+```python
+set_message_storage_limit(megabytes)
+```
+
+Set the message storage limit for propagation node mode.
+
+**Parameters:**
+
+- **megabytes** (<code>[float](#float)</code>) – Storage limit in megabytes. Set to 0 for unlimited.
+
+##### `lxmfy.testing.TestBot.set_propagation_node`
+
+```python
+set_propagation_node(node_hash)
+```
+
+Manually set the outbound propagation node.
+
+**Parameters:**
+
+- **node_hash** (<code>[str](#str)</code>) – The destination hash of the propagation node.
+
+##### `lxmfy.testing.TestBot.set_retain_on_node`
+
+```python
+set_retain_on_node(retain)
+```
+
+Keep copies of synced messages on the propagation node.
+
+Only meaningful when this bot runs as a propagation node.
+
+##### `lxmfy.testing.TestBot.signature_manager`
+
+```python
+signature_manager = SignatureManager(self, verification_enabled=self.config.signature_verification_enabled, require_signatures=self.config.require_message_signatures, request_unknown_identities=self.config.request_unknown_identities)
+```
+
+##### `lxmfy.testing.TestBot.spam_protection`
+
+```python
+spam_protection = SpamProtection(storage=self.storage, bot=self, rate_limit=self.config.rate_limit, cooldown=self.config.cooldown, max_warnings=self.config.max_warnings, warning_timeout=self.config.warning_timeout)
+```
+
+##### `lxmfy.testing.TestBot.storage`
+
+```python
+storage = Storage(JSONStorage(self.config.storage_path))
+```
+
+##### `lxmfy.testing.TestBot.sync_propagation_node`
+
+```python
+sync_propagation_node(max_messages=None)
+```
+
+Request stored messages from the outbound propagation node.
+
+Establishes a link to the configured propagation node if needed
+and downloads messages held for this bot's identity. Delivery
+completes asynchronously through the normal inbound pipeline.
+
+**Parameters:**
+
+- **max_messages** (<code>[int](#int) | None</code>) – Maximum messages to request. None requests all.
+
+Returns False when no router, identity, or outbound propagation
+node is configured.
+
+##### `lxmfy.testing.TestBot.thread_pool`
+
+```python
+thread_pool = ThreadPoolExecutor(max_workers=5)
+```
+
+##### `lxmfy.testing.TestBot.transport`
+
+```python
+transport = Transport(self, self.storage)
+```
+
+##### `lxmfy.testing.TestBot.unignore_destination`
+
+```python
+unignore_destination(destination)
+```
+
+Stop dropping inbound traffic from a destination.
+
+##### `lxmfy.testing.TestBot.unprioritise_destination`
+
+```python
+unprioritise_destination(destination)
+```
+
+Remove a destination from the prioritised list.
+
+Operates on the list directly because LXMRouter.unprioritise in
+LXMF 1.1.1 references an unbound name and always fails.
+
+##### `lxmfy.testing.TestBot.validate`
+
+```python
+validate()
+```
+
+Run validation checks and return formatted results.
+
+##### `lxmfy.testing.TestBot.wait_sent`
+
+```python
+wait_sent(count=1, timeout=5.0)
+```
+
+Wait until at least count new outbound messages are queued.
+
+#### `lxmfy.testing.fake_message`
+
+```python
+fake_message(content, *, source_hash, title=None, fields=None, message_hash=None)
+```
+
+Build an LXMessage-shaped object for inbound injection.
+
 ### `lxmfy.transport`
 
 Transport module for LXMFy bot framework.
@@ -15164,6 +18727,17 @@ Tolerates int keys, string keys, and common name variants the way
 clients like MeshChatX encode them. Returns a dict with
 reaction_to, reaction_emoji, and reaction_sender, or None when the
 fields carry no parseable reaction.
+
+### `lxmfy.unpack_reply`
+
+```python
+unpack_reply(fields)
+```
+
+Parse reply threading fields from an inbound LXMF message.
+
+Returns a dict with reply_to (hex), quote (str), and thread (hex)
+keys, or None when no reply fields are present.
 
 ### `lxmfy.validate_bot`
 
