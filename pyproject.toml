@@ -18,6 +18,7 @@ dependencies = [
     "lxmf>=1.1.1",
     "rns>=1.5.2",
     "cbor2>=5.4.0",
+    "landlockpy (>=0.1.1,<0.2.0) ; sys_platform == 'linux'",
 ]
 
 [project.urls]

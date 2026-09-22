@@ -27,7 +27,17 @@ from .debugger import (
 )
 from .events import Event, EventManager, EventPriority
 from .help import HelpFormatter, HelpSystem
-from .lxmf_fields import FIELD_COMMANDS, FIELD_RESULTS, pack_result, unpack_commands
+from .lxmf_fields import (
+    FIELD_COMMANDS,
+    FIELD_REACTION,
+    FIELD_RESULTS,
+    REACTION_CONTENT,
+    REACTION_TO,
+    pack_reaction,
+    pack_result,
+    unpack_commands,
+    unpack_reaction,
+)
 from .middleware import MiddlewareContext, MiddlewareManager, MiddlewareType
 from .permissions import DefaultPerms, PermissionManager, Role
 from .rrc import (
@@ -50,7 +60,10 @@ __all__ = [
     "BOT_DISPLAY_NAME_FILE",
     "DEFAULT_DEST_NAME",
     "FIELD_COMMANDS",
+    "FIELD_REACTION",
     "FIELD_RESULTS",
+    "REACTION_CONTENT",
+    "REACTION_TO",
     "RRC_VERSION",
     "Attachment",
     "AttachmentType",
@@ -94,9 +107,11 @@ __all__ = [
     "normalize_room",
     "pack_attachment",
     "pack_icon_appearance_field",
+    "pack_reaction",
     "pack_result",
     "sort_checks_by_severity",
     "unpack_commands",
+    "unpack_reaction",
     "validate_bot",
     "validate_envelope",
 ]

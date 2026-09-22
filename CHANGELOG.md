@@ -13,6 +13,9 @@
 - Outbound delivery control: outbound_queue, get_outbound_progress, cancel_outbound, delivery_link_available
 - Propagation sync: sync_propagation_node, cancel_propagation_sync, get_propagation_stats, set_retain_on_node, announce_propagation_node, allow_control_identity, disallow_control_identity
 - ingest_lxm_uri imports an LXM from an lxm:// URI
+- LXMF reactions: bot.react(destination, message_hash, reaction) sends a FIELD_REACTION delivery, on_reaction registers inbound handlers, msg.reaction exposes parsed reaction metadata
+- pack_reaction and unpack_reaction build and parse FIELD_REACTION dicts
+- Landlock sandbox now uses the landlockpy package instead of in-module syscall bindings
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes

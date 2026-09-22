@@ -40,6 +40,7 @@ cogs/
 .ruff_cache/
 
 testing/
+.coverage
 .hypothesis/.coverage
 coverage.xml
 benchmarks.json

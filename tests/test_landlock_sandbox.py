@@ -1,30 +1,12 @@
+import os
+import subprocess
 import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from lxmfy import landlock_sandbox as ll
-
-
-def test_parse_kernel_version():
-    assert ll._parse_kernel_version("6.12.7-1-cachyos-hardened") == (6, 12, 7)
-    assert ll._parse_kernel_version("5.13.0") == (5, 13, 0)
-    assert ll._parse_kernel_version("5.12.19") == (5, 12, 19)
-
-
-def test_kernel_version_meets_minimum():
-    with patch.object(
-        ll.os,
-        "uname",
-        return_value=type("U", (), {"release": "6.12.7"})(),
-    ):
-        assert ll._kernel_version_meets_minimum() is True
-    with patch.object(
-        ll.os,
-        "uname",
-        return_value=type("U", (), {"release": "5.12.99"})(),
-    ):
-        assert ll._kernel_version_meets_minimum() is False
 
 
 def test_landlock_requested_non_linux():
@@ -82,6 +64,13 @@ def test_landlock_auto_off_when_kernel_unsupported(monkeypatch):
         assert ll.landlock_auto_enabled() is False
 
 
+def test_landlock_unsupported_without_package(monkeypatch):
+    monkeypatch.setattr(ll, "landlockpy", None)
+    ll._landlock_support_cached = None
+    assert ll.landlock_kernel_supported() is False
+    assert ll.apply_landlock_sandbox() is False
+
+
 @pytest.mark.skipif(sys.platform != "linux", reason="Landlock probe requires Linux")
 def test_landlock_kernel_supported_on_linux():
     ll._landlock_support_cached = None
@@ -94,8 +83,71 @@ def test_collect_read_roots_includes_proc_for_psutil():
     assert "/proc" in roots
 
 
+def test_collect_rw_roots_temp_only():
+    import tempfile
+
+    roots = ll._collect_rw_roots(None, None, None, None, None, temp_only=True)
+    assert roots == [os.path.abspath(tempfile.gettempdir())]
+
+
 def test_landlock_status_dict():
     status = ll.landlock_status_dict(active=True, config_enabled=True)
     assert status["landlock_active"] is True
     assert "landlock_kernel_supported" in status
     assert "landlock_requested" in status
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux" or not ll.landlock_kernel_supported(),
+    reason="requires a Landlock-capable Linux kernel",
+)
+def test_apply_landlock_sandbox_enforces(tmp_path):
+    """Apply the real sandbox in a subprocess and verify denial and grants.
+
+    Enforcement is irreversible per-process, so it runs in a child. The
+    child writes to its temp root (allowed), reads an /etc file (read
+    root), then attempts writes outside every allowed root (denied).
+    """
+    child = """
+import os
+import sys
+import tempfile
+
+from lxmfy.landlock_sandbox import apply_landlock_sandbox
+
+if not apply_landlock_sandbox(temp_only=True, config_enabled=True):
+    sys.exit(2)
+
+probe = os.path.join(tempfile.gettempdir(), "lxmfy_ll_probe")
+with open(probe, "w") as f:
+    f.write("ok")
+with open("/etc/hostname") as f:
+    f.read(1)
+
+try:
+    with open("/etc/lxmfy_ll_denied", "w") as f:
+        f.write("x")
+    sys.exit(3)
+except OSError:
+    pass
+
+try:
+    with open(os.path.expanduser("~/.bashrc")) as f:
+        f.read(1)
+    sys.exit(4)
+except OSError:
+    pass
+
+sys.exit(0)
+"""
+    env = os.environ.copy()
+    repo_root = str(Path(__file__).resolve().parent.parent)
+    env["PYTHONPATH"] = repo_root + os.pathsep + env.get("PYTHONPATH", "")
+    env["LXMFY_LANDLOCK"] = "1"
+    result = subprocess.run(
+        [sys.executable, "-c", child],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 0, result.stderr

@@ -11,6 +11,7 @@ import RNS
 from LXMF import LXMessage
 
 from .attachments import Attachment, pack_attachment
+from .lxmf_fields import pack_reaction
 from .signatures import sign_outgoing_message
 from .validation import destination_bytes
 
@@ -572,6 +573,31 @@ class OutboundMixin:
                     f"Reset delivery attempts for {destination} (user came back online)",
                     RNS.LOG_DEBUG,
                 )
+
+    def react(self, destination: str, message_hash: str, reaction: str) -> bool:
+        """Send a reaction to a message.
+
+        Args:
+            destination: The destination hash of the message author.
+            message_hash: The full LXMessage hash being reacted to, hex.
+            reaction: The reaction content, usually a single emoji.
+
+        Reactions travel as an LXMF FIELD_REACTION dict on an otherwise
+        empty message. Clients that understand the field attach it to the
+        target message; clients that do not see a short empty delivery.
+        """
+        try:
+            raw = bytes.fromhex(message_hash)
+        except (ValueError, TypeError):
+            return False
+        if len(raw) != 32:
+            return False
+        return self.send(
+            destination,
+            "",
+            title="",
+            lxmf_fields=pack_reaction(raw, reaction),
+        )
 
     def delivery_link_available(self, destination: str) -> bool:
         """Check whether a direct link is up for a destination.

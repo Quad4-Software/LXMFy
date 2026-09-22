@@ -9,7 +9,12 @@ import RNS
 
 from ._sync import run_sync
 from .events import Event, EventPriority
-from .lxmf_fields import FIELD_RESULTS, pack_result, unpack_commands
+from .lxmf_fields import (
+    FIELD_RESULTS,
+    pack_result,
+    unpack_commands,
+    unpack_reaction,
+)
 from .middleware import MiddlewareContext, MiddlewareType
 from .permissions import DefaultPerms
 from .signatures import verify_incoming_message
@@ -46,6 +51,7 @@ class InboundMixin:
     middleware: MiddlewareManager
     nlp: IntentClassifier
     permissions: PermissionManager
+    reaction_handlers: list
     receipts: list
     router: LXMRouter | None
     spam_protection: SpamProtection
@@ -124,6 +130,16 @@ class InboundMixin:
                 self.logger.debug("Message from %s denied by permissions", sender)
                 return
 
+            reaction = unpack_reaction(msg_fields, sender)
+            if reaction is not None:
+                for handler in self.reaction_handlers:
+                    if run_sync(handler, sender, reaction):
+                        self.logger.debug(
+                            "Reaction from %s consumed by reaction handler",
+                            sender,
+                        )
+                        return
+
             # Call message handlers
             for handler in self.message_handlers:
                 if run_sync(handler, sender, message):
@@ -140,6 +156,7 @@ class InboundMixin:
                 "content": content,
                 "hash": receipt,
                 "fields": msg_fields,
+                "reaction": reaction,
                 "request_id": request_id,
             }
             msg = SimpleNamespace(**msg_ctx)
@@ -294,6 +311,20 @@ class InboundMixin:
         def decorator(func):
             """Registers a function to be called on every message."""
             self.message_handlers.append(func)
+            return func
+
+        return decorator
+
+    def on_reaction(self):
+        """Decorator for registering reaction handlers.
+
+        Handlers are called as handler(sender, reaction) where reaction
+        carries reaction_to, reaction_emoji, and reaction_sender.
+        """
+
+        def decorator(func):
+            """Registers a function to be called on inbound reactions."""
+            self.reaction_handlers.append(func)
             return func
 
         return decorator

@@ -757,6 +757,19 @@ test = ["pyfakefs", "pytest (>=6,!=8.1.*)"]
 type = ["pygobject-stubs", "pytest-mypy (>=1.0.1)", "shtab", "types-pywin32"]
 
 [[package]]
+name = "landlockpy"
+version = "0.1.1"
+description = "Python bindings for the Landlock Linux security module"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "sys_platform == \"linux\""
+files = [
+    {file = "landlockpy-0.1.1-py3-none-any.whl", hash = "sha256:0e39be3c21fbc4875adccd1a775de921720807cc61471b12426f679999d33e5f"},
+    {file = "landlockpy-0.1.1.tar.gz", hash = "sha256:3fa0664a17170b1ae0aa6a2d980503b7230aa51c9e6edfb25e58db0f71aed34b"},
+]
+
+[[package]]
 name = "lxmf"
 version = "1.1.1"
 description = "Lightweight Extensible Message Format for Reticulum"
@@ -1348,4 +1361,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "e1e6ed786c2c02f9f6d9953f72ac274de4bc4ae1b9fce2e73fbce73074893852"
+content-hash = "1c78a7d0833f0a604311e4d4510b952e3752bc8358838d06dbde1040260a99bf"

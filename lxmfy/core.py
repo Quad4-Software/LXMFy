@@ -81,6 +81,7 @@ class LXMFBot(
         self.cogs = {}
         self.first_message_handlers = []
         self.message_handlers = []
+        self.reaction_handlers = []
         self.delivery_callbacks = []
         self.receipts = []
         self._receive_lock = threading.Lock()
