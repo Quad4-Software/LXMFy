@@ -7,7 +7,20 @@
 - LXMF (`pip install lxmf`, version 1.1.1+; installed automatically with
   LXMFy)
 - CBOR (`cbor2`, installed automatically, required for RRC)
-- LXMFy (`pip install lxmfy` or install from source)
+
+=== "PyPI"
+
+    ``` bash
+    pip install lxmfy
+    ```
+
+=== "Source"
+
+    ``` bash
+    git clone https://github.com/Quad4-Software/LXMFy
+    cd LXMFy
+    poetry install
+    ```
 
 ## Creating Your First Bot (Using the CLI)
 

@@ -233,11 +233,13 @@ def long_task_command(ctx):
     ctx.reply("Long task completed!")
 ```
 
-**Important:** Functions marked as `threaded=True` **must not** directly
-interact with the Reticulum Network Stack (RNS) or any components that
-rely on `lxmfy.transport.py`, as these are generally not thread-safe.
-Use `ctx.reply()` for sending messages back to the user from within a
-threaded command.
+!!! warning "Thread safety"
+
+    Functions marked as `threaded=True` **must not** directly interact
+    with the Reticulum Network Stack (RNS) or any components that rely
+    on `lxmfy.transport.py`, as these are generally not thread-safe.
+    Use `ctx.reply()` for sending messages back to the user from within
+    a threaded command.
 
 ## Events
 
@@ -368,14 +370,16 @@ bot = LXMFBot(
 )
 ```
 
-**Important:** LXMF automatically handles all cryptographic signing and
-verification using RNS identities. LXMFy's `SignatureManager` is a
-configuration layer that:
+!!! note "Signature handling"
 
-- Controls whether to enforce signature verification
-- Determines policy for unsigned messages (accept or reject)
-- Integrates with the permission system (e.g., bypass verification for
-  trusted users)
+    LXMF automatically handles all cryptographic signing and
+    verification using RNS identities. LXMFy's `SignatureManager` is a
+    configuration layer that:
+
+    - Controls whether to enforce signature verification
+    - Determines policy for unsigned messages (accept or reject)
+    - Integrates with the permission system (e.g., bypass verification
+      for trusted users)
 
 The actual cryptographic operations are performed by LXMF/RNS, not by
 LXMFy.

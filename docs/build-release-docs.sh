@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build release documentation artifacts (PDF, EPUB, plain text) from the
-# Markdown sources. Requires pandoc, weasyprint (PDF engine), and griffe2md.
+# Markdown sources for every translated language.
+# Requires pandoc, weasyprint (PDF engine), and griffe2md.
 # Usage: docs/build-release-docs.sh [output-dir]
 set -euo pipefail
 
@@ -9,21 +10,37 @@ mkdir -p "$out"
 
 pages=(index quick-start creating-bots api-reference)
 
-tmp_en="$(mktemp -d)"
-tmp_ru="$(mktemp -d)"
-trap 'rm -rf "$tmp_en" "$tmp_ru"' EXIT
+declare -A titles=(
+    [en]="LXMFy Documentation"
+    [de]="LXMFy Dokumentation"
+    [es]="Documentación de LXMFy"
+    [fr]="Documentation LXMFy"
+    [pt]="Documentação do LXMFy"
+    [uk]="Документація LXMFy"
+    [ru]="Документация LXMFy"
+    [zh]="LXMFy 文档"
+)
+langs=(en de es fr pt uk ru zh)
+
+api="$(mktemp)"
+work="$(mktemp -d)"
+trap 'rm -f "$api"; rm -rf "$work"' EXIT
 
 griffe2md lxmfy 2>/dev/null \
-    | sed -E 's/\[([^]]+)\]\(#[^)]*\)/\1/g' \
-    > "$tmp_en/90-api-generated.md"
-cp "$tmp_en/90-api-generated.md" "$tmp_ru/90-api-generated.md"
+    | sed -E 's/\[([^]]+)\]\(#[^)]*\)/\1/g' > "$api"
 
 prepare() {
-    local lang_dir="$1" tmp="$2" i
+    local lang="$1" tmp="$work/$2" i
+    mkdir -p "$tmp"
     for i in "${!pages[@]}"; do
-        src="docs/${lang_dir:+$lang_dir/}${pages[$i]}.md"
+        if [[ "$lang" == en ]]; then
+            src="docs/${pages[$i]}.md"
+        else
+            src="docs/$lang/${pages[$i]}.md"
+        fi
         sed '/^:::/d' "$src" > "$tmp/$(printf '%02d' "$i")-${pages[$i]}.md"
     done
+    cp "$api" "$tmp/90-api-generated.md"
 }
 
 render() {
@@ -35,10 +52,19 @@ render() {
         -o "$base.txt"
 }
 
-prepare "" "$tmp_en"
-prepare "ru" "$tmp_ru"
-
-render "$tmp_en" en "LXMFy Documentation"
-render "$tmp_ru" ru "Документация LXMFy"
+for lang in "${langs[@]}"; do
+    missing=""
+    if [[ "$lang" != en ]]; then
+        for page in "${pages[@]}"; do
+            [[ -f "docs/$lang/$page.md" ]] || missing=1
+        done
+    fi
+    if [[ -n "$missing" ]]; then
+        echo "skipping $lang: incomplete docs/$lang" >&2
+        continue
+    fi
+    prepare "$lang" "$lang"
+    render "$work/$lang" "$lang" "${titles[$lang]}"
+done
 
 ls -lh "$out"

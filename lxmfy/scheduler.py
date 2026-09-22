@@ -9,6 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from threading import Event, Thread
+from typing import Any
 
 from ._sync import run_sync
 
@@ -115,7 +116,7 @@ class ScheduledTask:
 class TaskScheduler:
     """Manages scheduled tasks and background processes."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: Any):
         """Initialize the TaskScheduler.
 
         Args:

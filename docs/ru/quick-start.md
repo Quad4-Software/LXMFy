@@ -6,7 +6,20 @@
 - Reticulum Network Stack (`pip install rns`, версия 1.4.2+)
 - LXMF (`pip install lxmf`, версия 1.1.1+; устанавливается автоматически вместе с LXMFy)
 - CBOR (`cbor2`, устанавливается автоматически, нужен для RRC)
-- LXMFy (`pip install lxmfy` или установка из исходников)
+
+=== "PyPI"
+
+    ``` bash
+    pip install lxmfy
+    ```
+
+=== "Из исходников"
+
+    ``` bash
+    git clone https://github.com/Quad4-Software/LXMFy
+    cd LXMFy
+    poetry install
+    ```
 
 ## Создание первого бота (через CLI)
 

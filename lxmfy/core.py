@@ -11,6 +11,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
+from typing import Any
 
 import RNS
 from LXMF import LXMRouter
@@ -66,7 +67,7 @@ class LXMFBot(
     - Admin privileges
     """
 
-    def __init__(self, name: str | None = None, **kwargs):
+    def __init__(self, name: str | None = None, **kwargs: Any):
         """Initialize a new LXMFBot instance.
 
         Args:
