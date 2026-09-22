@@ -1,0 +1,5 @@
+# Shared pinned docs tooling for docs.yml and publish.yml.
+zensical==0.0.63
+mkdocstrings-python==2.0.8
+griffe2md==1.5.0
+mike @ git+https://github.com/squidfunk/mike.git@2d4ad799442f4592db8ad53b179bfb33db8c69ac
