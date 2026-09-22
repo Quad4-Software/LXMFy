@@ -90,6 +90,7 @@ jobs:
         with:
           egress-policy: audit
       - name: Checkout
+        # zizmor: ignore[artipacked] mike needs the token to push gh-pages; no artifacts uploaded
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -146,13 +147,14 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write  # mike pushes the gh-pages branch
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
       - name: Checkout release tag
+        # zizmor: ignore[artipacked] mike needs the token to push gh-pages; no artifacts uploaded
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.release.tag_name }}
