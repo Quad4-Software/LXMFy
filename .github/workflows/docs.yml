@@ -65,8 +65,8 @@ jobs:
 
       - name: Install docs tooling and lxmfy
         run: |
-          pip install -r docs/requirements-docs.txt
-          pip install .
+          pip install --require-hashes -r docs/requirements-docs.txt
+          pip install --no-deps -e .
 
       - name: Generate llms-full.txt
         run: docs/gen-llms-full.sh
@@ -103,8 +103,8 @@ jobs:
 
       - name: Install docs tooling and lxmfy
         run: |
-          pip install -r docs/requirements-docs.txt
-          pip install .
+          pip install --require-hashes -r docs/requirements-docs.txt
+          pip install --no-deps -e .
 
       - name: Generate llms-full.txt
         run: docs/gen-llms-full.sh
@@ -168,8 +168,8 @@ jobs:
 
       - name: Install docs tooling and lxmfy
         run: |
-          pip install -r docs/requirements-docs.txt
-          pip install .
+          pip install --require-hashes -r docs/requirements-docs.txt
+          pip install --no-deps -e .
 
       - name: Generate llms-full.txt
         run: docs/gen-llms-full.sh

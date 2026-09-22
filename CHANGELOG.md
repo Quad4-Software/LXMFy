@@ -32,6 +32,10 @@
 - Monthly dependency freshness workflow reports outdated packages to a tracking issue
 - Security workflow audits dependencies with pip-audit and uploads a CycloneDX SBOM
 - Docs tooling pins live in docs/requirements-docs.txt shared by the docs and release workflows
+- All pip installs in workflows and Dockerfiles are hash-pinned (--require-hashes)
+- Docker base images are pinned by digest and Poetry installs from a hashed requirements file
+- CodeQL workflow provides GitHub-native SAST on pushes, PRs, and a weekly schedule
+- master branch protection blocks force pushes and branch deletion
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes

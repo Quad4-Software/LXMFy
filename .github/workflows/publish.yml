@@ -65,7 +65,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -178,8 +178,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc weasyprint
-          pip install -r docs/requirements-docs.txt
-          pip install .
+          pip install --require-hashes -r docs/requirements-docs.txt
+          pip install --no-deps -e .
 
       - name: Build PDF, EPUB, and text bundles
         run: bash docs/build-release-docs.sh docs-dist

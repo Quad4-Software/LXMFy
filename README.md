@@ -19,7 +19,7 @@ Python framework for LXMF bots on the Reticulum Network.
 
 ## Installation
 
-**Requirements:** Python 3.11+, [RNS](https://pypi.org/project/rns/) 1.4.2+, [LXMF](https://pypi.org/project/lxmf/) 1.1.1+, [cbor2](https://pypi.org/project/cbor2/) 5.4.0+ (pulled in with LXMFy).
+**Requirements:** Python 3.11+, [RNS](https://pypi.org/project/rns/) 1.5.4+, [LXMF](https://pypi.org/project/lxmf/) 1.1.1+, [cbor2](https://pypi.org/project/cbor2/) 6.1.0+ (pulled in with LXMFy).
 
 ### From PyPI
 

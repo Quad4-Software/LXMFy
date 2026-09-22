@@ -33,7 +33,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -64,7 +64,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -96,7 +96,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -142,7 +142,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -175,7 +175,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -210,7 +210,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -249,7 +249,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install poetry==2.4.1
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0

@@ -1,5 +1,4 @@
-ARG PYTHON_VERSION=3.13
-FROM python:${PYTHON_VERSION}-alpine
+FROM python:3.13-alpine@sha256:79e7a9b9ff1cbceff819f856fb374477792a5967759d94df266de7b7b4120e6f
 
 LABEL org.opencontainers.image.source="https://github.com/Quad4-Software/LXMFy"
 LABEL org.opencontainers.image.description="Easily create LXMF bots for the Reticulum Network with this extensible framework."
@@ -10,9 +9,8 @@ WORKDIR /bot
 
 RUN mkdir -p /root/.reticulum /bot/config
 
-RUN apk add --no-cache curl && \
-    curl -sSL https://install.python-poetry.org | python3 - && \
-    ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+COPY docker/requirements-poetry.txt /tmp/requirements-poetry.txt
+RUN pip install --no-cache-dir --require-hashes -r /tmp/requirements-poetry.txt
 
 COPY pyproject.toml poetry.lock ./
 RUN poetry config virtualenvs.create false && \
