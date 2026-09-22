@@ -104,6 +104,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install poetry
+        run: pipx install poetry==2.4.1
+
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
@@ -111,9 +114,7 @@ jobs:
           cache: poetry
 
       - name: Install project dependencies
-        run: |
-          pipx install poetry==2.4.1
-          poetry install --no-interaction --no-ansi
+        run: poetry install --no-interaction --no-ansi
 
       - name: Install audit tooling
         run: poetry run pip install "pip-audit==2.10.1" "cyclonedx-bom==7.4.0"
