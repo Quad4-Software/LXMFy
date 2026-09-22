@@ -3,7 +3,7 @@
 ## Вимоги
 
 - Python 3.11+
-- Reticulum Network Stack (`pip install rns`, версія 1.4.2+)
+- Reticulum Network Stack (`pip install rns`, версія 1.5.4+)
 - LXMF (`pip install lxmf`, версія 1.1.1+; встановлюється автоматично разом із
   LXMFy)
 - CBOR (`cbor2`, встановлюється автоматично, потрібен для RRC)

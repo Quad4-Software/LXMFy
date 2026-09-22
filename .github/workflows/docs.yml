@@ -47,6 +47,11 @@ jobs:
       - name: Build site
         run: zensical build
 
+      - name: Generate llms-full.txt
+        run: |
+          pip install "griffe2md==1.5.0"
+          docs/gen-llms-full.sh
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

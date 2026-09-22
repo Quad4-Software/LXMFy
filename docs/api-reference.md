@@ -517,6 +517,62 @@ bot = LXMFBot(
 )
 ```
 
+### Router Controls
+
+Thin wrappers over the underlying `LXMRouter` for sender control,
+tickets, outbound queue management, and propagation node sync. All take
+destination hashes as hex strings and return `False` when the router is
+not running (for example in `test_mode`).
+
+**Sender control (inbound)**
+
+- `ignore_destination(destination)` / `unignore_destination(destination)` / `is_ignored(destination)`:
+  Drop inbound messages from a sender
+- `allow_destination(destination)` / `disallow_destination(destination)`:
+  Whitelist management when the router runs in allow-list mode
+- `prioritise_destination(destination)` / `unprioritise_destination(destination)`:
+  Prioritized sender list
+- `set_inbound_stamp_cost(stamp_cost)`: Require a stamp cost on inbound
+  messages (`None` clears)
+- `enforce_stamps()` / `ignore_stamps()`: Inbound stamp enforcement
+  toggles
+
+**Tickets**
+
+- `generate_ticket(destination, expiry=None)`: Issue an inbound stamp
+  ticket for a sender
+- `get_inbound_tickets(destination)`: Tickets held for a sender
+- `get_outbound_ticket(destination)` / `get_outbound_ticket_expiry(destination)` /
+  `get_outbound_stamp_cost(destination)`: Outbound ticket state learned
+  from the network
+
+**Outbound queue**
+
+- `outbound_queue()`: Snapshot of pending outbound messages
+- `get_outbound_progress(lxm_hash)`: Delivery progress for a message
+  hash, or `None`
+- `cancel_outbound(message_id)`: Remove a queued message before
+  delivery
+- `delivery_link_available(destination)`: Whether an active RNS link
+  exists to the destination
+
+**Propagation**
+
+- `sync_propagation_node(max_messages=None)`: Pull messages from the
+  configured propagation node
+- `cancel_propagation_sync()`: Stop an in-progress sync
+- `get_propagation_stats()`: Node transfer state and limits, or `None`
+- `set_retain_on_node(retain)`: Keep delivered messages on the node
+- `announce_propagation_node()`: Announce this node as a propagation
+  node
+- `allow_control_identity(destination)` / `disallow_control_identity(destination)`:
+  Propagation control channel whitelist
+
+**Ingest**
+
+- `ingest_lxm_uri(uri)`: Import an `lxm://` URI message into the
+  inbound queue
+
 ## Message Handlers
 
 LXMFy provides decorators for handling different types of incoming

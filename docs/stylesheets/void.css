@@ -176,3 +176,12 @@
 .md-nav__link:active {
   font-weight: 600;
 }
+
+/* Header right side: search, repo link, language picker, palette last */
+.md-header__option {
+  order: 1;
+  margin-inline-start: .4rem;
+}
+.md-header__option[data-md-component="palette"] {
+  order: 2;
+}

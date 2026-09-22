@@ -20,6 +20,9 @@
 - Docs translated into German, Spanish, French, Portuguese, Ukrainian, Russian, and Simplified Chinese with release bundles per language
 - Docs use a dark-first quad4 "void" theme with a light "paper" scheme, system-preference detection, and a palette toggle
 - Docs are an installable PWA: service worker precaches the core pages, caches visited pages offline, and refreshes content when the browser comes back online
+- Docs header gains a language picker and hreflang links for all eight languages
+- Docs ship llms.txt and a generated llms-full.txt for LLM consumers
+- Docs emit Open Graph, Twitter card, theme-color, and JSON-LD (WebSite plus SoftwareSourceCode) metadata with a social card image, plus robots.txt
 
 ### Fixes
 - Delivery destination keeps LXMF's inbound link callbacks, so link-based delivery completes
@@ -77,7 +80,8 @@
 - Outbound messages include reply tickets by default
 
 ### Updates
-- RNS >=1.5.2, LXMF >=1.1.1
+- RNS >=1.5.4, LXMF >=1.1.1, cbor2 >=6.1.0
+- Dev tooling updated: pytest 9.1, ruff 0.16, hypothesis 6.168, pyright 1.1.414, twine 7, psutil 7.2.2
 - Debugger covers stamp, ticket, and ratchet send blockers more clearly
 
 ## [2.0.2] - 2026-07-23

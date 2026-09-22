@@ -63,6 +63,7 @@ nav = [
 ]
 
 [project.theme]
+custom_dir = "overrides"
 features = [
   "navigation.sections",
   "navigation.footer",
@@ -88,5 +89,39 @@ media = "(prefers-color-scheme: light)"
 scheme = "paper"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
+
+[project.extra]
+[[project.extra.alternate]]
+name = "English"
+link = "https://lxmfy.quad4.io/"
+lang = "en"
+[[project.extra.alternate]]
+name = "Deutsch"
+link = "https://lxmfy.quad4.io/de/"
+lang = "de"
+[[project.extra.alternate]]
+name = "Español"
+link = "https://lxmfy.quad4.io/es/"
+lang = "es"
+[[project.extra.alternate]]
+name = "Français"
+link = "https://lxmfy.quad4.io/fr/"
+lang = "fr"
+[[project.extra.alternate]]
+name = "Português"
+link = "https://lxmfy.quad4.io/pt/"
+lang = "pt"
+[[project.extra.alternate]]
+name = "Русский"
+link = "https://lxmfy.quad4.io/ru/"
+lang = "ru"
+[[project.extra.alternate]]
+name = "Українська"
+link = "https://lxmfy.quad4.io/uk/"
+lang = "uk"
+[[project.extra.alternate]]
+name = "简体中文"
+link = "https://lxmfy.quad4.io/zh/"
+lang = "zh"
 
 [project.plugins.mkdocstrings]
