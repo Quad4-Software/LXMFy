@@ -1,0 +1,2838 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python framework for LXMF bots on the Reticulum Network">
+      
+      
+      
+        <link rel="canonical" href="https://lxmfy.quad4.io/2.1.0/uk/creating-bots/">
+      
+      
+        <link rel="prev" href="../quick-start/">
+      
+      
+        <link rel="next" href="../api-reference/">
+      
+      
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/" hreflang="en">
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/de/" hreflang="de">
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/es/" hreflang="es">
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/fr/" hreflang="fr">
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/pt/" hreflang="pt">
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/ru/" hreflang="ru">
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/uk/" hreflang="uk">
+        
+          <link rel="alternate" href="https://lxmfy.quad4.io/zh/" hreflang="zh">
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="zensical-0.0.63">
+    
+    
+  
+    <title>Створення ботів - LXMFy</title>
+  
+
+    
+      
+        
+      
+      <link rel="stylesheet" href="../../assets/stylesheets/modern/main.10763589.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/modern/palette.812a03bb.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Space+Grotesk:300,300i,400,400i,500,500i,700,700i%7CSpace+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Space Grotesk";--md-code-font:"Space Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/void.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LXMFy">
+  <meta property="og:title" content="Створення ботів - LXMFy">
+  
+    <meta property="og:description" content="Python framework for LXMF bots on the Reticulum Network">
+  
+  
+    <meta property="og:url" content="https://lxmfy.quad4.io/2.1.0/uk/creating-bots/">
+  
+  <meta property="og:image" content="https://lxmfy.quad4.io/2.1.0/assets/social.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://lxmfy.quad4.io/2.1.0/assets/social.png">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a0a0b">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f4f5">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "LXMFy",
+        "url": "https://lxmfy.quad4.io/2.1.0/",
+        "description": "Python framework for LXMF bots on the Reticulum Network",
+        "inLanguage": ["en", "de", "es", "fr", "pt", "ru", "uk", "zh"]
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "name": "LXMFy",
+        "url": "https://lxmfy.quad4.io/2.1.0/",
+        "codeRepository": "https://github.com/Quad4-Software/LXMFy",
+        "programmingLanguage": "Python",
+        "license": "https://opensource.org/license/0bsd"
+      }
+    ]
+  }
+  </script>
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="void" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LXMFy" class="md-header__button md-logo" aria-label="LXMFy" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="LXMFy">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LXMFy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Створення ботів
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="void" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="paper" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-languages" viewBox="0 0 24 24"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/de/" hreflang="de" class="md-select__link">
+              Deutsch
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/es/" hreflang="es" class="md-select__link">
+              Español
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/fr/" hreflang="fr" class="md-select__link">
+              Français
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/pt/" hreflang="pt" class="md-select__link">
+              Português
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/ru/" hreflang="ru" class="md-select__link">
+              Русский
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/uk/" hreflang="uk" class="md-select__link">
+              Українська
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="https://lxmfy.quad4.io/zh/" hreflang="zh" class="md-select__link">
+              简体中文
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/Quad4-Software/LXMFy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LXMFy" class="md-nav__button md-logo" aria-label="LXMFy" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="LXMFy">
+
+    </a>
+    LXMFy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Quad4-Software/LXMFy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Quick Start
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../creating-bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Creating Bots
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Languages
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Languages
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_1" id="__nav_5_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Deutsch
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_1_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5_1">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Deutsch
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../de/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  LXMFy
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../de/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Schnellstart
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../de/creating-bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Bots erstellen
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../de/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Kernkomponenten
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Español
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5_2">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Español
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../es/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  LXMFy
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../es/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Inicio rápido
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../es/creating-bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Creación de bots
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../es/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Componentes principales
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Français
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5_3">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Français
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  LXMFy
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fr/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Démarrage rapide
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fr/creating-bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Création de bots
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fr/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Composants principaux
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Português
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5_4">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Português
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  LXMFy
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pt/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Início rápido
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pt/creating-bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Criar bots
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pt/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Componentes principais
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Українська
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="true">
+            <label class="md-nav__title" for="__nav_5_5">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Українська
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  LXMFy
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Швидкий старт
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Створення ботів
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Створення ботів
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Базова структура
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Використання шаблонів
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Конфігурація бота
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Конфігурація бота">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lxmf" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Встановлення іконки бота (поле LXMF)
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lxmf_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Структуровані команди через поля LXMF
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Використання коґів (розширень)
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Зовнішні скриптові коґи (підтримка інших мов)
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nlp" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Локальна класифікація інтентів (NLP)
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rns-link" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Підтримка RNS Link
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Обробка повідомлень
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Обробка повідомлень">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Обробник першого повідомлення
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Загальний обробник повідомлень
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Обробка подій
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Сховище
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Права доступу
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Перевірка підписів
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Доставка повідомлень
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Доставка повідомлень">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Використання вузлів поширення
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Налаштування повторних спроб
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reticulum-relay-chat-rrc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reticulum Relay Chat (RRC)
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reticulum Relay Chat (RRC)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reticulum" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Конфігурація Reticulum має значення
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Швидкий старт із шаблоном
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rrc-" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Програмний RRC-бот
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Поведінка сесії
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Основні компоненти
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Русский
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5_6">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  Русский
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ru/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  LXMFy
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ru/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Быстрый старт
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ru/creating-bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Создание ботов
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ru/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Основные компоненты
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    
+    
+    
+    
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  简体中文
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        
+          <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+            <label class="md-nav__title" for="__nav_5_7">
+              <span class="md-nav__icon md-icon"></span>
+              
+  
+  简体中文
+
+            </label>
+            <ul class="md-nav__list" data-md-scrollfix>
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  LXMFy
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zh/quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  快速上手
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zh/creating-bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  创建机器人
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+                
+                  
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../zh/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  核心组件
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+                
+              
+            </ul>
+          </nav>
+        
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/Quad4-Software/LXMFy/edit/master/docs/uk/creating-bots.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="_1">Створення ботів<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<h2 id="_2">Базова структура<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>Мінімальний бот LXMFy складається з таких кроків:</p>
+<ol>
+<li>Імпортуйте <code>LXMFBot</code>.</li>
+<li>Створіть екземпляр <code>LXMFBot</code> з потрібною конфігурацією.</li>
+<li>Визначте команди або обробники подій.</li>
+<li>Запустіть бота через <code>bot.run()</code>.</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># 1. Створюємо екземпляр бота</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"SimpleBot"</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">command_prefix</span><span class="o">=</span><span class="s2">"!"</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">storage_path</span><span class="o">=</span><span class="s2">"simple_data"</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># 2. Визначаємо команди</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"ping"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Responds with pong"</span><span class="p">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">ping_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="c1"># ctx - це об'єкт контексту з інформацією про повідомлення</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="c1"># ctx.sender: LXMF-хеш відправника</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="c1"># ctx.content: повний вміст повідомлення</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="c1"># ctx.args: список аргументів після команди</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="c1"># ctx.reply(message): функція для надсилання відповіді</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="c1">#   (також приймає іменовані аргументи, як-от title="My Title", lxmf_fields=some_fields)</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Pong!"</span><span class="p">)</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1"># Для довготривалих задач можна використовувати команди в окремому потоці:</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># import time</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1"># @bot.command(name="long_op", description="Performs a long operation in a separate thread", threaded=True)</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1"># def long_op_command(ctx):</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="c1">#     ctx.reply("Starting long operation...")</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="c1">#     time.sleep(10) # Імітація довготривалої операції</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="c1">#     ctx.reply("Long operation complete!")</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="c1"># Важливо: команди в окремих потоках не повинні напряму взаємодіяти з RNS або lxmfy.transport.py.</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"greet"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Greets the user"</span><span class="p">)</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="k">def</span><span class="w"> </span><span class="nf">greet_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>        <span class="n">name</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Hello, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">!"</span><span class="p">)</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Hello there! Tell me your name: !greet &lt;your_name&gt;"</span><span class="p">)</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="c1"># 3. Запускаємо бота</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Starting bot: </span><span class="si">{</span><span class="n">bot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Bot LXMF Address: </span><span class="si">{</span><span class="n">bot</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">hash</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<h2 id="_3">Використання шаблонів<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>LXMFy надає кілька шаблонів для типових видів ботів. Ви можете
+використати CLI для генерації файла бота на основі шаблону.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Створити echo-бота</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>my_echo_bot
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Створити бота-нагадувача (використовує сховище SQLite)</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span>reminder<span class="w"> </span>my_reminder_bot
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Створити бота для нотаток (використовує сховище JSON)</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span>note<span class="w"> </span>my_note_bot
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Створити тестового бота для коґів (перевіряє завантаження коґів)</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span>cogtest<span class="w"> </span>my_cog_test_bot
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Створити RRC-бота для кімнат (підключається до хабів і відповідає на @згадки)</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span>rrc<span class="w"> </span>my_rrc_bot
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># Або запустити шаблон напряму</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>lxmfy<span class="w"> </span>run<span class="w"> </span>rrc
+</span></code></pre></div>
+<p>Виконання цих команд створює файл Python (наприклад, <code>my_echo_bot.py</code>),
+який імпортує й запускає вибраний шаблон. Далі ви можете змінити
+згенерований файл або сам код шаблону (<code>lxmfy/templates/...</code>).</p>
+<p><strong>Приклад згенерованого файла (<code>my_cog_test_bot.py</code>):</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy.templates</span><span class="w"> </span><span class="kn">import</span> <span class="n">CogTestBot</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">bot</span> <span class="o">=</span> <span class="n">CogTestBot</span><span class="p">()</span> <span class="c1"># Створює екземпляр шаблону CogTestBot</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="c1"># За бажанням можна перевизначити типове ім'я:</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="c1"># bot.bot.name = "My Cog Test Bot"</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<h2 id="_4">Конфігурація бота<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p>Під час створення екземпляра <code>LXMFBot</code> ви можете передавати різні
+іменовані аргументи для налаштування його поведінки. Список поширених
+параметрів див. у розділі <code>BotConfig</code> у <a href="../api-reference/">Довіднику
+API</a> або в <a href="../quick-start/">посібнику швидкого
+старту</a>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"ConfiguredBot"</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">announce</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="c1"># Анонсувати щогодини</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">admins</span><span class="o">=</span><span class="p">{</span><span class="s2">"your_admin_hash_here"</span><span class="p">},</span> <span class="c1"># Задати адміністраторів</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">command_prefix</span><span class="o">=</span><span class="s2">"$"</span><span class="p">,</span> <span class="c1"># Використовувати '$' як префікс</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">storage_type</span><span class="o">=</span><span class="s2">"sqlite"</span><span class="p">,</span> <span class="c1"># Використовувати базу даних SQLite</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">storage_path</span><span class="o">=</span><span class="s2">"data/my_bot_data.db"</span><span class="p">,</span> <span class="c1"># Вказати шлях до файла БД</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">rate_limit</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="c1"># Дозволити 10 повідомлень за хвилину</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="n">cooldown</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="c1"># Період очікування 30 секунд</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">permissions_enabled</span><span class="o">=</span><span class="kc">True</span> <span class="c1"># Увімкнути рольові права</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">)</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="c1"># Конфігурацію також можна змінювати після створення екземпляра</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="c1"># Примітка: деякі параметри краще задавати під час ініціалізації</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_warnings</span> <span class="o">=</span> <span class="mi">5</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">spam_protection</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">max_warnings</span> <span class="o">=</span> <span class="mi">5</span> <span class="c1"># Оновити також захист від спаму</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<h3 id="lxmf">Встановлення іконки бота (поле LXMF)<a class="headerlink" href="#lxmf" title="Permanent link">&para;</a></h3>
+<p>Ви можете задати боту власну іконку, яка відображатиметься у сумісних
+клієнтах LXMF. Для цього використовується <code>LXMF.FIELD_ICON_APPEARANCE</code>,
+її можна задавати під час надсилання повідомлень.</p>
+<p>Спершу переконайтеся, що у вас є потрібні імпорти:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">IconAppearance</span><span class="p">,</span> <span class="n">pack_icon_appearance_field</span>
+</span></code></pre></div>
+<p>Далі ви можете визначити й використовувати іконку:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># У класі бота або під час налаштування</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">icon_data</span> <span class="o">=</span> <span class="n">IconAppearance</span><span class="p">(</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">icon_name</span><span class="o">=</span><span class="s2">"robot_2"</span><span class="p">,</span>  <span class="c1"># Виберіть з Material Symbols</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">fg_color</span><span class="o">=</span><span class="sa">b</span><span class="s1">'</span><span class="se">\x00\xFF\x00</span><span class="s1">'</span><span class="p">,</span>  <span class="c1"># Зелений</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">bg_color</span><span class="o">=</span><span class="sa">b</span><span class="s1">'</span><span class="se">\x33\x33\x33</span><span class="s1">'</span>   <span class="c1"># Темно-сірий</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="bp">self</span><span class="o">.</span><span class="n">bot_icon_field</span> <span class="o">=</span> <span class="n">pack_icon_appearance_field</span><span class="p">(</span><span class="n">icon_data</span><span class="p">)</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># Під час надсилання повідомлення або відповіді:</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Message from your bot!"</span><span class="p">,</span> <span class="n">lxmf_fields</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bot_icon_field</span><span class="p">)</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># або</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1"># bot.send(destination, "Another message", lxmf_fields=self.bot_icon_field)</span>
+</span></code></pre></div>
+<p>Це <code>self.bot_icon_field</code> можна обчислити один раз і повторно
+використовувати для всіх повідомлень бота.</p>
+<h2 id="lxmf_1">Структуровані команди через поля LXMF<a class="headerlink" href="#lxmf_1" title="Permanent link">&para;</a></h2>
+<p>Окрім текстових команд, LXMFy підтримує команди, надіслані через поля
+повідомлень LXMF, за допомогою <code>FIELD_COMMANDS</code> (<code>0x09</code>). Це зручно для
+структурованих процесів запит/відповідь між клієнтами LXMF і ботами.</p>
+<p>Коли повідомлення містить <code>FIELD_COMMANDS</code>, бот витягує ім'я команди та
+аргументи, спрямовує їх через той самий реєстр команд, що й текстові
+команди, і автоматично додає <code>FIELD_RESULTS</code> (<code>0x0A</code>) у відповідь.</p>
+<p><strong>Отримання структурованих команд</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"FieldBot"</span><span class="p">)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"add"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Add two numbers"</span><span class="p">)</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">add_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>        <span class="k">try</span><span class="p">:</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>            <span class="n">result</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>            <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>            <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Invalid numbers"</span><span class="p">)</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Usage: add &lt;a&gt; &lt;b&gt;"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Об'єкт <code>ctx</code> у зворотних викликах польових команд містить:</p>
+<ul>
+<li><code>ctx.fields</code>: сирий словник полів LXMF з вхідного повідомлення</li>
+<li><code>ctx.request_id</code>: <code>request_id</code> з вхідного <code>FIELD_COMMANDS</code> (якщо є)</li>
+</ul>
+<p><strong>Надсилання структурованої команди з клієнта LXMF</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">LXMF</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">FIELD_COMMANDS</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">lxm</span> <span class="o">=</span> <span class="n">LXMF</span><span class="o">.</span><span class="n">LXMessage</span><span class="p">(</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">destination</span><span class="p">,</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">source</span><span class="p">,</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="sa">b</span><span class="s2">""</span><span class="p">,</span>  <span class="c1"># вміст може бути порожнім для команд лише з полями</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">desired_method</span><span class="o">=</span><span class="n">LXMF</span><span class="o">.</span><span class="n">LXMessage</span><span class="o">.</span><span class="n">DIRECT</span><span class="p">,</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="p">)</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="n">lxm</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">FIELD_COMMANDS</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="s2">"command"</span><span class="p">:</span> <span class="s2">"add"</span><span class="p">,</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="s2">"args"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"3"</span><span class="p">,</span> <span class="s2">"5"</span><span class="p">],</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="s2">"request_id"</span><span class="p">:</span> <span class="s2">"req-42"</span><span class="p">,</span>  <span class="c1"># необов'язково, для кореляції</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="p">}</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="n">router</span><span class="o">.</span><span class="n">handle_outbound</span><span class="p">(</span><span class="n">lxm</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Вимкнення польових команд</strong></p>
+<p>Якщо ви хочете, щоб бот ігнорував <code>FIELD_COMMANDS</code> і обробляв лише
+текстові команди, задайте:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"TextOnlyBot"</span><span class="p">,</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">lxmf_commands_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="_5">Використання коґів (розширень)<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>Коґи дозволяють організувати команди та обробники подій в окремих файлах
+(модулях), зберігаючи головний файл бота чистим.</p>
+<ol>
+<li><strong>Створіть каталог <code>cogs</code></strong> (або той, який ви задали в <code>cogs_dir</code> у
+    <code>BotConfig</code>).</li>
+<li><strong>Створіть файли Python</strong> всередині каталогу <code>cogs</code> (наприклад,
+    <code>utility.py</code>).</li>
+<li><strong>Визначте клас</strong>, який успадковує <code>lxmfy.Cog</code> (необов'язково, але
+    гарна практика), або просто звичайний клас.</li>
+<li><strong>Визначте команди</strong> як методи класу з декоратором <code>@Command</code>.</li>
+<li><strong>Створіть функцію <code>setup(bot)</code></strong> у файлі коґа, яку LXMFy викличе
+    для реєстрації коґа.</li>
+</ol>
+<p><strong>Приклад (<code>cogs/utility.py</code>):</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Command</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy.commands</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cog</span>  <span class="c1"># Імпортуйте Cog, якщо успадковуєте його</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">UtilityCog</span><span class="p">:</span> <span class="c1"># Або class UtilityCog(Cog):</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bot</span><span class="p">):</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">bot</span> <span class="o">=</span> <span class="n">bot</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="nd">@Command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"uptime"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Shows bot uptime"</span><span class="p">)</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="c1"># Примітка: методи в коґах зазвичай приймають 'self' і 'ctx'</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">uptime_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>        <span class="n">uptime_seconds</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Bot has been running for </span><span class="si">{</span><span class="n">uptime_seconds</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds."</span><span class="p">)</span>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>    <span class="nd">@Command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"info"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Shows bot info"</span><span class="p">)</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">info_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>        <span class="n">info</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>            <span class="sa">f</span><span class="s2">"Bot Name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>            <span class="sa">f</span><span class="s2">"Owner(s): </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">admins</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'None'</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>            <span class="sa">f</span><span class="s2">"Prefix: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">command_prefix</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>        <span class="p">)</span>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>    <span class="nd">@Command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"threaded_cog_task"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Performs a long task in a cog thread"</span><span class="p">,</span> <span class="n">threaded</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">threaded_cog_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Starting a long cog task... this will run in a separate thread."</span><span class="p">)</span>
+</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span> <span class="c1"># Імітація довготривалої операції</span>
+</span><span id="__span-9-29"><a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Long cog task completed!"</span><span class="p">)</span>
+</span><span id="__span-9-30"><a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a>
+</span><span id="__span-9-31"><a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="c1"># Ця функція обов'язкова для завантаження коґа</span>
+</span><span id="__span-9-32"><a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="n">bot</span><span class="p">):</span>
+</span><span id="__span-9-33"><a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>    <span class="n">cog_instance</span> <span class="o">=</span> <span class="n">UtilityCog</span><span class="p">(</span><span class="n">bot</span><span class="p">)</span>
+</span><span id="__span-9-34"><a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">add_cog</span><span class="p">(</span><span class="n">cog_instance</span><span class="p">)</span> <span class="c1"># Реєструє екземпляр коґа в боті</span>
+</span></code></pre></div>
+<p><strong>Головний файл бота (<code>my_bot.py</code>):</strong></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"CogBot"</span><span class="p">,</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">cogs_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Переконайтеся, що коґи увімкнені (типово так)</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">cogs_dir</span><span class="o">=</span><span class="s2">"cogs"</span> <span class="c1"># Вкажіть каталог</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">)</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    <span class="c1"># Коґи завантажуються автоматично під час ініціалізації LXMFBot,</span>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>    <span class="c1"># якщо cogs_enabled дорівнює True.</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<p>Під час запуску бот автоматично знайде <code>utility.py</code>, викличе його
+функцію <code>setup</code>, яка створить екземпляр <code>UtilityCog</code> і зареєструє його
+через <code>bot.add_cog()</code>. Команди, визначені в коґі (<code>uptime</code>, <code>info</code>),
+стануть доступними.</p>
+<h2 id="_6">Зовнішні скриптові коґи (підтримка інших мов)<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
+<p>Ви також можете писати розширення бота мовами, відмінними від Python
+(наприклад, Bash, Ruby, Perl, Go, C), використовуючи зовнішні скриптові
+коґи.</p>
+<ol>
+<li><strong>Створіть виконуваний скрипт</strong> у вашому каталозі <code>cogs</code>.</li>
+<li><strong>Додайте shebang</strong> на початку скрипта (наприклад, <code>#!/bin/bash</code>).</li>
+<li><strong>Переконайтеся, що скрипт виконуваний</strong> (<code>chmod +x your_script</code>).</li>
+</ol>
+<p>Під час запуску бот автоматично зареєструє будь-який виконуваний файл у
+каталозі <code>cogs</code> (який не закінчується на <code>.py</code>) як команду бота.</p>
+<p><strong>Протокол аргументів:</strong></p>
+<ul>
+<li><code>$1</code>: LXMF-хеш відправника.</li>
+<li><code>$2</code>: повний вміст повідомлення.</li>
+<li><code>$3</code>, <code>$4</code>, ...: окремі аргументи команди.</li>
+</ul>
+<p><strong>Змінні середовища:</strong></p>
+<ul>
+<li><code>LXMFY_SENDER</code>: хеш ідентифікатора відправника.</li>
+<li><code>LXMFY_CONTENT</code>: повний вміст повідомлення.</li>
+<li><code>LXMFY_HAS_ADMIN</code>: <code>true</code> або <code>false</code> залежно від статусу
+  адміністратора відправника.</li>
+</ul>
+<p><strong>Приклад коґа на Bash (<code>cogs/greet.sh</code>):</strong></p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Hello from Bash! You sent: </span><span class="nv">$2</span><span class="s2">"</span>
+</span></code></pre></div>
+<p>Коли користувач надсилає <code>/greet hello</code>, бот виконає цей скрипт і
+відповість його stdout: <code>Hello from Bash! You sent: /greet hello</code>.</p>
+<h2 id="nlp">Локальна класифікація інтентів (NLP)<a class="headerlink" href="#nlp" title="Permanent link">&para;</a></h2>
+<p>LXMFy постачається з локальним класифікатором інтентів. Він зіставляє
+текст повідомлення з позначеними прикладами фраз, коли текст не збігається
+точно з префіксом команди.</p>
+<ol>
+<li><strong>Увімкніть NLP</strong> у конфігурації бота: <code>nlp_enabled=True</code>.</li>
+<li><strong>Визначте інтенти</strong> за допомогою декоратора <code>@bot.intent</code>.</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">intent</span><span class="p">(</span><span class="s2">"help"</span><span class="p">,</span> <span class="n">examples</span><span class="o">=</span><span class="p">[</span><span class="s2">"how do I use this?"</span><span class="p">,</span> <span class="s2">"show me commands"</span><span class="p">,</span> <span class="s2">"help me please"</span><span class="p">])</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">help_intent</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">msg</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"I can help! Try typing /help to see a list of commands."</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Зіставлення використовує вектори TF-IDF і косинусну подібність. Усе
+оцінювання виконується на хості бота. Жоден текст не надсилається до
+зовнішнього API.</p>
+<p><strong>Експорт та імпорт моделі</strong></p>
+<p>Експортуйте й імпортуйте навчену модель, щоб більші боти не проходили
+повторне навчання при кожному запуску:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Експорт моделі</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">model_data</span> <span class="o">=</span> <span class="n">bot</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">export_model</span><span class="p">()</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Збережіть model_data у файл або базу даних</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># Пізніше імпортуйте її назад</span>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">bot</span><span class="o">.</span><span class="n">nlp</span><span class="o">.</span><span class="n">import_model</span><span class="p">(</span><span class="n">model_data</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="rns-link">Підтримка RNS Link<a class="headerlink" href="#rns-link" title="Permanent link">&para;</a></h2>
+<p>Боти можуть встановлювати прямі RNS Link і відповідати на них для
+стануваного, потокового або широкосмугового трафіку, ніж дозволяють
+окремі пакети LXMF.</p>
+<ol>
+<li><strong>Увімкніть підтримку Link</strong> у конфігурації:
+    <code>link_support_enabled=True</code>.</li>
+<li><strong>Запросіть link</strong>: <code>bot.request_link(destination_hash)</code>. Ви також
+    можете вказати власне ім'я застосунку та аспекти:
+    <code>bot.request_link(dest, callback, "my_app", "aspect1")</code>.</li>
+<li><strong>Обробляйте вхідні link</strong>: зареєструйте зворотний виклик через
+    <code>bot.on_link(handler)</code>.</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">handle_link</span><span class="p">(</span><span class="n">link</span><span class="p">):</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Link established with </span><span class="si">{</span><span class="n">RNS</span><span class="o">.</span><span class="n">hexrep</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">destination</span><span class="o">.</span><span class="n">hash</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="c1"># Тепер ви можете використовувати link для прямої комунікації RNS</span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">bot</span><span class="o">.</span><span class="n">on_link</span><span class="p">(</span><span class="n">handle_link</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Безпека та ізоляція:</strong></p>
+<ul>
+<li><strong>Таймаути:</strong> зовнішні коґи мають типовий таймаут (30 с), щоб
+  запобігти зависанню. Налаштовується через <code>external_cogs_timeout</code>.</li>
+<li><strong>Потоки:</strong> усі зовнішні коґи виконуються в окремих потоках і не
+  блокують бота.</li>
+<li><strong>Пісочниця процесу бота (лише Linux):</strong> коли <code>landlock_enabled=True</code>
+  (типово) і ядро підтримує Landlock LSM (5.13+), бот після запуску
+  застосовує файлову пісочницю до власного процесу. Шляхи, доступні для
+  запису, обмежені сховищем, конфігурацією, коґами, конфігурацією
+  Reticulum і тимчасовими каталогами. Перевизначається змінною
+  середовища <code>LXMFY_LANDLOCK=0</code> для вимкнення або <code>LXMFY_LANDLOCK=1</code>,
+  щоб примусово спробувати.</li>
+<li><strong>Пісочниця зовнішніх коґів (лише Linux):</strong> коли
+  <code>external_cogs_sandbox_enabled=True</code> (типово), виконувані скриптові
+  коґи працюють в обмеженому середовищі. Задайте
+  <code>external_cogs_sandbox_type</code> одним із:</li>
+<li><code>auto</code> (типово): надає перевагу Landlock, якщо підтримується, інакше
+    <code>bubblewrap</code> (<code>bwrap</code>), інакше <code>firejail</code></li>
+<li><code>landlock</code>: пісочниця лише на Landlock через <code>preexec_fn</code> (вужчі
+    правила, ніж у пісочниці процесу бота)</li>
+<li><code>bwrap</code>: пісочниця bubblewrap з монтуванням лише для читання</li>
+<li><code>firejail</code>: приватний профіль firejail без мережі</li>
+<li><code>none</code>: без пісочниці підпроцесу</li>
+<li><strong>Статус:</strong> викличте <code>bot.get_landlock_status()</code>, щоб перевірити
+  підтримку ядра, чи було запитано Landlock, і чи активна пісочниця
+  процесу бота.</li>
+</ul>
+<h2 id="_7">Обробка повідомлень<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>
+<p>LXMFy надає кілька способів обробки вхідних повідомлень на різних
+етапах.</p>
+<h3 id="_8">Обробник першого повідомлення<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<p>Обробляє перше повідомлення від кожного нового користувача (зручно для
+привітань):</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"WelcomeBot"</span><span class="p">,</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">first_message_enabled</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Має бути True (типово)</span>
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="p">)</span>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">on_first_message</span><span class="p">()</span>
+</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">welcome_new_user</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>    <span class="n">content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
+</span><span id="__span-15-12"><a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a>        <span class="n">sender</span><span class="p">,</span>
+</span><span id="__span-15-13"><a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a>        <span class="sa">f</span><span class="s2">"Welcome to the bot! You said: </span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="se">\n\n</span><span class="s2">"</span>
+</span><span id="__span-15-14"><a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a>        <span class="s2">"Type /help to see available commands."</span>
+</span><span id="__span-15-15"><a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a>    <span class="p">)</span>
+</span><span id="__span-15-16"><a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a>    <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># Поверніть True, щоб зупинити подальшу обробку цього повідомлення</span>
+</span><span id="__span-15-17"><a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a>
+</span><span id="__span-15-18"><a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+</span><span id="__span-15-19"><a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<h3 id="_9">Загальний обробник повідомлень<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<p>Обробляє всі вхідні повідомлення до обробки команд:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"EchoBot"</span><span class="p">)</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">on_message</span><span class="p">()</span>
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">echo_non_commands</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>    <span class="n">content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>
+</span><span id="__span-16-9"><a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>    <span class="c1"># Перевіряємо, чи це команда - якщо так, даємо обробнику команд впоратися</span>
+</span><span id="__span-16-10"><a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>    <span class="k">if</span> <span class="n">content</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">bot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">command_prefix</span><span class="p">):</span>
+</span><span id="__span-16-11"><a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>        <span class="n">command_name</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="n">bot</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">command_prefix</span><span class="p">):]</span>
+</span><span id="__span-16-12"><a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>        <span class="k">if</span> <span class="n">command_name</span> <span class="ow">in</span> <span class="n">bot</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
+</span><span id="__span-16-13"><a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a>            <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Даємо обробнику команд опрацювати її</span>
+</span><span id="__span-16-14"><a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a>
+</span><span id="__span-16-15"><a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a>    <span class="c1"># Не команда, відлунюємо її назад</span>
+</span><span id="__span-16-16"><a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"You said: </span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-16-17"><a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a>    <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># Поверніть False, щоб продовжити обробку (хоча жодна команда не збіжиться)</span>
+</span><span id="__span-16-18"><a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a>
+</span><span id="__span-16-19"><a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"hello"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Say hello"</span><span class="p">)</span>
+</span><span id="__span-16-20"><a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="k">def</span><span class="w"> </span><span class="nf">hello_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-16-21"><a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a>    <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Hello! This is a command response."</span><span class="p">)</span>
+</span><span id="__span-16-22"><a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a>
+</span><span id="__span-16-23"><a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+</span><span id="__span-16-24"><a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<p>Порядок обробки обробників повідомлень:</p>
+<ol>
+<li><strong>Обробник першого повідомлення</strong> (якщо <code>first_message_enabled=True</code>
+    і це перше повідомлення від відправника)</li>
+<li><strong>Загальні обробники повідомлень</strong> (зареєстровані через
+    <code>@bot.on_message()</code>)</li>
+<li><strong>Обробка команд</strong> (якщо повідомлення збігається з зареєстрованою
+    командою)</li>
+</ol>
+<p>Обробники можуть повертати <code>True</code>, щоб зупинити подальшу обробку, або
+<code>False</code>, щоб перейти до наступного етапу.</p>
+<h2 id="_10">Обробка подій<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h2>
+<p>Ви можете реєструвати обробники для різних подій бота за допомогою
+декоратора <code>@bot.events.on()</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy.events</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventPriority</span> <span class="c1"># Необов'язково, для пріоритету</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"EventBot"</span><span class="p">)</span>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"message_received"</span><span class="p">)</span>
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">log_message</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    <span class="c1"># Об'єкт події містить деталі</span>
+</span><span id="__span-17-9"><a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="n">sender</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sender"</span><span class="p">)</span>
+</span><span id="__span-17-10"><a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="n">message_content</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"message"</span><span class="p">)</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">)</span>
+</span><span id="__span-17-11"><a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Received message from </span><span class="si">{</span><span class="n">sender</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">message_content</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-17-12"><a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
+</span><span id="__span-17-13"><a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a>    <span class="c1"># Ви можете скасувати обробку події (наприклад, зупинити обробку повідомлення)</span>
+</span><span id="__span-17-14"><a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    <span class="c1"># if sender == "some_blocked_hash":</span>
+</span><span id="__span-17-15"><a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>    <span class="c1">#    event.cancel()</span>
+</span><span id="__span-17-16"><a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>
+</span><span id="__span-17-17"><a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"command_executed"</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">EventPriority</span><span class="o">.</span><span class="n">LOW</span><span class="p">)</span>
+</span><span id="__span-17-18"><a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="k">def</span><span class="w"> </span><span class="nf">log_command</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+</span><span id="__span-17-19"><a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>    <span class="c1"># Приклад: event.data може містити {'command_name': 'ping', 'sender': '...', ...}</span>
+</span><span id="__span-17-20"><a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a>    <span class="n">command_name</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'command_name'</span><span class="p">,</span> <span class="s1">'unknown'</span><span class="p">)</span>
+</span><span id="__span-17-21"><a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>    <span class="n">sender</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'sender'</span><span class="p">,</span> <span class="s1">'unknown'</span><span class="p">)</span>
+</span><span id="__span-17-22"><a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Command '</span><span class="si">{</span><span class="n">command_name</span><span class="si">}</span><span class="s2">' executed by </span><span class="si">{</span><span class="n">sender</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-17-23"><a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>
+</span><span id="__span-17-24"><a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a><span class="c1"># Ви також можете визначати власні події</span>
+</span><span id="__span-17-25"><a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"special"</span><span class="p">)</span>
+</span><span id="__span-17-26"><a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a><span class="k">def</span><span class="w"> </span><span class="nf">special_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-17-27"><a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a>    <span class="n">ctx</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">"Doing something special!"</span><span class="p">)</span>
+</span><span id="__span-17-28"><a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a>    <span class="c1"># Надіслати власну подію</span>
+</span><span id="__span-17-29"><a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">dispatch</span><span class="p">(</span><span class="n">Event</span><span class="p">(</span><span class="s2">"special_action_taken"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">"user"</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sender</span><span class="p">}))</span>
+</span><span id="__span-17-30"><a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a>
+</span><span id="__span-17-31"><a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="s2">"special_action_taken"</span><span class="p">)</span>
+</span><span id="__span-17-32"><a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a><span class="k">def</span><span class="w"> </span><span class="nf">handle_special</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+</span><span id="__span-17-33"><a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a>    <span class="n">user</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"user"</span><span class="p">)</span>
+</span><span id="__span-17-34"><a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Special action was taken by user: </span><span class="si">{</span><span class="n">user</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="__span-17-35"><a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a>
+</span><span id="__span-17-36"><a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a>
+</span><span id="__span-17-37"><a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+</span><span id="__span-17-38"><a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<p>Докладніше про структуру <code>Event</code> і пріоритети див. <code>lxmfy/events.py</code>.</p>
+<h2 id="_11">Сховище<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<p>LXMFy надає бекенди сховища JSON, SQLite та In-Memory.</p>
+<ul>
+<li><strong>JSON:</strong> простий, читабельний для людини. Підходить для невеликих
+  наборів даних. Налаштовується через <code>storage_type="json"</code> і
+  <code>storage_path="your_data_dir"</code>.</li>
+<li><strong>SQLite:</strong> ефективніший для більших наборів даних або частих записів.
+  Налаштовується через <code>storage_type="sqlite"</code> і
+  <code>storage_path="your_db_file.db"</code>.</li>
+<li><strong>Memory:</strong> сховище повністю в оперативній пам'яті. Стан втрачається
+  після вимкнення. Налаштовується через <code>storage_type="memory"</code>.</li>
+</ul>
+<p>Доступ до інтерфейсу сховища здійснюється через <code>bot.storage</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Зберегти дані</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">bot</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"user_prefs:"</span> <span class="o">+</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sender</span><span class="p">,</span> <span class="p">{</span><span class="s2">"theme"</span><span class="p">:</span> <span class="s2">"dark"</span><span class="p">})</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Отримати дані (зі значенням за замовчуванням)</span>
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="n">prefs</span> <span class="o">=</span> <span class="n">bot</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"user_prefs:"</span> <span class="o">+</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sender</span><span class="p">,</span> <span class="p">{})</span>
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">theme</span> <span class="o">=</span> <span class="n">prefs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"theme"</span><span class="p">,</span> <span class="s2">"light"</span><span class="p">)</span>
+</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
+</span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="c1"># Перевірити існування даних</span>
+</span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="k">if</span> <span class="n">bot</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">"some_key"</span><span class="p">):</span>
+</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Key exists!"</span><span class="p">)</span>
+</span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>
+</span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="c1"># Видалити дані</span>
+</span><span id="__span-18-13"><a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="n">bot</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">"old_data_key"</span><span class="p">)</span>
+</span><span id="__span-18-14"><a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>
+</span><span id="__span-18-15"><a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="c1"># Сканувати ключі за префіксом (зручно для перелічення даних користувачів)</span>
+</span><span id="__span-18-16"><a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="n">user_keys</span> <span class="o">=</span> <span class="n">bot</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="s2">"user_prefs:"</span><span class="p">)</span>
+</span><span id="__span-18-17"><a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">user_keys</span><span class="p">:</span>
+</span><span id="__span-18-18"><a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>    <span class="n">user_data</span> <span class="o">=</span> <span class="n">bot</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+</span><span id="__span-18-19"><a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Data for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">user_data</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Докладніше див. <code>lxmfy/storage.py</code> і довідник API.</p>
+<h2 id="_12">Права доступу<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<p>LXMFy включає опційну рольову систему прав. Увімкніть її через
+<code>permissions_enabled=True</code> під час ініціалізації <code>LXMFBot</code>.</p>
+<ul>
+<li><strong>Ролі:</strong> визначайте ролі з конкретними правами (наприклад,
+  <code>DefaultPerms.MANAGE_USERS</code>).</li>
+<li><strong>Права:</strong> гранулярні прапорці, визначені в <code>DefaultPerms</code>
+  (наприклад, <code>USE_COMMANDS</code>, <code>BYPASS_SPAM</code>).</li>
+<li><strong>Призначення:</strong> призначайте ролі хешам користувачів.</li>
+</ul>
+<p>Деталі використання див. у <code>lxmfy/permissions.py</code>, довіднику API та,
+можливо, прикладах коґів (якщо такі створено).</p>
+<h2 id="_13">Перевірка підписів<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<p>LXMFy надає конфігурацію для вбудованого в LXMF криптографічного
+підписування та перевірки повідомлень. Усі повідомлення LXMF
+автоматично підписуються стеком LXMF/RNS - LXMFy лише дозволяє
+застосовувати політики перевірки підписів.</p>
+<p><strong>Конфігурація:</strong></p>
+<p>Увімкніть перевірку підписів у конфігурації бота:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"SecureBot"</span><span class="p">,</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="n">signature_verification_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Увімкнути перевірку підписів</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="n">require_message_signatures</span><span class="o">=</span><span class="kc">False</span>      <span class="c1"># Встановіть True, щоб відхиляти непідписані повідомлення</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Як це працює:</strong></p>
+<p>LXMF автоматично виконує всі криптографічні операції:</p>
+<ol>
+<li><strong>Вихідні повідомлення:</strong> LXMF автоматично підписує всі повідомлення
+    ідентифікатором RNS відправника під час пакування повідомлення.</li>
+<li><strong>Вхідні повідомлення:</strong> LXMF автоматично перевіряє підписи за
+    ідентифікатором RNS відправника і надає результати валідації.</li>
+<li><strong>Роль LXMFy:</strong> LXMFy перевіряє результати валідації LXMF і
+    застосовує вашу політику:<ul>
+<li>Якщо <code>signature_verification_enabled=False</code>: усі повідомлення
+  приймаються (типово)</li>
+<li>Якщо <code>signature_verification_enabled=True</code> і
+  <code>require_message_signatures=False</code>: повідомлення приймаються, але
+  непідписані/невалідні підписи записуються в журнал</li>
+<li>Якщо <code>signature_verification_enabled=True</code> і
+  <code>require_message_signatures=True</code>: непідписані або невалідні
+  повідомлення відхиляються</li>
+</ul>
+</li>
+<li><strong>Інтеграція з правами:</strong> користувачі з правом <code>BYPASS_SPAM</code> можуть
+    обходити вимоги перевірки підписів.</li>
+</ol>
+<p><strong>Керування через CLI:</strong></p>
+<p>Ви можете керувати налаштуваннями перевірки підписів через CLI:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Перевірити перевірку підписів</span>
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>lxmfy<span class="w"> </span>signatures<span class="w"> </span><span class="nb">test</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Увімкнути перевірку підписів</span>
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>lxmfy<span class="w"> </span>signatures<span class="w"> </span><span class="nb">enable</span>
+</span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>
+</span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="c1"># Вимкнути перевірку підписів</span>
+</span><span id="__span-20-8"><a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>lxmfy<span class="w"> </span>signatures<span class="w"> </span>disable
+</span></code></pre></div>
+<p><strong>Технічні деталі:</strong></p>
+<p>LXMF використовує підписи Ed25519, які надає криптографічна система RNS.
+Кожне повідомлення LXMF містить підпис відправника, який перевіряється
+за його відомим ідентифікатором RNS. LXMFy просто читає властивість LXMF
+<code>message.signature_validated</code> і <code>message.unverified_reason</code>, щоб
+застосовувати політику безпеки вашого бота.</p>
+<h2 id="_14">Доставка повідомлень<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
+<h3 id="_15">Використання вузлів поширення<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<p>Надсилайте повідомлення через конкретні вузли поширення LXMF:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"PropagationBot"</span><span class="p">)</span>
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
+</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"send"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Send via propagation node"</span><span class="p">)</span>
+</span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">send_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-21-7"><a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>    <span class="c1"># Задайте конкретний вузол поширення один раз (на рівні конфігурації)</span>
+</span><span id="__span-21-8"><a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">set_propagation_node</span><span class="p">(</span><span class="s2">"&lt;propagation_node_hash_here&gt;"</span><span class="p">)</span>
+</span><span id="__span-21-9"><a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>
+</span><span id="__span-21-10"><a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a>    <span class="c1"># Надсилання з налаштованою стратегією доставки</span>
+</span><span id="__span-21-11"><a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
+</span><span id="__span-21-12"><a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>        <span class="n">ctx</span><span class="o">.</span><span class="n">sender</span><span class="p">,</span>
+</span><span id="__span-21-13"><a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>        <span class="s2">"This message will use direct delivery with propagation fallback as configured"</span>
+</span><span id="__span-21-14"><a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>    <span class="p">)</span>
+</span></code></pre></div>
+<p>Використовуйте вузол поширення, коли отримувач офлайн або пряма
+доставка постійно не вдається на поточному шляху.</p>
+<h3 id="_16">Налаштування повторних спроб<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h3>
+<p>Налаштуйте автоматичні повторні спроби для невдалих доставок
+повідомлень через конфігурацію бота:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span>
+</span><span id="__span-22-2"><a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
+</span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"ReliableBot"</span><span class="p">)</span>
+</span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>
+</span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"ReliableBot"</span><span class="p">,</span>
+</span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">direct_delivery_retries</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>  <span class="c1"># Повторювати пряму доставку до 5 разів</span>
+</span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">propagation_fallback_enabled</span><span class="o">=</span><span class="kc">True</span>
+</span><span id="__span-22-9"><a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="p">)</span>
+</span><span id="__span-22-10"><a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>
+</span><span id="__span-22-11"><a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"important"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Send important message with retries"</span><span class="p">)</span>
+</span><span id="__span-22-12"><a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a><span class="k">def</span><span class="w"> </span><span class="nf">important_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-22-13"><a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">sender</span><span class="p">,</span> <span class="s2">"This is an important message"</span><span class="p">)</span>
+</span><span id="__span-22-14"><a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>
+</span><span id="__span-22-15"><a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"normal"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Send with default retries"</span><span class="p">)</span>
+</span><span id="__span-22-16"><a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a><span class="k">def</span><span class="w"> </span><span class="nf">normal_command</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+</span><span id="__span-22-17"><a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>    <span class="c1"># direct_delivery_retries типово дорівнює 3</span>
+</span><span id="__span-22-18"><a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>    <span class="n">bot</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">sender</span><span class="p">,</span> <span class="s2">"This message uses default retry settings"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Система повторних спроб:</p>
+<ul>
+<li>Автоматично відстежує спроби доставки для кожного отримувача</li>
+<li>Повторює невдалі прямі доставки до <code>direct_delivery_retries</code> разів</li>
+<li>Скидає лічильник повторів після успішної доставки</li>
+<li>Записує спроби повторів і невдачі в журнал для налагодження</li>
+</ul>
+<h2 id="reticulum-relay-chat-rrc">Reticulum Relay Chat (RRC)<a class="headerlink" href="#reticulum-relay-chat-rrc" title="Permanent link">&para;</a></h2>
+<p>Боти LXMFy можуть приєднуватися до хабів <a href="https://rrc.kc1awv.net/">RRC</a>
+як звичайні клієнти через RNS Link з конвертами CBOR. Це сумісно з
+NomadNet і хабами у стилі rrcd (включно з MeshChatX, коли він хостить
+той самий хаб або приєднується до нього).</p>
+<h3 id="reticulum">Конфігурація Reticulum має значення<a class="headerlink" href="#reticulum" title="Permanent link">&para;</a></h3>
+<p>Бот повинен використовувати <strong>ту саму</strong> мережу Reticulum, що й хаб.
+MeshChatX зазвичай використовує <code>~/.reticulum</code> з інтерфейсами backbone
+або TCP. Локальний каталог <code>config/</code> проєкту часто використовує
+ізольоване ім'я екземпляра і лише AutoInterface, тому анонси хаба
+ніколи не надходять, і ви бачите <code>Hub identity unknown</code>.</p>
+<p>Використайте один із варіантів:</p>
+<ul>
+<li>Задайте <code>reticulum_config_dir</code> на вашу конфігурацію користувача
+  (зазвичай <code>~/.reticulum</code>)</li>
+<li>Або експортуйте <code>LXMFY_RETICULUM_CONFIG_DIR=~/.reticulum</code></li>
+<li>Тримайте MeshChatX або <code>rnsd</code> запущеними, щоб спільний екземпляр був
+  активний до запуску бота</li>
+</ul>
+<p>Шаблон <code>rrc</code> типово використовує <code>~/.reticulum</code>, якщо цей каталог
+існує.</p>
+<h3 id="_17">Швидкий старт із шаблоном<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>lxmfy<span class="w"> </span>run<span class="w"> </span>rrc
+</span></code></pre></div>
+<p>Типові значення:</p>
+<ul>
+<li>Хаб: <code>664fc0e8d2e448658e37bb3f34e6c88f</code></li>
+<li>Кімната: <code>#general</code></li>
+<li>Конфігурація Reticulum: <code>~/.reticulum</code> (або
+  <code>LXMFY_RETICULUM_CONFIG_DIR</code>)</li>
+</ul>
+<p>Ви маєте побачити журнали підключення до хаба, welcome, автоматичного
+приєднання і <code>RRC joined #general</code>.</p>
+<h3 id="rrc-">Програмний RRC-бот<a class="headerlink" href="#rrc-" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">lxmfy</span><span class="w"> </span><span class="kn">import</span> <span class="n">LXMFBot</span><span class="p">,</span> <span class="n">RRCMessage</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="n">bot</span> <span class="o">=</span> <span class="n">LXMFBot</span><span class="p">(</span>
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"RoomBot"</span><span class="p">,</span>
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">reticulum_config_dir</span><span class="o">=</span><span class="s2">"~/.reticulum"</span><span class="p">,</span>
+</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="n">rrc_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="n">rrc_hubs</span><span class="o">=</span><span class="p">[</span><span class="s2">"your_rrc_hub_destination_hash"</span><span class="p">],</span>
+</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    <span class="n">rrc_rooms</span><span class="o">=</span><span class="p">[</span><span class="s2">"general"</span><span class="p">],</span>
+</span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>    <span class="n">rrc_nick</span><span class="o">=</span><span class="s2">"RoomBot"</span><span class="p">,</span>
+</span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>    <span class="n">rrc_auto_reconnect</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-24-11"><a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>    <span class="n">rrc_persist_sessions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-24-12"><a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="p">)</span>
+</span><span id="__span-24-13"><a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>
+</span><span id="__span-24-14"><a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="nd">@bot</span><span class="o">.</span><span class="n">on_rrc</span>
+</span><span id="__span-24-15"><a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a><span class="k">def</span><span class="w"> </span><span class="nf">on_rrc</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">payload</span><span class="p">):</span>
+</span><span id="__span-24-16"><a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>    <span class="k">if</span> <span class="n">event</span> <span class="o">==</span> <span class="s2">"welcome"</span><span class="p">:</span>
+</span><span id="__span-24-17"><a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>        <span class="n">bot</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Welcomed by hub"</span><span class="p">)</span>
+</span><span id="__span-24-18"><a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>        <span class="k">return</span>
+</span><span id="__span-24-19"><a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>    <span class="k">if</span> <span class="n">event</span> <span class="o">!=</span> <span class="s2">"msg"</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="n">RRCMessage</span><span class="p">):</span>
+</span><span id="__span-24-20"><a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>        <span class="k">return</span>
+</span><span id="__span-24-21"><a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a>    <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">mention</span> <span class="ow">and</span> <span class="n">payload</span><span class="o">.</span><span class="n">room</span><span class="p">:</span>
+</span><span id="__span-24-22"><a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>        <span class="n">client</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span>
+</span><span id="__span-24-23"><a id="__codelineno-24-23" name="__codelineno-24-23" href="#__codelineno-24-23"></a>            <span class="n">payload</span><span class="o">.</span><span class="n">room</span><span class="p">,</span>
+</span><span id="__span-24-24"><a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>            <span class="sa">f</span><span class="s2">"Heard you, </span><span class="si">{</span><span class="n">payload</span><span class="o">.</span><span class="n">nick</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+</span><span id="__span-24-25"><a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>        <span class="p">)</span>
+</span><span id="__span-24-26"><a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>
+</span><span id="__span-24-27"><a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a><span class="n">bot</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</span></code></pre></div>
+<p>Або підключіться під час виконання:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">bot</span><span class="o">.</span><span class="n">connect_rrc</span><span class="p">(</span><span class="s2">"hub_destination_hash"</span><span class="p">,</span> <span class="n">rooms</span><span class="o">=</span><span class="p">[</span><span class="s2">"general"</span><span class="p">])</span>
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="n">bot</span><span class="o">.</span><span class="n">rrc</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="s2">"general"</span><span class="p">,</span> <span class="s2">"hello room"</span><span class="p">)</span>
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="n">bot</span><span class="o">.</span><span class="n">rrc</span><span class="o">.</span><span class="n">send_action</span><span class="p">(</span><span class="s2">"general"</span><span class="p">,</span> <span class="s2">"waves"</span><span class="p">)</span>
+</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="n">bot</span><span class="o">.</span><span class="n">disconnect_rrc</span><span class="p">()</span>
+</span></code></pre></div>
+<h3 id="_18">Поведінка сесії<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h3>
+<ul>
+<li>HELLO / WELCOME, JOIN / PART, MSG / NOTICE / ACTION, PING / PONG,
+  ERROR, RESOURCE_ENVELOPE</li>
+<li>Автоматичне перепідключення з повторним приєднанням до кімнат після
+  WELCOME</li>
+<li>Клієнтське застосування ліміту хаба та обмеження частоти</li>
+<li>Персистентність сесій між перезапусками (<code>rrc_persist_sessions</code>,
+  типово увімкнено)</li>
+<li>Персистентність вихідної черги LXMF окрема
+  (<code>message_persistence_enabled</code>)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../quick-start/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Швидкий старт">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Швидкий старт
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../api-reference/" class="md-footer__link md-footer__link--next" aria-label="Next: Основні компоненти">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Основні компоненти
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"../..","features":["navigation.sections","navigation.footer","navigation.top","toc.integrate","content.action.edit","search.highlight"],"redirect":null,"search":"../../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":{"alias":true,"provider":"mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
+      
+        <script src="../../javascripts/pwa.js"></script>
+      
+    
+  </body>
+</html>
