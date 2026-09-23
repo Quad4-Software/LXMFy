@@ -7,6 +7,7 @@ DOCKER_IMAGE ?= lxmfy-test
 WHEEL_BUILDER_IMAGE ?= lxmfy-wheel-builder
 
 RNGIT ?= rngit
+SHIV ?= poetry run shiv
 RNGIT_CONFIG ?= $(HOME)/.rngit
 RNS_CONFIG ?= $(HOME)/.reticulum
 RNGIT_REMOTE ?= $(shell git config --get remote.origin.url)
@@ -170,6 +171,9 @@ release-dist-clean:
 release-dist:
 	rm -rf dist/
 	poetry build
+	$(SHIV) --compressed -c lxmfy -p "/usr/bin/env python3" \
+		-o "dist/$(PACKAGE_NAME)-$(PACKAGE_VERSION).pyz" \
+		"dist/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-py3-none-any.whl"
 
 release-tag:
 	@tag="$(RELEASE_TAG)"; \
