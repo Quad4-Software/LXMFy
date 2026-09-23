@@ -1,16 +1,22 @@
-# Publish to PyPI via OIDC trusted publishing.
+# Publish to PyPI via OIDC trusted publishing and create the GitHub release.
 # Secure-use: environment protection, minimal permissions, SHA-pinned actions,
 # secrets via env vars (never interpolated into run scripts), no pull_request_target.
+# Releases on this repo are immutable: the workflow creates the release as a
+# draft, attaches assets, then publishes. Do not create releases by hand.
 
 name: Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       confirm:
         description: Type publish to confirm a manual publish from this ref
+        required: true
+        type: string
+      tag:
+        description: Existing tag to create the GitHub release for
         required: true
         type: string
 
@@ -34,16 +40,18 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           CONFIRM: ${{ github.event.inputs.confirm }}
+          REF: ${{ github.ref }}
+          TAG_INPUT: ${{ github.event.inputs.tag }}
         run: |
-          if [ "$EVENT_NAME" = "release" ]; then
-            echo "Release publish allowed"
+          if [ "$EVENT_NAME" = "push" ] && [[ "$REF" == refs/tags/v* ]]; then
+            echo "Tag push publish allowed"
             exit 0
           fi
-          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$CONFIRM" = "publish" ]; then
-            echo "Manual publish confirmed"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$CONFIRM" = "publish" ] && [ -n "$TAG_INPUT" ]; then
+            echo "Manual publish confirmed for tag=$TAG_INPUT"
             exit 0
           fi
-          echo "Refusing publish for event=$EVENT_NAME confirm=$CONFIRM"
+          echo "Refusing publish for event=$EVENT_NAME ref=$REF confirm=$CONFIRM tag=$TAG_INPUT"
           exit 1
 
   build:
@@ -145,14 +153,6 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Attach pyz to release
-        if: github.event_name == 'release'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" dist/*.pyz --clobber
-
   docs-artifacts:
     name: Build docs artifacts
     needs: [guard]
@@ -184,13 +184,86 @@ jobs:
       - name: Build PDF, EPUB, and text bundles
         run: bash docs/build-release-docs.sh docs-dist
 
-      - name: Attach docs to release
-        if: github.event_name == 'release'
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: docs-bundles
+          path: docs-dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Create GitHub release
+    needs: [build, zipapp, docs-artifacts]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the release and attach assets
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download dist artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Download pyz artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: lxmfy-zipapp
+          path: dist/
+      - name: Download docs bundles
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: docs-bundles
+          path: docs-dist/
+      - name: Resolve release tag
+        id: tag
+        env:
+          TAG_INPUT: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          tag="${TAG_INPUT:-$REF_NAME}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Refusing to release tag=$tag"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      - name: Extract release notes
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          ver="${RELEASE_TAG#v}"
+          awk -v ver="$ver" '
+            /^## \[/ { if (found) exit; if (index($0, "[" ver "]")) found = 1; next }
+            found
+          ' CHANGELOG.md | sed '/./,$!d' > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "See CHANGELOG.md for details." > release-notes.md
+          fi
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$RELEASE_TAG" docs-dist/* --clobber
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+        run: gh release create "$RELEASE_TAG" --draft --title "$RELEASE_TAG" --notes-file release-notes.md
+      - name: Attach release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+        run: gh release upload "$RELEASE_TAG" dist/* docs-dist/*
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.tag.outputs.tag }}
+        run: gh release edit "$RELEASE_TAG" --draft=false --latest
 
   publish-pypi:
     name: Publish to PyPI
