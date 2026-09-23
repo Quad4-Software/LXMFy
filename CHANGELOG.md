@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.1.0] - 2026-09-22
+## [2.1.1] - 2026-09-22
 
 ### Features
 - Async def command callbacks and message handlers now run instead of silently returning coroutines
@@ -73,6 +73,7 @@
 - Security workflow: zizmor workflow audit, bandit SAST, gitleaks secret scan
 - Coverage XML artifact on the 3.13 test leg with a 65% coverage gate
 - Releases build a self-contained .pyz zipapp (shiv) alongside the wheel and attach it to the GitHub release
+- Publish workflow triggers on tag pushes and creates the GitHub release as a draft, attaches assets, then publishes, which immutable releases require
 - SLSA build provenance attestations on the wheel, sdist, and pyz via GitHub artifact attestations (Sigstore)
 - Test matrix covers Python 3.11 through 3.14
 - Benchmark job archives results per run
