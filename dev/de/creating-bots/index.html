@@ -900,6 +900,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#zuruckgestellte-sends-und-stamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Zurückgestellte Sends und Stamps
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2087,6 +2098,10 @@
 <h2 id="verwendung-von-vorlagen">Verwendung von Vorlagen<a class="headerlink" href="#verwendung-von-vorlagen" title="Permanent link">&para;</a></h2>
 <p>LXMFy stellt mehrere Vorlagen für gängige Bot-Typen bereit. Mit der
 CLI kann eine Bot-Datei auf Basis einer Vorlage generiert werden.</p>
+<p>Für ein volles Projektverzeichnis statt einer einzelnen Datei
+scaffoldet <code>lxmfy init</code> <code>bot.py</code>, ein <code>cogs</code>-Paket, ein README und
+eine <code>.gitignore</code> und fragt unterwegs nach Vorlage, Speicher-Backend,
+Befehlspräfix und Admin-Hashes.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Echo-Bot erstellen</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>my_echo_bot
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
@@ -2667,6 +2682,29 @@ Nachrichtenzustellungen über die Bot-Konfiguration einstellen:</p>
 <li>Setzt den Wiederholungszähler nach erfolgreicher Zustellung zurück</li>
 <li>Protokolliert Wiederholungsversuche und Fehler zur Fehlersuche</li>
 </ul>
+<h3 id="zuruckgestellte-sends-und-stamps">Zurückgestellte Sends und Stamps<a class="headerlink" href="#zuruckgestellte-sends-und-stamps" title="Permanent link">&para;</a></h3>
+<p>Zwei Zustelldetails lohnt es früh zu kennen:</p>
+<ul>
+<li><strong>Zurückgestellte Sends</strong>: Wenn die Zielidentität noch nicht bekannt
+  ist, hält <code>send()</code> die Nachricht im Speicher (die
+  <code>pending_sends_*</code>-Konfigurationsschlüssel steuern den Rückstau) und
+  flusht sie, wenn der Peer announcet. <code>defer=False</code> an einem Send
+  verwirft statt zu halten.</li>
+<li><strong>Stamps</strong>: <code>stamp_cost</code> setzt eine eingehende
+  Proof-of-Work-Anforderung, <code>require_stamps</code> lehnt Nachrichten ab, die
+  sie nicht erfüllen, und <code>include_tickets</code> (Standard) hängt
+  Reply-Tickets an, damit Peers Ihrem Bot antworten können, ohne
+  eigene Stamp-Kosten zu zahlen.</li>
+</ul>
+<p>Wenn die Zustellung nicht funktioniert, läuft <code>lxmfy debug</code> den ganzen
+Pfad ab (Konfiguration, Instanz, Interfaces, Identität, Send-Pipeline)
+und schreibt einen redigierten Report zum Teilen. Dieselben Prüfungen
+sind als <code>bot.diagnose_connectivity()</code> und
+<code>bot.diagnose_destination(hash)</code> aufrufbar.</p>
+<p>Siehe die <a href="../api-reference/#nachrichtenzustellung">API-Referenz</a> für
+die volle Zustellfläche: Wiederholungen, Propagationsknoten,
+Warteschlangen-Persistenz, den Zustell-Ereignisstrom und die
+Admin-Befehle <code>/queue</code>, <code>/cancel</code>, <code>/inbox</code>, <code>/delivery</code>.</p>
 <h2 id="reticulum-relay-chat-rrc">Reticulum Relay Chat (RRC)<a class="headerlink" href="#reticulum-relay-chat-rrc" title="Permanent link">&para;</a></h2>
 <p>LXMFy-Bots können <a href="https://rrc.kc1awv.net/">RRC</a>-Hubs als gewöhnliche
 Clients über RNS-Links mit CBOR-Envelopes beitreten. Kompatibel mit

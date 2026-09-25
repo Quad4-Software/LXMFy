@@ -1811,7 +1811,13 @@
 </div>
 </div>
 <h2 id="cli">创建你的第一个机器人（使用 CLI）<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h2>
-<p>使用 LXMFy CLI 生成项目骨架。</p>
+<p>使用 LXMFy CLI 生成项目骨架。两种方式:</p>
+<ul>
+<li><code>lxmfy init</code> 会问几个问题 (名称, 模板, 存储, 前缀, admins),
+  并写出一个可直接运行的项目目录。</li>
+<li><code>lxmfy create</code> 用默认值写出单个 bot 文件, 不提问。</li>
+</ul>
+<p>本指南使用 <code>lxmfy create</code>。</p>
 <ol>
 <li>
 <p><strong>打开终端</strong>，进入你想创建机器人项目的目录。</p>
@@ -1905,6 +1911,9 @@ announce 消息，并开始监听消息。</p>
     该回复可能还会带上图标。</li>
 <li><strong>试试帮助命令：</strong> 发送 <code>/help</code>。</li>
 </ol>
+<p>如果没有任何消息到达, 在项目目录下运行 <code>lxmfy debug</code>。它会检
+查 Reticulum 配置, 接口, 身份和发送流水线, 并保存一份脱敏报
+告, 你可以在求助时分享。</p>
 <h2 id="_4">接下来可以配置什么<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p><strong>消息处理器</strong></p>
 <ul>

@@ -691,6 +691,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#deferred-sends-and-stamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Deferred Sends and Stamps
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2083,6 +2094,10 @@
 <h2 id="using-templates">Using Templates<a class="headerlink" href="#using-templates" title="Permanent link">&para;</a></h2>
 <p>LXMFy provides several templates for common bot types. You can use the
 CLI to generate a bot file based on a template.</p>
+<p>For a full project directory instead of a single file, <code>lxmfy init</code>
+scaffolds <code>bot.py</code>, a <code>cogs</code> package, a README, and a <code>.gitignore</code>,
+asking about template, storage backend, command prefix, and admin
+hashes along the way.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Create an echo bot</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>my_echo_bot
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
@@ -2638,6 +2653,26 @@ config:</p>
 <li>Resets the retry counter on successful delivery</li>
 <li>Logs retry attempts and failures for debugging</li>
 </ul>
+<h3 id="deferred-sends-and-stamps">Deferred Sends and Stamps<a class="headerlink" href="#deferred-sends-and-stamps" title="Permanent link">&para;</a></h3>
+<p>Two delivery details are worth knowing early:</p>
+<ul>
+<li><strong>Deferred sends</strong>: when the destination identity is not known yet,
+  <code>send()</code> holds the message in storage (the <code>pending_sends_*</code> config
+  keys control the backlog) and flushes it when the peer announces.
+  Pass <code>defer=False</code> to a send to drop instead of holding.</li>
+<li><strong>Stamps</strong>: <code>stamp_cost</code> sets an inbound proof-of-work requirement,
+  <code>require_stamps</code> rejects messages that fail it, and
+  <code>include_tickets</code> (default) attaches reply tickets so peers can
+  answer your bot without paying their own stamp cost.</li>
+</ul>
+<p>When delivery misbehaves, <code>lxmfy debug</code> walks the whole path (config,
+instance, interfaces, identity, send pipeline) and writes a redacted
+report you can share. The same checks are callable as
+<code>bot.diagnose_connectivity()</code> and <code>bot.diagnose_destination(hash)</code>.</p>
+<p>See the <a href="../api-reference/#message-delivery">API Reference</a> for the full
+delivery surface: retries, propagation nodes, queue persistence, the
+delivery event stream, and the <code>/queue</code>, <code>/cancel</code>, <code>/inbox</code>,
+<code>/delivery</code> admin commands.</p>
 <h2 id="reticulum-relay-chat-rrc">Reticulum Relay Chat (RRC)<a class="headerlink" href="#reticulum-relay-chat-rrc" title="Permanent link">&para;</a></h2>
 <p>LXMFy bots can join <a href="https://rrc.kc1awv.net/">RRC</a> hubs as ordinary
 clients over RNS Links using CBOR envelopes. This is compatible with

@@ -1395,6 +1395,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#envios-diferidos-e-stamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Envios diferidos e stamps
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2065,6 +2076,10 @@
 <h2 id="utilizar-templates">Utilizar templates<a class="headerlink" href="#utilizar-templates" title="Permanent link">&para;</a></h2>
 <p>O LXMFy fornece vários templates para tipos de bot comuns. Pode usar a
 CLI para gerar um ficheiro de bot a partir de um template.</p>
+<p>Para um diretório de projeto completo em vez de um único
+ficheiro, <code>lxmfy init</code> gera <code>bot.py</code>, um pacote <code>cogs</code>, um README e um
+<code>.gitignore</code>, perguntando pelo caminho por template, backend de
+armazenamento, prefixo de comandos e hashes de admin.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Criar um bot de eco</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>my_echo_bot
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
@@ -2630,6 +2645,29 @@ configuração do bot:</p>
 <li>Repõe o contador de repetições numa entrega bem-sucedida</li>
 <li>Regista tentativas e falhas de repetição para depuração</li>
 </ul>
+<h3 id="envios-diferidos-e-stamps">Envios diferidos e stamps<a class="headerlink" href="#envios-diferidos-e-stamps" title="Permanent link">&para;</a></h3>
+<p>Dois detalhes de entrega que vale a pena conhecer cedo:</p>
+<ul>
+<li><strong>Envios diferidos</strong>: quando a identidade do destino ainda não é
+  conhecida, <code>send()</code> retém a mensagem em armazenamento (as chaves de
+  configuração <code>pending_sends_*</code> controlam o backlog) e despeja-a
+  quando o peer anuncia. Passa <code>defer=False</code> a um envio para descartar
+  em vez de reter.</li>
+<li><strong>Stamps</strong>: <code>stamp_cost</code> define um requisito de proof-of-work de
+  entrada, <code>require_stamps</code> rejeita mensagens que o falham, e
+  <code>include_tickets</code> (padrão) anexa tickets de resposta para que os
+  peers possam responder ao teu bot sem pagar o seu próprio custo de
+  stamp.</li>
+</ul>
+<p>Quando a entrega falha, <code>lxmfy debug</code> percorre todo o caminho
+(configuração, instância, interfaces, identidade, pipeline de envio) e
+escreve um relatório redigido que podes partilhar. As mesmas
+verificações são chamáveis como <code>bot.diagnose_connectivity()</code> e
+<code>bot.diagnose_destination(hash)</code>.</p>
+<p>Vê a <a href="../api-reference/#entrega-de-mensagens">Referência de API</a> para
+toda a superfície de entrega: repetições, nós de propagação,
+persistência de fila, o fluxo de eventos de entrega e os comandos de
+administração <code>/queue</code>, <code>/cancel</code>, <code>/inbox</code>, <code>/delivery</code>.</p>
 <h2 id="reticulum-relay-chat-rrc">Reticulum Relay Chat (RRC)<a class="headerlink" href="#reticulum-relay-chat-rrc" title="Permanent link">&para;</a></h2>
 <p>Os bots LXMFy podem entrar em hubs <a href="https://rrc.kc1awv.net/">RRC</a> como
 clientes normais através de RNS Links usando envelopes CBOR. É

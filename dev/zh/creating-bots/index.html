@@ -1890,6 +1890,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#stamps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        延迟发送与 stamps
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2087,6 +2098,9 @@
 <h2 id="_3">使用模板<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <p>LXMFy 为常见机器人类型提供了若干模板。可以用 CLI 基于模板生成
 机器人文件。</p>
+<p>如果需要完整项目目录而不是单个文件, <code>lxmfy init</code> 会生成
+<code>bot.py</code>, 一个 <code>cogs</code> 包, README 和 <code>.gitignore</code>, 并在过程中
+询问模板, 存储后端, 命令前缀和 admin hash。</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 创建一个 echo 机器人</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>lxmfy<span class="w"> </span>create<span class="w"> </span>--template<span class="w"> </span><span class="nb">echo</span><span class="w"> </span>my_echo_bot
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
@@ -2622,6 +2636,24 @@ LXMF 数据包更高带宽的流量。</p>
 <li>投递成功后重置重试计数器</li>
 <li>记录重试尝试和失败以便调试</li>
 </ul>
+<h3 id="stamps">延迟发送与 stamps<a class="headerlink" href="#stamps" title="Permanent link">&para;</a></h3>
+<p>两个值得尽早了解的投递细节:</p>
+<ul>
+<li><strong>延迟发送</strong>: 当目的地身份未知时, <code>send()</code> 会把消息保留在
+  存储中 (<code>pending_sends_*</code> 配置项控制积压), 并在对端
+  announce 时发出。向发送传入 <code>defer=False</code> 则丢弃而非保留。</li>
+<li><strong>Stamps</strong>: <code>stamp_cost</code> 设置入站 proof-of-work 要求,
+  <code>require_stamps</code> 拒绝不满足要求的消息, <code>include_tickets</code>
+  (默认) 附带回复 ticket, 让对端无需支付自己的 stamp 成本
+  即可回复你的 bot。</li>
+</ul>
+<p>当投递异常时, <code>lxmfy debug</code> 会走完整条链路 (配置, 实例, 接口,
+身份, 发送流水线) 并生成一份可分享的脱敏报告。同样的检查也可
+以通过 <code>bot.diagnose_connectivity()</code> 和
+<code>bot.diagnose_destination(hash)</code> 调用。</p>
+<p>完整的投递功能见 <a href="../api-reference/">API 参考</a>: 重试,
+传播节点, 队列持久化, 投递事件流以及管理命令 <code>/queue</code>,
+<code>/cancel</code>, <code>/inbox</code>, <code>/delivery</code>。</p>
 <h2 id="reticulum-relay-chat-rrc">Reticulum Relay Chat (RRC)<a class="headerlink" href="#reticulum-relay-chat-rrc" title="Permanent link">&para;</a></h2>
 <p>LXMFy 机器人可以作为普通客户端通过 RNS Link 加入
 <a href="https://rrc.kc1awv.net/">RRC</a> hub，使用 CBOR 封包。这与

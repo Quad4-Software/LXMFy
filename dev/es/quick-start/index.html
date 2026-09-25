@@ -1812,7 +1812,16 @@
 </div>
 </div>
 <h2 id="creacion-de-tu-primer-bot-con-la-cli">Creación de tu primer bot (con la CLI)<a class="headerlink" href="#creacion-de-tu-primer-bot-con-la-cli" title="Permanent link">&para;</a></h2>
-<p>Usa la CLI de LXMFy para generar la estructura de un proyecto.</p>
+<p>Usa la CLI de LXMFy para generar la estructura de un proyecto. Dos
+formas:</p>
+<ul>
+<li><code>lxmfy init</code> hace unas preguntas (nombre, plantilla, almacenamiento,
+  prefijo, admins) y escribe un directorio de proyecto listo para
+  ejecutar.</li>
+<li><code>lxmfy create</code> escribe un único archivo de bot con defaults, sin
+  preguntas.</li>
+</ul>
+<p>Esta guía usa <code>lxmfy create</code>.</p>
 <ol>
 <li>
 <p><strong>Abre tu terminal</strong> en el directorio donde quieras crear el
@@ -1911,6 +1920,10 @@ anuncio por la red Reticulum y empezará a escuchar mensajes.</p>
     icono anterior, esta respuesta también puede llevar un icono.</li>
 <li><strong>Prueba el comando de ayuda:</strong> envía <code>/help</code>.</li>
 </ol>
+<p>Si no llega nada, ejecuta <code>lxmfy debug</code> desde el directorio del
+proyecto. Comprueba la configuración de Reticulum, las interfaces, la
+identidad y la pipeline de envío, y guarda un informe redactado que
+puedes compartir al pedir ayuda.</p>
 <h2 id="que-configurar-a-continuacion">Qué configurar a continuación<a class="headerlink" href="#que-configurar-a-continuacion" title="Permanent link">&para;</a></h2>
 <p><strong>Manejadores de mensajes</strong></p>
 <ul>

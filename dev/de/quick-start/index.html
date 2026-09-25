@@ -1812,7 +1812,15 @@
 </div>
 </div>
 <h2 id="den-ersten-bot-erstellen-uber-die-cli">Den ersten Bot erstellen (über die CLI)<a class="headerlink" href="#den-ersten-bot-erstellen-uber-die-cli" title="Permanent link">&para;</a></h2>
-<p>Verwenden Sie die LXMFy-CLI, um ein Projektgerüst zu erstellen.</p>
+<p>Verwenden Sie die LXMFy-CLI, um ein Projektgerüst zu erstellen. Zwei
+Wege:</p>
+<ul>
+<li><code>lxmfy init</code> stellt ein paar Fragen (Name, Vorlage, Speicher,
+  Präfix, Admins) und schreibt ein lauffertiges Projektverzeichnis.</li>
+<li><code>lxmfy create</code> schreibt eine einzelne Bot-Datei mit Defaults, ohne
+  Fragen.</li>
+</ul>
+<p>Diese Anleitung verwendet <code>lxmfy create</code>.</p>
 <ol>
 <li>
 <p><strong>Öffnen Sie ein Terminal</strong> in dem Verzeichnis, in dem Sie Ihr
@@ -1914,6 +1922,10 @@ auf Nachrichten zu warten.</p>
     Icon enthalten.</li>
 <li><strong>Testen Sie den Hilfebefehl:</strong> Senden Sie <code>/help</code>.</li>
 </ol>
+<p>Wenn nichts ankommt, führen Sie <code>lxmfy debug</code> im Projektverzeichnis
+aus. Es prüft Reticulum-Konfiguration, Interfaces, Identität und
+Send-Pipeline und speichert einen redigierten Report, den Sie beim
+Hilfeersuchen teilen können.</p>
 <h2 id="was-als-nachstes-konfigurieren">Was als Nächstes konfigurieren<a class="headerlink" href="#was-als-nachstes-konfigurieren" title="Permanent link">&para;</a></h2>
 <p><strong>Nachrichten-Handler</strong></p>
 <ul>
