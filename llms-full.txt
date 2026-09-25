@@ -135,7 +135,7 @@ This walkthrough uses `lxmfy create`.
         cogs_dir="cogs",      # Directory to load cogs from
         cogs_enabled=True,    # Enable/disable loading cogs
         permissions_enabled=False, # Enable/disable the role-based permission system
-        storage_type="json",  # Storage backend ("json", "sqlite", or "memory")
+        storage_type="json",  # Storage backend ("json", "sqlite", "msgpack", or "memory")
         storage_path="data",  # Path for storage files/database
         first_message_enabled=True, # Enable special handling for first messages
         event_logging_enabled=True, # Log events to storage?
@@ -798,13 +798,16 @@ priorities.
 
 ## Storage
 
-LXMFy provides JSON, SQLite, and In-Memory storage backends.
+LXMFy provides JSON, SQLite, MsgPack, and In-Memory storage backends.
 
 - **JSON:** Simple, human-readable. Good for small datasets. Configure
   with `storage_type="json"` and `storage_path="your_data_dir"`.
 - **SQLite:** More efficient for larger datasets or frequent writes.
   Configure with `storage_type="sqlite"` and
   `storage_path="your_db_file.db"`.
+- **MsgPack:** Compact binary format with the same one-file-per-key
+  layout as JSON. Configure with `storage_type="msgpack"` and
+  `storage_path="your_data_dir"`.
 - **Memory:** Entirely in-RAM storage. State is lost on shutdown.
   Configure with `storage_type="memory"`.
 
@@ -1136,7 +1139,7 @@ bot = LXMFBot(
     hot_reloading=False,
 
     # Storage, events, permissions
-    storage_type="json",              # "json", "sqlite", or "memory"
+    storage_type="json",              # "json", "sqlite", "msgpack", or "memory"
     storage_path="data",
     permissions_enabled=False,
     first_message_enabled=True,
@@ -1462,6 +1465,14 @@ storage = JSONStorage("data")
 from lxmfy import SQLiteStorage
 
 storage = SQLiteStorage("data/bot.db")
+```
+
+### MsgPackStorage
+
+``` python
+from lxmfy.storage import MsgPackStorage
+
+storage = MsgPackStorage("data") # {key}.msgpack files
 ```
 
 ### MemoryStorage
@@ -2491,6 +2502,8 @@ Generated from source docstrings.
 
 ::: lxmfy.storage.MemoryStorage
 
+::: lxmfy.MsgPackStorage
+
 ::: lxmfy.ConversationManager
 
 ::: lxmfy.Answer
@@ -2584,6 +2597,7 @@ including command handling, storage management, moderation features, and role-ba
 - [**MiddlewareContext**](#lxmfy.MiddlewareContext) – Context passed through middleware chain
 - [**MiddlewareManager**](#lxmfy.MiddlewareManager) – Manages middleware registration and execution
 - [**MiddlewareType**](#lxmfy.MiddlewareType) – Types of middleware execution points
+- [**MsgPackStorage**](#lxmfy.MsgPackStorage) – MsgPack file-based storage backend.
 - [**PermissionManager**](#lxmfy.PermissionManager) – Manages permissions, roles, and user assignments
 - [**RRCClient**](#lxmfy.RRCClient) – Client session for a single RRC hub destination.
 - [**RRCManager**](#lxmfy.RRCManager) – Owns RRCClient sessions and fans events out to bot handlers.
@@ -2795,7 +2809,7 @@ Configuration settings for LXMFBot.
 - [**cogs_dir**](#lxmfy.BotConfig.cogs_dir) (<code>[str](#str)</code>) – The directory to load cogs from. Defaults to "cogs".
 - [**cogs_enabled**](#lxmfy.BotConfig.cogs_enabled) (<code>[bool](#bool)</code>) – Whether to enable cogs. Defaults to True.
 - [**permissions_enabled**](#lxmfy.BotConfig.permissions_enabled) (<code>[bool](#bool)</code>) – Whether to enable the permission system. Defaults to False.
-- [**storage_type**](#lxmfy.BotConfig.storage_type) (<code>[str](#str)</code>) – The type of storage to use ("json" or "sqlite"). Defaults to "json".
+- [**storage_type**](#lxmfy.BotConfig.storage_type) (<code>[str](#str)</code>) – The type of storage to use ("json", "sqlite", "msgpack", or "memory"). Defaults to "json".
 - [**storage_path**](#lxmfy.BotConfig.storage_path) (<code>[str](#str)</code>) – The path to the storage file or directory. Defaults to "data".
 - [**first_message_enabled**](#lxmfy.BotConfig.first_message_enabled) (<code>[bool](#bool)</code>) – Whether to enable first message handling. Defaults to True.
 - [**event_logging_enabled**](#lxmfy.BotConfig.event_logging_enabled) (<code>[bool](#bool)</code>) – Whether to enable event logging. Defaults to True.
@@ -5928,6 +5942,130 @@ REQUEST = 'request'
 ```python
 RESPONSE = 'response'
 ```
+
+### `lxmfy.MsgPackStorage`
+
+```python
+MsgPackStorage(directory)
+```
+
+Bases: <code>[StorageBackend](#lxmfy.storage.StorageBackend)</code>
+
+MsgPack file-based storage backend.
+
+Uses the msgpack implementation vendored with RNS
+(``RNS.vendor.umsgpack``), so no extra dependency is needed. Stores
+each key in its own ``{key}.msgpack`` file, mirroring JSONStorage.
+
+**Functions:**
+
+- [**delete**](#lxmfy.MsgPackStorage.delete) – Delete a value from storage.
+- [**exists**](#lxmfy.MsgPackStorage.exists) – Check if a key exists in storage.
+- [**get**](#lxmfy.MsgPackStorage.get) – Retrieve a value from storage.
+- [**scan**](#lxmfy.MsgPackStorage.scan) – Scan for keys with a given prefix.
+- [**set**](#lxmfy.MsgPackStorage.set) – Store a value in storage.
+
+**Attributes:**
+
+- [**cache**](#lxmfy.MsgPackStorage.cache) (<code>[dict](#dict)[[str](#str), [Any](#typing.Any)]</code>) – 
+- [**directory**](#lxmfy.MsgPackStorage.directory) – 
+- [**logger**](#lxmfy.MsgPackStorage.logger) – 
+
+**Parameters:**
+
+- **directory** (<code>[str](#str)</code>) – The directory to store the msgpack files in.
+
+#### `lxmfy.MsgPackStorage.cache`
+
+```python
+cache: dict[str, Any] = {}
+```
+
+#### `lxmfy.MsgPackStorage.delete`
+
+```python
+delete(key)
+```
+
+Delete a value from storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to delete.
+
+#### `lxmfy.MsgPackStorage.directory`
+
+```python
+directory = Path(directory)
+```
+
+#### `lxmfy.MsgPackStorage.exists`
+
+```python
+exists(key)
+```
+
+Check if a key exists in storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to check.
+
+**Returns:**
+
+- <code>[bool](#bool)</code> – True if the key exists, False otherwise.
+
+#### `lxmfy.MsgPackStorage.get`
+
+```python
+get(key, default=None)
+```
+
+Retrieve a value from storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to retrieve.
+- **default** (<code>[Any](#typing.Any)</code>) – The default value to return if the key is not found.
+
+**Returns:**
+
+- <code>[Any](#typing.Any)</code> – The value associated with the key, or the default value if not found.
+
+#### `lxmfy.MsgPackStorage.logger`
+
+```python
+logger = logging.getLogger(__name__)
+```
+
+#### `lxmfy.MsgPackStorage.scan`
+
+```python
+scan(prefix)
+```
+
+Scan for keys with a given prefix.
+
+**Parameters:**
+
+- **prefix** (<code>[str](#str)</code>) – The prefix to scan for.
+
+**Returns:**
+
+- <code>[list](#list)</code> – A list of keys that start with the prefix.
+
+#### `lxmfy.MsgPackStorage.set`
+
+```python
+set(key, value)
+```
+
+Store a value in storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to store the value under.
+- **value** (<code>[Any](#typing.Any)</code>) – The value to store.
 
 ### `lxmfy.PermissionManager`
 
@@ -9570,7 +9708,7 @@ Configuration settings for LXMFBot.
 - [**cogs_dir**](#lxmfy.config.BotConfig.cogs_dir) (<code>[str](#str)</code>) – The directory to load cogs from. Defaults to "cogs".
 - [**cogs_enabled**](#lxmfy.config.BotConfig.cogs_enabled) (<code>[bool](#bool)</code>) – Whether to enable cogs. Defaults to True.
 - [**permissions_enabled**](#lxmfy.config.BotConfig.permissions_enabled) (<code>[bool](#bool)</code>) – Whether to enable the permission system. Defaults to False.
-- [**storage_type**](#lxmfy.config.BotConfig.storage_type) (<code>[str](#str)</code>) – The type of storage to use ("json" or "sqlite"). Defaults to "json".
+- [**storage_type**](#lxmfy.config.BotConfig.storage_type) (<code>[str](#str)</code>) – The type of storage to use ("json", "sqlite", "msgpack", or "memory"). Defaults to "json".
 - [**storage_path**](#lxmfy.config.BotConfig.storage_path) (<code>[str](#str)</code>) – The path to the storage file or directory. Defaults to "data".
 - [**first_message_enabled**](#lxmfy.config.BotConfig.first_message_enabled) (<code>[bool](#bool)</code>) – Whether to enable first message handling. Defaults to True.
 - [**event_logging_enabled**](#lxmfy.config.BotConfig.event_logging_enabled) (<code>[bool](#bool)</code>) – Whether to enable event logging. Defaults to True.
@@ -16381,6 +16519,7 @@ The Storage class serves as a facade for the underlying storage backend.
 
 - [**JSONStorage**](#lxmfy.storage.JSONStorage) – JSON file-based storage backend.
 - [**MemoryStorage**](#lxmfy.storage.MemoryStorage) – In-memory storage backend.
+- [**MsgPackStorage**](#lxmfy.storage.MsgPackStorage) – MsgPack file-based storage backend.
 - [**SQLiteStorage**](#lxmfy.storage.SQLiteStorage) – SQLite database storage backend.
 - [**Storage**](#lxmfy.storage.Storage) – Facade for the underlying storage backend.
 - [**StorageBackend**](#lxmfy.storage.StorageBackend) – Abstract base class for storage backends.
@@ -16584,6 +16723,130 @@ set(key, value)
 ```
 
 Store a value in storage.
+
+#### `lxmfy.storage.MsgPackStorage`
+
+```python
+MsgPackStorage(directory)
+```
+
+Bases: <code>[StorageBackend](#lxmfy.storage.StorageBackend)</code>
+
+MsgPack file-based storage backend.
+
+Uses the msgpack implementation vendored with RNS
+(``RNS.vendor.umsgpack``), so no extra dependency is needed. Stores
+each key in its own ``{key}.msgpack`` file, mirroring JSONStorage.
+
+**Functions:**
+
+- [**delete**](#lxmfy.storage.MsgPackStorage.delete) – Delete a value from storage.
+- [**exists**](#lxmfy.storage.MsgPackStorage.exists) – Check if a key exists in storage.
+- [**get**](#lxmfy.storage.MsgPackStorage.get) – Retrieve a value from storage.
+- [**scan**](#lxmfy.storage.MsgPackStorage.scan) – Scan for keys with a given prefix.
+- [**set**](#lxmfy.storage.MsgPackStorage.set) – Store a value in storage.
+
+**Attributes:**
+
+- [**cache**](#lxmfy.storage.MsgPackStorage.cache) (<code>[dict](#dict)[[str](#str), [Any](#typing.Any)]</code>) – 
+- [**directory**](#lxmfy.storage.MsgPackStorage.directory) – 
+- [**logger**](#lxmfy.storage.MsgPackStorage.logger) – 
+
+**Parameters:**
+
+- **directory** (<code>[str](#str)</code>) – The directory to store the msgpack files in.
+
+##### `lxmfy.storage.MsgPackStorage.cache`
+
+```python
+cache: dict[str, Any] = {}
+```
+
+##### `lxmfy.storage.MsgPackStorage.delete`
+
+```python
+delete(key)
+```
+
+Delete a value from storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to delete.
+
+##### `lxmfy.storage.MsgPackStorage.directory`
+
+```python
+directory = Path(directory)
+```
+
+##### `lxmfy.storage.MsgPackStorage.exists`
+
+```python
+exists(key)
+```
+
+Check if a key exists in storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to check.
+
+**Returns:**
+
+- <code>[bool](#bool)</code> – True if the key exists, False otherwise.
+
+##### `lxmfy.storage.MsgPackStorage.get`
+
+```python
+get(key, default=None)
+```
+
+Retrieve a value from storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to retrieve.
+- **default** (<code>[Any](#typing.Any)</code>) – The default value to return if the key is not found.
+
+**Returns:**
+
+- <code>[Any](#typing.Any)</code> – The value associated with the key, or the default value if not found.
+
+##### `lxmfy.storage.MsgPackStorage.logger`
+
+```python
+logger = logging.getLogger(__name__)
+```
+
+##### `lxmfy.storage.MsgPackStorage.scan`
+
+```python
+scan(prefix)
+```
+
+Scan for keys with a given prefix.
+
+**Parameters:**
+
+- **prefix** (<code>[str](#str)</code>) – The prefix to scan for.
+
+**Returns:**
+
+- <code>[list](#list)</code> – A list of keys that start with the prefix.
+
+##### `lxmfy.storage.MsgPackStorage.set`
+
+```python
+set(key, value)
+```
+
+Store a value in storage.
+
+**Parameters:**
+
+- **key** (<code>[str](#str)</code>) – The key to store the value under.
+- **value** (<code>[Any](#typing.Any)</code>) – The value to store.
 
 #### `lxmfy.storage.SQLiteStorage`
 
