@@ -76,7 +76,7 @@ Diese Anleitung verwendet `lxmfy create`.
         cogs_dir="cogs",      # Verzeichnis, aus dem Cogs geladen werden
         cogs_enabled=True,    # Laden der Cogs ein-/ausschalten
         permissions_enabled=False, # Rollenbasiertes Berechtigungssystem ein-/ausschalten
-        storage_type="json",  # Speicher-Backend ("json", "sqlite" oder "memory")
+        storage_type="json",  # Speicher-Backend ("json", "sqlite", "msgpack" oder "memory")
         storage_path="data",  # Pfad für Speicherdateien/Datenbank
         first_message_enabled=True, # Sonderbehandlung für erste Nachrichten aktivieren
         event_logging_enabled=True, # Ereignisse im Speicher protokollieren?

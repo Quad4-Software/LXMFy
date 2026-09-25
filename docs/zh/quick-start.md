@@ -68,7 +68,7 @@
         cogs_dir="cogs",      # 加载 Cog 的目录
         cogs_enabled=True,    # 启用/禁用加载 Cog
         permissions_enabled=False, # 启用/禁用基于角色的权限系统
-        storage_type="json",  # 存储后端（"json"、"sqlite" 或 "memory"）
+        storage_type="json",  # 存储后端（"json"、"sqlite"、"msgpack" 或 "memory"）
         storage_path="data",  # 存储文件/数据库的路径
         first_message_enabled=True, # 启用对首条消息的特殊处理
         event_logging_enabled=True, # 将事件记录到存储？

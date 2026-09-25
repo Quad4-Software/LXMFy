@@ -60,7 +60,7 @@ from .rrc import (
     validate_envelope,
 )
 from .scheduler import ScheduledTask, TaskScheduler
-from .storage import JSONStorage, SQLiteStorage, Storage
+from .storage import JSONStorage, MsgPackStorage, SQLiteStorage, Storage
 from .testing import SentMessage, TestBot, fake_message
 from .validation import format_validation_results, validate_bot
 
@@ -100,6 +100,7 @@ __all__ = [
     "MiddlewareContext",
     "MiddlewareManager",
     "MiddlewareType",
+    "MsgPackStorage",
     "PermissionManager",
     "RRCClient",
     "RRCManager",

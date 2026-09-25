@@ -549,7 +549,7 @@ if __name__ == "__main__":
 
 ## Сховище
 
-LXMFy надає бекенди сховища JSON, SQLite та In-Memory.
+LXMFy надає бекенди сховища JSON, SQLite, MsgPack та In-Memory.
 
 - **JSON:** простий, читабельний для людини. Підходить для невеликих
   наборів даних. Налаштовується через `storage_type="json"` і
@@ -557,6 +557,9 @@ LXMFy надає бекенди сховища JSON, SQLite та In-Memory.
 - **SQLite:** ефективніший для більших наборів даних або частих записів.
   Налаштовується через `storage_type="sqlite"` і
   `storage_path="your_db_file.db"`.
+- **MsgPack:** компактний бінарний формат із тим самим розкладом
+  файл-на-ключ, що й JSON. Налаштовується через
+  `storage_type="msgpack"` і `storage_path="your_data_dir"`.
 - **Memory:** сховище повністю в оперативній пам'яті. Стан втрачається
   після вимкнення. Налаштовується через `storage_type="memory"`.
 

@@ -530,13 +530,16 @@ if __name__ == "__main__":
 
 ## 存储
 
-LXMFy 提供 JSON、SQLite 和内存三种存储后端。
+LXMFy 提供 JSON、SQLite、MsgPack 和内存四种存储后端。
 
 - **JSON：** 简单、可读，适合小数据集。用
   `storage_type="json"` 和 `storage_path="your_data_dir"` 配置。
 - **SQLite：** 对更大数据集或频繁写入更高效。用
   `storage_type="sqlite"` 和 `storage_path="your_db_file.db"`
   配置。
+- **MsgPack：** 紧凑的二进制格式，与 JSON 同样采用每键一个文件的
+  布局。用 `storage_type="msgpack"` 和
+  `storage_path="your_data_dir"` 配置。
 - **内存：** 完全在 RAM 中存储，关闭后状态丢失。用
   `storage_type="memory"` 配置。
 

@@ -565,7 +565,7 @@ Weitere Details zur `Event`-Struktur und zu Prioritäten finden Sie in
 
 ## Speicher
 
-LXMFy bietet JSON-, SQLite- und In-Memory-Speicher-Backends.
+LXMFy bietet JSON-, SQLite-, MsgPack- und In-Memory-Speicher-Backends.
 
 - **JSON:** Einfach, menschenlesbar. Gut für kleine Datenmengen.
   Konfiguration mit `storage_type="json"` und
@@ -573,6 +573,9 @@ LXMFy bietet JSON-, SQLite- und In-Memory-Speicher-Backends.
 - **SQLite:** Effizienter bei größeren Datenmengen oder häufigen
   Schreibvorgängen. Konfiguration mit `storage_type="sqlite"` und
   `storage_path="your_db_file.db"`.
+- **MsgPack:** Kompaktes Binärformat mit demselben
+  Datei-pro-Schlüssel-Layout wie JSON. Konfiguration mit
+  `storage_type="msgpack"` und `storage_path="your_data_dir"`.
 - **Memory:** Speicher vollständig im RAM. Zustand geht beim
   Herunterfahren verloren. Konfiguration mit `storage_type="memory"`.
 

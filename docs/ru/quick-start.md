@@ -69,7 +69,7 @@
         cogs_dir="cogs",      # Каталог для загрузки когов
         cogs_enabled=True,    # Включить/выключить загрузку когов
         permissions_enabled=False, # Включить/выключить ролевую систему прав
-        storage_type="json",  # Бэкенд хранилища ("json", "sqlite" или "memory")
+        storage_type="json",  # Бэкенд хранилища ("json", "sqlite", "msgpack" или "memory")
         storage_path="data",  # Путь к файлам хранилища/базе данных
         first_message_enabled=True, # Специальная обработка первых сообщений
         event_logging_enabled=True, # Записывать события в хранилище?

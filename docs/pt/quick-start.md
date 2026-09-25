@@ -74,7 +74,7 @@ Este guia usa `lxmfy create`.
         cogs_dir="cogs",      # Diretório de onde carregar os cogs
         cogs_enabled=True,    # Ativar/desativar o carregamento de cogs
         permissions_enabled=False, # Ativar/desativar o sistema de permissões por papéis
-        storage_type="json",  # Backend de armazenamento ("json", "sqlite" ou "memory")
+        storage_type="json",  # Backend de armazenamento ("json", "sqlite", "msgpack" ou "memory")
         storage_path="data",  # Caminho para os ficheiros/base de dados de armazenamento
         first_message_enabled=True, # Ativar tratamento especial das primeiras mensagens
         event_logging_enabled=True, # Registar eventos no armazenamento?

@@ -19,7 +19,7 @@ class TestFrameworkPermutations:
             "nlp_enabled": [True, False],
             "permissions_enabled": [True, False],
             "signature_verification_enabled": [True, False],
-            "storage_type": ["json", "sqlite"],
+            "storage_type": ["json", "sqlite", "msgpack"],
         }
 
         # Get all permutations (Cartesian product)

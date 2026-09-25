@@ -804,7 +804,7 @@ def run_init(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--storage",
-        choices=["json", "sqlite", "memory"],
+        choices=["json", "sqlite", "msgpack", "memory"],
         default=None,
         help="Storage backend for a basic bot (default: json)",
     )
@@ -875,11 +875,11 @@ def run_init(argv: list[str] | None = None) -> int:
     cogs = not args.no_cogs
     if template == "basic":
         storage = args.storage or _ask(
-            "Storage (json, sqlite, memory)",
+            "Storage (json, sqlite, msgpack, memory)",
             "json",
             assume_yes=yes,
         )
-        if storage not in {"json", "sqlite", "memory"}:
+        if storage not in {"json", "sqlite", "msgpack", "memory"}:
             print_error(f"Invalid storage backend '{storage}'")
             return 1
         prefix = args.prefix or _ask(

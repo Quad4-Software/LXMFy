@@ -75,7 +75,7 @@
         cogs_dir="cogs",      # Каталог для завантаження коґів
         cogs_enabled=True,    # Увімкнути/вимкнути завантаження коґів
         permissions_enabled=False, # Увімкнути/вимкнути рольову систему прав
-        storage_type="json",  # Бекенд сховища ("json", "sqlite" або "memory")
+        storage_type="json",  # Бекенд сховища ("json", "sqlite", "msgpack" або "memory")
         storage_path="data",  # Шлях до файлів сховища/бази даних
         first_message_enabled=True, # Спеціальна обробка перших повідомлень
         event_logging_enabled=True, # Записувати події у сховище?

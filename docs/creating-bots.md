@@ -548,13 +548,16 @@ priorities.
 
 ## Storage
 
-LXMFy provides JSON, SQLite, and In-Memory storage backends.
+LXMFy provides JSON, SQLite, MsgPack, and In-Memory storage backends.
 
 - **JSON:** Simple, human-readable. Good for small datasets. Configure
   with `storage_type="json"` and `storage_path="your_data_dir"`.
 - **SQLite:** More efficient for larger datasets or frequent writes.
   Configure with `storage_type="sqlite"` and
   `storage_path="your_db_file.db"`.
+- **MsgPack:** Compact binary format with the same one-file-per-key
+  layout as JSON. Configure with `storage_type="msgpack"` and
+  `storage_path="your_data_dir"`.
 - **Memory:** Entirely in-RAM storage. State is lost on shutdown.
   Configure with `storage_type="memory"`.
 

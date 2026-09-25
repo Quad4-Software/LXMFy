@@ -22,7 +22,7 @@ class BotConfig:
         cogs_dir (str): The directory to load cogs from. Defaults to "cogs".
         cogs_enabled (bool): Whether to enable cogs. Defaults to True.
         permissions_enabled (bool): Whether to enable the permission system. Defaults to False.
-        storage_type (str): The type of storage to use ("json" or "sqlite"). Defaults to "json".
+        storage_type (str): The type of storage to use ("json", "sqlite", "msgpack", or "memory"). Defaults to "json".
         storage_path (str): The path to the storage file or directory. Defaults to "data".
         first_message_enabled (bool): Whether to enable first message handling. Defaults to True.
         event_logging_enabled (bool): Whether to enable event logging. Defaults to True.

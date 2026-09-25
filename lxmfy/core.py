@@ -49,7 +49,7 @@ from .reticulum_config import (
 )
 from .scheduler import TaskScheduler
 from .signatures import SignatureManager
-from .storage import JSONStorage, MemoryStorage, SQLiteStorage, Storage
+from .storage import JSONStorage, MemoryStorage, MsgPackStorage, SQLiteStorage, Storage
 from .transport import Transport
 from .validation import format_validation_results, validate_bot
 
@@ -133,12 +133,14 @@ class LXMFBot(
             self.storage = Storage(JSONStorage(self.config.storage_path))
         elif self.config.storage_type == "sqlite":
             self.storage = Storage(SQLiteStorage(self.config.storage_path))
+        elif self.config.storage_type == "msgpack":
+            self.storage = Storage(MsgPackStorage(self.config.storage_path))
         elif self.config.storage_type == "memory":
             self.storage = Storage(MemoryStorage())
         else:
             raise ValueError(
                 f"Unknown storage_type {self.config.storage_type!r}; "
-                "expected 'json', 'sqlite', or 'memory'",
+                "expected 'json', 'sqlite', 'msgpack', or 'memory'",
             )
 
         self.admins = set(self.config.admins or [])

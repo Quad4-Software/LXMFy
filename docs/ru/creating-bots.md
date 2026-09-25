@@ -488,10 +488,13 @@ if __name__ == "__main__":
 
 ## Хранилище
 
-LXMFy предоставляет бэкенды хранилища JSON, SQLite и In-Memory.
+LXMFy предоставляет бэкенды хранилища JSON, SQLite, MsgPack и In-Memory.
 
 - **JSON:** простой, читаемый человеком. Подходит для небольших данных. Настройка: `storage_type="json"` и `storage_path="your_data_dir"`.
 - **SQLite:** эффективнее для больших данных или частых записей. Настройка: `storage_type="sqlite"` и `storage_path="your_db_file.db"`.
+- **MsgPack:** компактный бинарный формат с той же раскладкой
+  файл-на-ключ, что и JSON. Настройка: `storage_type="msgpack"` и
+  `storage_path="your_data_dir"`.
 - **Memory:** хранилище полностью в ОЗУ. Состояние теряется при остановке. Настройка: `storage_type="memory"`.
 
 Доступ к хранилищу — через `bot.storage`:

@@ -43,7 +43,7 @@ bot = LXMFBot(
     hot_reloading=False,
 
     # Speicher, Ereignisse, Berechtigungen
-    storage_type="json",              # "json", "sqlite" oder "memory"
+    storage_type="json",              # "json", "sqlite", "msgpack" oder "memory"
     storage_path="data",
     permissions_enabled=False,
     first_message_enabled=True,
@@ -382,6 +382,14 @@ storage = JSONStorage("data")
 from lxmfy import SQLiteStorage
 
 storage = SQLiteStorage("data/bot.db")
+```
+
+### MsgPackStorage
+
+``` python
+from lxmfy.storage import MsgPackStorage
+
+storage = MsgPackStorage("data") # {key}.msgpack files
 ```
 
 ### MemoryStorage
@@ -1449,6 +1457,8 @@ Wird aus den Docstrings des Quellcodes generiert.
 ::: lxmfy.SQLiteStorage
 
 ::: lxmfy.storage.MemoryStorage
+
+::: lxmfy.MsgPackStorage
 
 ::: lxmfy.ConversationManager
 

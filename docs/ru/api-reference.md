@@ -42,7 +42,7 @@ bot = LXMFBot(
     hot_reloading=False,
 
     # Хранилище, события, права
-    storage_type="json",              # "json", "sqlite" или "memory"
+    storage_type="json",              # "json", "sqlite", "msgpack" или "memory"
     storage_path="data",
     permissions_enabled=False,
     first_message_enabled=True,
@@ -368,6 +368,14 @@ storage = JSONStorage("data")
 from lxmfy import SQLiteStorage
 
 storage = SQLiteStorage("data/bot.db")
+```
+
+### MsgPackStorage
+
+``` python
+from lxmfy.storage import MsgPackStorage
+
+storage = MsgPackStorage("data") # {key}.msgpack files
 ```
 
 ### MemoryStorage
@@ -1367,6 +1375,8 @@ except Exception as e:
 ::: lxmfy.SQLiteStorage
 
 ::: lxmfy.storage.MemoryStorage
+
+::: lxmfy.MsgPackStorage
 
 ::: lxmfy.ConversationManager
 
