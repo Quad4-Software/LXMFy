@@ -59,6 +59,11 @@ if __name__ == "__main__":
 O LXMFy fornece vários templates para tipos de bot comuns. Pode usar a
 CLI para gerar um ficheiro de bot a partir de um template.
 
+Para um diretório de projeto completo em vez de um único
+ficheiro, `lxmfy init` gera `bot.py`, um pacote `cogs`, um README e um
+`.gitignore`, perguntando pelo caminho por template, backend de
+armazenamento, prefixo de comandos e hashes de admin.
+
 ``` bash
 # Criar um bot de eco
 lxmfy create --template echo my_echo_bot
@@ -724,6 +729,32 @@ O sistema de repetição:
 - Repete entregas diretas falhadas até `direct_delivery_retries`
 - Repõe o contador de repetições numa entrega bem-sucedida
 - Regista tentativas e falhas de repetição para depuração
+
+### Envios diferidos e stamps
+
+Dois detalhes de entrega que vale a pena conhecer cedo:
+
+- **Envios diferidos**: quando a identidade do destino ainda não é
+  conhecida, `send()` retém a mensagem em armazenamento (as chaves de
+  configuração `pending_sends_*` controlam o backlog) e despeja-a
+  quando o peer anuncia. Passa `defer=False` a um envio para descartar
+  em vez de reter.
+- **Stamps**: `stamp_cost` define um requisito de proof-of-work de
+  entrada, `require_stamps` rejeita mensagens que o falham, e
+  `include_tickets` (padrão) anexa tickets de resposta para que os
+  peers possam responder ao teu bot sem pagar o seu próprio custo de
+  stamp.
+
+Quando a entrega falha, `lxmfy debug` percorre todo o caminho
+(configuração, instância, interfaces, identidade, pipeline de envio) e
+escreve um relatório redigido que podes partilhar. As mesmas
+verificações são chamáveis como `bot.diagnose_connectivity()` e
+`bot.diagnose_destination(hash)`.
+
+Vê a [Referência de API](api-reference.md#entrega-de-mensagens) para
+toda a superfície de entrega: repetições, nós de propagação,
+persistência de fila, o fluxo de eventos de entrega e os comandos de
+administração `/queue`, `/cancel`, `/inbox`, `/delivery`.
 
 ## Reticulum Relay Chat (RRC)
 

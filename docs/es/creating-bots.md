@@ -59,6 +59,11 @@ if __name__ == "__main__":
 LXMFy incluye varias plantillas para tipos de bot habituales. Puedes
 usar la CLI para generar un archivo de bot basado en una plantilla.
 
+Para un directorio de proyecto completo en lugar de un solo
+archivo, `lxmfy init` genera `bot.py`, un paquete `cogs`, un README y
+un `.gitignore`, preguntando por plantilla, backend de almacenamiento,
+prefijo de comandos y hashes de admin por el camino.
+
 ``` bash
 # Crear un bot eco
 lxmfy create --template echo my_echo_bot
@@ -730,6 +735,32 @@ El sistema de reintentos:
   `direct_delivery_retries` veces
 - Reinicia el contador de reintentos tras una entrega correcta
 - Registra los intentos y fallos de reintento para depuración
+
+### Envíos diferidos y stamps
+
+Dos detalles de entrega que conviene conocer pronto:
+
+- **Envíos diferidos**: cuando la identidad del destino aún no se
+  conoce, `send()` retiene el mensaje en almacenamiento (las claves de
+  configuración `pending_sends_*` controlan la reserva) y lo vacía
+  cuando el peer anuncia. Pasa `defer=False` a un envío para descartar
+  en lugar de retener.
+- **Stamps**: `stamp_cost` establece un requisito de proof-of-work
+  entrante, `require_stamps` rechaza los mensajes que no lo cumplen, y
+  `include_tickets` (por defecto) adjunta tickets de respuesta para
+  que los peers puedan contestar a tu bot sin pagar su propio coste de
+  stamp.
+
+Cuando la entrega falla, `lxmfy debug` recorre todo el camino
+(configuración, instancia, interfaces, identidad, pipeline de envío) y
+escribe un informe redactado que puedes compartir. Las mismas
+comprobaciones se pueden llamar como `bot.diagnose_connectivity()` y
+`bot.diagnose_destination(hash)`.
+
+Consulta la [Referencia de API](api-reference.md#entrega-de-mensajes)
+para toda la superficie de entrega: reintentos, nodos de propagación,
+persistencia de cola, el flujo de eventos de entrega y los comandos de
+administración `/queue`, `/cancel`, `/inbox`, `/delivery`.
 
 ## Reticulum Relay Chat (RRC)
 

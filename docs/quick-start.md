@@ -129,6 +129,10 @@ This walkthrough uses `lxmfy create`.
     example above, this reply might also carry an icon.
 3.  **Try the help command:** Send `/help`.
 
+If nothing arrives, run `lxmfy debug` from the project directory. It
+checks the Reticulum config, interfaces, identity, and send pipeline,
+and saves a redacted report you can share when asking for help.
+
 ## What to configure next
 
 **Message handlers**

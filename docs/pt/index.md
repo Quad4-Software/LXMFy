@@ -24,8 +24,9 @@ bot.run()
 
 - Registo de comandos com argumentos anotados por tipo, geração de ajuda e restrição a administradores
 - Cogs em Python ou em qualquer linguagem executável
-- Comandos em campos LXMF, reações, anexos e aparência de ícone
-- Entrega por nó de propagação com repetições e persistência da fila
+- Comandos em campos LXMF, reações, threading de respostas, anexos e aparência de ícone
+- Conversações (msg.ask), harness de teste sem rede e depurador de conectividade
+- Entrega por nó de propagação com repetições, envios diferidos e persistência da fila
 - Intents NLP opcionais, permissões, assinaturas, sandboxing com Landlock
 - Cliente de salas RRC compatível com hubs NomadNet e MeshChatX
 

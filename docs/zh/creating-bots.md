@@ -59,6 +59,10 @@ if __name__ == "__main__":
 LXMFy 为常见机器人类型提供了若干模板。可以用 CLI 基于模板生成
 机器人文件。
 
+如果需要完整项目目录而不是单个文件, `lxmfy init` 会生成
+`bot.py`, 一个 `cogs` 包, README 和 `.gitignore`, 并在过程中
+询问模板, 存储后端, 命令前缀和 admin hash。
+
 ``` bash
 # 创建一个 echo 机器人
 lxmfy create --template echo my_echo_bot
@@ -694,6 +698,27 @@ def normal_command(ctx):
 - 对失败的直接投递最多重试 `direct_delivery_retries` 次
 - 投递成功后重置重试计数器
 - 记录重试尝试和失败以便调试
+
+### 延迟发送与 stamps
+
+两个值得尽早了解的投递细节:
+
+- **延迟发送**: 当目的地身份未知时, `send()` 会把消息保留在
+  存储中 (`pending_sends_*` 配置项控制积压), 并在对端
+  announce 时发出。向发送传入 `defer=False` 则丢弃而非保留。
+- **Stamps**: `stamp_cost` 设置入站 proof-of-work 要求,
+  `require_stamps` 拒绝不满足要求的消息, `include_tickets`
+  (默认) 附带回复 ticket, 让对端无需支付自己的 stamp 成本
+  即可回复你的 bot。
+
+当投递异常时, `lxmfy debug` 会走完整条链路 (配置, 实例, 接口,
+身份, 发送流水线) 并生成一份可分享的脱敏报告。同样的检查也可
+以通过 `bot.diagnose_connectivity()` 和
+`bot.diagnose_destination(hash)` 调用。
+
+完整的投递功能见 [API 参考](api-reference.md): 重试,
+传播节点, 队列持久化, 投递事件流以及管理命令 `/queue`,
+`/cancel`, `/inbox`, `/delivery`。
 
 ## Reticulum Relay Chat (RRC)
 

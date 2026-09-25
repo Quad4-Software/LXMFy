@@ -59,6 +59,11 @@ if __name__ == "__main__":
 LXMFy stellt mehrere Vorlagen für gängige Bot-Typen bereit. Mit der
 CLI kann eine Bot-Datei auf Basis einer Vorlage generiert werden.
 
+Für ein volles Projektverzeichnis statt einer einzelnen Datei
+scaffoldet `lxmfy init` `bot.py`, ein `cogs`-Paket, ein README und
+eine `.gitignore` und fragt unterwegs nach Vorlage, Speicher-Backend,
+Befehlspräfix und Admin-Hashes.
+
 ``` bash
 # Echo-Bot erstellen
 lxmfy create --template echo my_echo_bot
@@ -739,6 +744,32 @@ Das Wiederholungssystem:
   `direct_delivery_retries`-mal
 - Setzt den Wiederholungszähler nach erfolgreicher Zustellung zurück
 - Protokolliert Wiederholungsversuche und Fehler zur Fehlersuche
+
+### Zurückgestellte Sends und Stamps
+
+Zwei Zustelldetails lohnt es früh zu kennen:
+
+- **Zurückgestellte Sends**: Wenn die Zielidentität noch nicht bekannt
+  ist, hält `send()` die Nachricht im Speicher (die
+  `pending_sends_*`-Konfigurationsschlüssel steuern den Rückstau) und
+  flusht sie, wenn der Peer announcet. `defer=False` an einem Send
+  verwirft statt zu halten.
+- **Stamps**: `stamp_cost` setzt eine eingehende
+  Proof-of-Work-Anforderung, `require_stamps` lehnt Nachrichten ab, die
+  sie nicht erfüllen, und `include_tickets` (Standard) hängt
+  Reply-Tickets an, damit Peers Ihrem Bot antworten können, ohne
+  eigene Stamp-Kosten zu zahlen.
+
+Wenn die Zustellung nicht funktioniert, läuft `lxmfy debug` den ganzen
+Pfad ab (Konfiguration, Instanz, Interfaces, Identität, Send-Pipeline)
+und schreibt einen redigierten Report zum Teilen. Dieselben Prüfungen
+sind als `bot.diagnose_connectivity()` und
+`bot.diagnose_destination(hash)` aufrufbar.
+
+Siehe die [API-Referenz](api-reference.md#nachrichtenzustellung) für
+die volle Zustellfläche: Wiederholungen, Propagationsknoten,
+Warteschlangen-Persistenz, den Zustell-Ereignisstrom und die
+Admin-Befehle `/queue`, `/cancel`, `/inbox`, `/delivery`.
 
 ## Reticulum Relay Chat (RRC)
 

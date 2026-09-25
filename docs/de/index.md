@@ -24,8 +24,9 @@ bot.run()
 
 - Befehlsregistrierung mit typannotierten Argumenten, Hilfegenerierung und Admin-Beschränkung
 - Cogs in Python oder jeder ausführbaren Sprache
-- LXMF-Feldbefehle, Reaktionen, Anhänge und Icon-Darstellung
-- Zustellung über Propagationsknoten mit Wiederholungen und persistenter Warteschlange
+- LXMF-Feldbefehle, Reaktionen, Antwort-Threading, Anhänge und Icon-Darstellung
+- Konversationen (msg.ask), netzwerkfreier Test-Harness und Konnektivitäts-Debugger
+- Zustellung über Propagationsknoten mit Wiederholungen, zurückgestellten Sends und persistenter Warteschlange
 - Optionale NLP-Intents, Berechtigungen, Signaturen, Landlock-Sandboxing
 - RRC-Raum-Client, kompatibel mit NomadNet- und MeshChatX-Hubs
 

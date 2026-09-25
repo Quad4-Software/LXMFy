@@ -60,6 +60,11 @@ LXMFy fournit plusieurs modèles pour les types de bots courants. Vous
 pouvez utiliser la CLI pour générer un fichier de bot à partir d'un
 modèle.
 
+Pour un répertoire de projet complet plutôt qu'un fichier
+unique, `lxmfy init` génère `bot.py`, un paquet `cogs`, un README et
+un `.gitignore`, en demandant au passage le modèle, le backend de
+stockage, le préfixe de commandes et les hashes d'admin.
+
 ``` bash
 # Créer un bot echo
 lxmfy create --template echo my_echo_bot
@@ -735,6 +740,32 @@ Le système de réessais :
   `direct_delivery_retries`
 - Remet le compteur de réessais à zéro après une livraison réussie
 - Journalise les tentatives de réessai et les échecs pour le débogage
+
+### Envois différés et stamps
+
+Deux détails de livraison à connaître tôt :
+
+- **Envois différés** : quand l'identité de la destination n'est pas
+  encore connue, `send()` retient le message en stockage (les clés de
+  configuration `pending_sends_*` contrôlent le backlog) et le vide
+  quand le pair annonce. Passez `defer=False` à un envoi pour jeter
+  plutôt que retenir.
+- **Stamps** : `stamp_cost` fixe une exigence de preuve de travail
+  entrante, `require_stamps` rejette les messages qui la ratent, et
+  `include_tickets` (par défaut) joint des tickets de réponse pour que
+  les pairs puissent répondre à votre bot sans payer leur propre coût
+  de stamp.
+
+Quand la livraison déconne, `lxmfy debug` parcourt tout le chemin
+(configuration, instance, interfaces, identité, pipeline d'envoi) et
+écrit un rapport expurgé à partager. Les mêmes contrôles sont
+appelables via `bot.diagnose_connectivity()` et
+`bot.diagnose_destination(hash)`.
+
+Voir la [Référence API](api-reference.md#livraison-des-messages) pour
+toute la surface de livraison : réessais, nœuds de propagation,
+persistance de file, le flux d'événements de livraison et les
+commandes d'administration `/queue`, `/cancel`, `/inbox`, `/delivery`.
 
 ## Reticulum Relay Chat (RRC)
 

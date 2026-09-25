@@ -24,8 +24,9 @@ bot.run()
 
 - Command registry with type-hinted arguments, help generation, and admin gating
 - Cogs in Python or any executable language
-- LXMF field commands, reactions, attachments, and icon appearance
-- Propagation node delivery with retries and queue persistence
+- LXMF field commands, reactions, reply threading, attachments, and icon appearance
+- Conversations (msg.ask), a no-network test harness, and a connectivity debugger
+- Propagation node delivery with retries, deferred sends, and queue persistence
 - Optional NLP intents, permissions, signatures, Landlock sandboxing
 - RRC room client compatible with NomadNet and MeshChatX hubs
 

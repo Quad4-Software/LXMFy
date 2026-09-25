@@ -24,7 +24,15 @@
 
 ## Den ersten Bot erstellen (über die CLI)
 
-Verwenden Sie die LXMFy-CLI, um ein Projektgerüst zu erstellen.
+Verwenden Sie die LXMFy-CLI, um ein Projektgerüst zu erstellen. Zwei
+Wege:
+
+- `lxmfy init` stellt ein paar Fragen (Name, Vorlage, Speicher,
+  Präfix, Admins) und schreibt ein lauffertiges Projektverzeichnis.
+- `lxmfy create` schreibt eine einzelne Bot-Datei mit Defaults, ohne
+  Fragen.
+
+Diese Anleitung verwendet `lxmfy create`.
 
 1.  **Öffnen Sie ein Terminal** in dem Verzeichnis, in dem Sie Ihr
     Bot-Projekt erstellen möchten.
@@ -125,6 +133,11 @@ Verwenden Sie die LXMFy-CLI, um ein Projektgerüst zu erstellen.
     Icon-Beispiel oben einkommentiert haben, kann die Antwort auch ein
     Icon enthalten.
 3.  **Testen Sie den Hilfebefehl:** Senden Sie `/help`.
+
+Wenn nichts ankommt, führen Sie `lxmfy debug` im Projektverzeichnis
+aus. Es prüft Reticulum-Konfiguration, Interfaces, Identität und
+Send-Pipeline und speichert einen redigierten Report, den Sie beim
+Hilfeersuchen teilen können.
 
 ## Was als Nächstes konfigurieren
 

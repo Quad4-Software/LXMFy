@@ -59,6 +59,11 @@ if __name__ == "__main__":
 LXMFy provides several templates for common bot types. You can use the
 CLI to generate a bot file based on a template.
 
+For a full project directory instead of a single file, `lxmfy init`
+scaffolds `bot.py`, a `cogs` package, a README, and a `.gitignore`,
+asking about template, storage backend, command prefix, and admin
+hashes along the way.
+
 ``` bash
 # Create an echo bot
 lxmfy create --template echo my_echo_bot
@@ -714,6 +719,29 @@ The retry system:
 - Retries failed direct deliveries up to `direct_delivery_retries`
 - Resets the retry counter on successful delivery
 - Logs retry attempts and failures for debugging
+
+### Deferred Sends and Stamps
+
+Two delivery details are worth knowing early:
+
+- **Deferred sends**: when the destination identity is not known yet,
+  `send()` holds the message in storage (the `pending_sends_*` config
+  keys control the backlog) and flushes it when the peer announces.
+  Pass `defer=False` to a send to drop instead of holding.
+- **Stamps**: `stamp_cost` sets an inbound proof-of-work requirement,
+  `require_stamps` rejects messages that fail it, and
+  `include_tickets` (default) attaches reply tickets so peers can
+  answer your bot without paying their own stamp cost.
+
+When delivery misbehaves, `lxmfy debug` walks the whole path (config,
+instance, interfaces, identity, send pipeline) and writes a redacted
+report you can share. The same checks are callable as
+`bot.diagnose_connectivity()` and `bot.diagnose_destination(hash)`.
+
+See the [API Reference](api-reference.md#message-delivery) for the full
+delivery surface: retries, propagation nodes, queue persistence, the
+delivery event stream, and the `/queue`, `/cancel`, `/inbox`,
+`/delivery` admin commands.
 
 ## Reticulum Relay Chat (RRC)
 

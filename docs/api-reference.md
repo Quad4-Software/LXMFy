@@ -10,41 +10,82 @@ from lxmfy import LXMFBot
 
 bot = LXMFBot(
     name="MyBot",
+    command_prefix="/",
+    admins=set(),
+    config_path=None,                 # default "config" in the working directory
+    reticulum_config_dir=None,        # or LXMFY_RETICULUM_CONFIG_DIR / "~/.reticulum"
+    test_mode=False,                  # skip RNS startup, for tests
+    log_level="INFO",                 # lxmfy logger level, None leaves logging alone
+    loglevel=None,                    # RNS log level 0-7, None uses reticulum config
+
+    # Announces
     announce=600,
     announce_immediately=True,
-    admins=set(),
-    hot_reloading=False,
+    announce_enabled=True,
+    announce_display_name_file=None,  # filename under config_path overriding the
+                                      # announced display name (default file:
+                                      # bot_display_name.txt)
+
+    # Spam protection
     rate_limit=5,
     cooldown=60,
     max_warnings=3,
     warning_timeout=300,
-    command_prefix="/",
+
+    # Cogs
     cogs_dir="cogs",
     cogs_enabled=True,
-    permissions_enabled=False,
-    storage_type="json", # "json", "sqlite", or "memory"
-    storage_path="data",
-    first_message_enabled=True,
-    event_logging_enabled=True,
-    max_logged_events=1000,
-    event_middleware_enabled=True,
-    announce_enabled=True,
-    signature_verification_enabled=False,
-    require_message_signatures=False,
-    identity_pinning_enabled=False,
-    message_persistence_enabled=True,
     dynamic_cogs_enabled=True,
     external_cogs_enabled=True,
     external_cogs_sandbox_enabled=True,
     external_cogs_sandbox_type="auto",  # "auto", "landlock", "bwrap", "firejail", "none"
     external_cogs_timeout=30,
+    hot_reloading=False,
+
+    # Storage, events, permissions
+    storage_type="json",              # "json", "sqlite", or "memory"
+    storage_path="data",
+    permissions_enabled=False,
+    first_message_enabled=True,
+    event_logging_enabled=True,
+    max_logged_events=1000,
+    event_middleware_enabled=True,
+
+    # Security
+    signature_verification_enabled=False,
+    require_message_signatures=False,
+    require_stamps=False,             # reject messages with invalid stamps
+    request_unknown_identities=False, # request sender identities from the network
+    stamp_cost=None,                  # inbound stamp cost, None disables
+    include_tickets=True,             # attach reply tickets to outbound messages
+    identity_pinning_enabled=False,
     landlock_enabled=True,
+
+    # Optional features
     nlp_enabled=False,
     nlp_threshold=0.5,
     link_support_enabled=False,
     lxmf_commands_enabled=True,
+
+    # Delivery
+    message_persistence_enabled=True,
     message_queue_size=50,
-    reticulum_config_dir=None,  # or LXMFY_RETICULUM_CONFIG_DIR / "~/.reticulum"
+    opportunistic_sending=True,
+    direct_delivery_retries=3,
+    propagation_fallback_enabled=True,
+    propagation_node=None,            # outbound propagation node hash
+    autopeer_propagation=False,       # discover propagation nodes from announces
+    autopeer_maxdepth=4,              # max hop depth for autopeering, None = no limit
+    enable_propagation_node=False,    # run this bot as a propagation node
+    message_storage_limit_mb=500,     # node storage cap, node mode only
+
+    # Deferred sends
+    pending_sends_enabled=True,       # hold sends for unknown destinations
+    pending_sends_max=200,
+    pending_sends_ttl=604800,         # 7 days
+    pending_sends_retry=300,          # seconds between retry sweeps
+
+    # RRC
     rrc_enabled=False,
     rrc_hubs=[],
     rrc_rooms=[],
@@ -55,21 +96,29 @@ bot = LXMFBot(
 )
 ```
 
+All of these are fields on `BotConfig`. `LXMFBot(**kwargs)` forwards every
+keyword argument to it, so `bot.config` holds the resolved values.
+
 ### Key Methods
 
-- `get_landlock_status()`: Return Landlock LSM sandbox availability and
-  activation state for the bot process
 - `run(delay=10)`: Start the bot's main loop
-- `send(destination, message, title="Reply", lxmf_fields=None, stamp_cost=None, opportunistic=None)`:
-  Send a message to a destination, optionally with custom LXMF fields,
-  stamp cost override, and opportunistic sending (tries direct, falls
-  back to propagation immediately if configured).
+- `cleanup()`: Persist queues, cancel conversations, shut down the
+  scheduler, router, and RNS. Called automatically when `run()` exits.
+- `send(destination, message, title="Reply", lxmf_fields=None, stamp_cost=None, opportunistic=None, method=None, include_ticket=None, defer=None, reply_to=None, quote=None, thread=None)`:
+  Send a message to a destination. `stamp_cost` overrides the outbound
+  cost for this message, `opportunistic` overrides
+  `opportunistic_sending`, `include_ticket` overrides
+  `include_tickets`, and `defer` overrides `pending_sends_enabled`.
+  `reply_to`, `quote`, and `thread` set the reply threading fields.
 - `send_with_attachment(destination, message, attachment, title="Reply", stamp_cost=None, opportunistic=None)`:
   Send a message with an attachment
-- `command(name, description="No description provided", admin_only=False, threaded=False)`:
-  Decorator for registering commands. Set `threaded=True` to run the
-  command's callback in a separate thread. Commands support type-hinted
-  arguments for automatic conversion.
+- `command(name, description="No description provided", admin_only=False, permissions=None, usage=None, examples=None, category=None, aliases=None, threaded=False, rate_limit=None)`:
+  Decorator for registering commands. `permissions` overrides the
+  `DefaultPerms` gate (`ALL` when `admin_only`, else `USE_COMMANDS`),
+  `threaded` runs the callback in a worker thread, `rate_limit` caps
+  invocations per sender per cooldown window, and `usage`, `examples`,
+  `category`, `aliases` feed the help system. Commands support
+  type-hinted arguments for automatic conversion.
 - `intent(name, examples)`: Decorator for registering NLP intent
   handlers.
 - `nlp.export_model()`: Export trained NLP model data.
@@ -87,19 +136,68 @@ bot = LXMFBot(
 - `on_first_message()`: Decorator for handling first messages from users
 - `on_message()`: Decorator for handling all messages (called before
   command processing)
+- `received(function)`: Register a callback invoked with the message
+  context for every inbound message that made it through the pipeline
+  without being consumed by a command or intent
 - `on_reaction()`: Decorator for handling inbound reactions. Handlers
   receive `(sender, reaction)` where reaction carries `reaction_to`,
   `reaction_emoji`, and `reaction_sender` keys
 - `react(destination, message_hash, reaction)`: Send a reaction to a
   message via the LXMF `FIELD_REACTION` field
 - `validate()`: Run validation checks on the bot configuration
+- `get_landlock_status()`: Return Landlock LSM sandbox availability and
+  activation state for the bot process
+- `diagnose_destination(destination, request_path=False, wait=0.0)`:
+  Probe identity and path state for a destination hash
+- `diagnose_connectivity(destination=None, request_path=False, wait=0.0)`:
+  Run the full doctor report and return it as a dict
+- `get_debugger()`: Return a `Debugger` bound to this bot
+- `set_propagation_node(node_hash)`: Pin the outbound propagation node
+- `get_propagation_node_status()`: Configured, discovered, and current
+  outbound propagation node state
+- `set_message_storage_limit(megabytes)`: Storage cap when running as a
+  propagation node
+- `get_propagation_storage_stats()`: Node storage usage, or a dict
+  explaining why it is unavailable
 - `connect_rrc(hub_hash, rooms=None, nick=None, dest_name=None, auto_reconnect=None)`:
   Connect to an RRC hub as a client
 - `disconnect_rrc(hub_hash=None)`: Disconnect one or all RRC hub
   sessions
 - `on_rrc(callback=None)`: Decorator or register handler for RRC events
   (`handler(event, client, payload)`)
-- `rrc`: `RRCManager` instance for multi-hub sessions
+- `on_delivery_event(callback=None)`: Subscribe to the outbound
+  delivery event stream, decorator or direct call
+
+### Attributes
+
+- `config`: The resolved `BotConfig`
+- `commands`, `cogs`: Registered command and cog registries
+- `storage`: The active storage backend
+- `scheduler`: `TaskScheduler` for cron-style tasks
+- `events`: `EventManager` for event handlers and dispatch
+- `middleware`: `MiddlewareManager` for command middleware
+- `permissions`: `PermissionManager` for roles and flags
+- `spam_protection`: `SpamProtection` for rate limits, warnings, bans
+- `signature_manager`: Signature policy layer
+- `nlp`: The intent classifier (matches only when `nlp_enabled`)
+- `delivery`: `DeliveryTracker`, the outbound event stream
+- `conversations`: `ConversationManager` for `msg.ask` questions
+- `rrc`: `RRCManager` for multi-hub sessions, `None` until RRC is
+  enabled or `connect_rrc()` runs
+- `local`: The bot's `RNS.Destination` (its LXMF address is
+  `bot.local.hash`)
+
+## Announce Display Name
+
+The name peers see comes from `name`, but two overrides exist for
+announces. If `announce_display_name_file` is set and that file exists
+under `config_path`, its contents win. Otherwise
+`bot_display_name.txt` under `config_path` is read when present.
+Either way, assigning `bot.name = "New Name"` re-syncs the announced
+display name at runtime.
+
+This lets operators rename a bot without editing code, and lets the
+announced name differ from the internal config name.
 
 ## Structured Commands via LXMF Fields
 
@@ -291,6 +389,31 @@ def hello(ctx):
     ctx.reply(f"Hello {ctx.sender}!")
 ```
 
+Help metadata and access control come from extra decorator kwargs:
+
+``` python
+from lxmfy import DefaultPerms
+
+@bot.command(
+    name="purge",
+    description="Clear stored data",
+    permissions=DefaultPerms.MANAGE_MESSAGES,
+    usage="/purge <key>",
+    examples=["/purge cache"],
+    category="Admin",
+    aliases=["clear"],
+)
+def purge(ctx, key: str):
+    bot.storage.delete(key)
+    ctx.reply(f"Deleted {key}")
+```
+
+`permissions` overrides the default gate: `USE_COMMANDS` for normal
+commands, `ALL` for `admin_only` ones. `category` groups the command in
+`/help` output. `aliases` is help metadata only: alias names are shown
+to users but are not registered for dispatch, so `/clear` will not run
+`purge` unless you register it as a second command.
+
 ### Type-Hinted Arguments
 
 Commands automatically parse and convert arguments based on type hints
@@ -319,6 +442,36 @@ def report(ctx):
 Requires `permissions_enabled=True`, like the global rate limit. Users
 with the admin role or `BYPASS_SPAM` skip the check.
 
+## Spam Protection
+
+`bot.spam_protection` enforces the global rate limit: a sender may post
+`rate_limit` messages inside each `cooldown` window. Exceeding the
+limit adds a warning and rejects the message. At `max_warnings` the
+sender is banned. Warnings decay after `warning_timeout` seconds of
+good behavior.
+
+Spam checks run inside the `message_received` event and require
+`permissions_enabled=True`.
+
+``` python
+bot = LXMFBot(
+    name="GuardedBot",
+    permissions_enabled=True,
+    rate_limit=5,        # messages per cooldown window
+    cooldown=60,         # window length in seconds
+    max_warnings=3,      # warnings before a ban
+    warning_timeout=300, # seconds before the warning count resets
+)
+
+# Lift a ban manually
+bot.spam_protection.unban(sender_hash)
+```
+
+Warnings, bans, and counters persist in the configured storage backend,
+so bans survive restarts. Senders with the `BYPASS_SPAM` permission are
+never rate limited or banned. Per-command `rate_limit` on `@bot.command`
+is gentler: it rejects the invocation only and never warns or bans.
+
 ## Help System
 
 The framework includes an interactive help generator that provides
@@ -329,7 +482,7 @@ beautiful, categorized help menus based on Cog and Command metadata.
 # Users can use '/help' or '/help <command>'
 ```
 
-### Threaded Commands
+## Threaded Commands
 
 For long-running or blocking operations that do not interact with the
 Reticulum Network Stack directly, you can run commands in a separate
@@ -360,9 +513,27 @@ Event system for handling various bot events:
 ``` python
 @bot.events.on("message_received", EventPriority.HIGHEST)
 def handle_message(event):
-    # Handle message event
-    pass
+    # event.data carries the payload, e.g. sender and message
+    event.cancel()  # stop later handlers and further processing
 ```
+
+Handlers run in `EventPriority` order: `HIGHEST`, `HIGH`, `NORMAL`,
+`LOW`. Spam checking itself is a `message_received` handler at
+`HIGHEST`, so cancelling that event is how the rate limiter drops
+messages.
+
+Dispatch custom events of your own:
+
+``` python
+from lxmfy import Event
+
+bot.events.dispatch(Event("order_placed", data={"user": ctx.sender}))
+```
+
+`event_logging_enabled`, `max_logged_events`, and
+`event_middleware_enabled` exist on `BotConfig` but are not wired up:
+events are not written to storage and `bot.events.use()` is a stub.
+Treat them as reserved.
 
 ## Testing
 
@@ -397,6 +568,10 @@ def test_ping():
 - `fake_message(content, source_hash=..., ...)` builds an inbound
   message for driving `bot._message_received` directly.
 
+`SentMessage` wraps each captured outbound message: `destination` (hex),
+`content`, `title`, `fields`, `method`, `include_ticket`,
+`stamp_cost`, and `raw` for the underlying object.
+
 The repository test suite also includes reliability and stress
 scenarios. Use the repository's test runner to execute them.
 
@@ -427,16 +602,51 @@ def admin_command(ctx):
         ctx.reply("Admin command executed")
 ```
 
+Enable with `permissions_enabled=True`. `DefaultPerms` flags:
+
+- `USE_BOT`, `SEND_MESSAGES`, `USE_COMMANDS`: basic access
+- `MANAGE_MESSAGES`, `MANAGE_COMMANDS`, `MANAGE_USERS`: elevated
+- `BYPASS_RATELIMIT`, `BYPASS_SPAM`, `VIEW_ADMIN_COMMANDS`: special
+- `VIEW_EVENTS`, `MANAGE_EVENTS`, `BYPASS_EVENT_CHECKS`: event system
+- `NONE`, `ALL`: shorthands
+
+`bot.permissions` manages roles and assignments:
+
+``` python
+bot.permissions.create_role("moderator", DefaultPerms.MANAGE_MESSAGES | DefaultPerms.BYPASS_SPAM)
+bot.permissions.assign_role(user_hash, "moderator")
+bot.permissions.remove_role(user_hash, "moderator")
+bot.permissions.has_permission(user_hash, DefaultPerms.USE_COMMANDS)
+```
+
+Roles and assignments persist in the configured storage backend. Two
+built-in roles exist and cannot be deleted: `user` (the default) and
+`admin`, which is granted automatically to every hash in `admins`.
+
 ## Middleware
 
 Middleware system for processing messages and events:
 
 ``` python
+from lxmfy import MiddlewareType
+
 @bot.middleware.register(MiddlewareType.PRE_COMMAND)
 def pre_command_middleware(ctx):
-    # Process before command execution
-    pass
+    # ctx wraps the message context, ctx.cancelled drops it
+    if "spamword" in ctx.data.content:
+        ctx.cancel()
 ```
+
+Three points in the pipeline run middleware:
+
+- `PRE_COMMAND`: before command dispatch, after spam checks. Returning
+  `None` from the chain aborts the message entirely.
+- `POST_COMMAND`: after a command's callback finishes (including
+  threaded commands, which fire it on the worker thread).
+- `PRE_EVENT`: before the `message_received` event dispatch.
+
+`POST_EVENT`, `REQUEST`, and `RESPONSE` exist in `MiddlewareType` but
+nothing in the pipeline executes them yet.
 
 ## Attachments
 
@@ -624,6 +834,20 @@ bot.send(
 # on the Reticulum network
 ```
 
+You can also set the node at construction time with
+`propagation_node="<hash>"`, or let the bot discover nodes itself:
+
+``` python
+bot = LXMFBot(
+    name="AutoBot",
+    autopeer_propagation=True, # learn nodes from announces
+    autopeer_maxdepth=4,       # ignore nodes deeper than 4 hops
+)
+```
+
+`bot.get_propagation_node_status()` reports the manual node, the
+discovered nodes, and the outbound node currently in use.
+
 ### Automatic Retries
 
 Configure automatic retry attempts for failed direct deliveries:
@@ -645,6 +869,29 @@ The retry system tracks delivery attempts per destination and
 automatically retries failed deliveries. Successful deliveries reset the
 retry counter for that destination.
 
+### Deferred Sends
+
+Sending to a destination whose identity the node has not heard yet
+normally fails outright. With `pending_sends_enabled` (default) the
+message is held in storage instead, then flushed automatically when the
+destination announces or on a periodic sweep.
+
+``` python
+bot = LXMFBot(
+    pending_sends_enabled=True,
+    pending_sends_max=200,     # oldest held messages drop beyond this
+    pending_sends_ttl=604800,  # held messages expire after 7 days
+    pending_sends_retry=300,   # seconds between sweeps in run()
+)
+
+# Per-send override
+bot.send(dest, "hold this", defer=True)
+bot.send(dest, "send or drop", defer=False)
+```
+
+Held sends appear as `held (unknown peers)` in the `/queue` admin
+command and produce `deferred` events on the delivery tracker.
+
 ### Message Persistence
 
 Outgoing messages can be persisted to disk to ensure they are delivered
@@ -659,6 +906,56 @@ bot = LXMFBot(
     message_queue_size=50,
 )
 ```
+
+### Stamps and Tickets
+
+Stamp costs make senders pay proof-of-work before their message is
+accepted, which throttles unsolicited traffic. LXMFy exposes both sides
+of the mechanism.
+
+``` python
+bot = LXMFBot(
+    stamp_cost=16,          # require this inbound stamp cost
+    require_stamps=True,    # reject messages with invalid stamps
+    include_tickets=True,   # let peers reply without grinding a stamp
+)
+```
+
+- `stamp_cost` is the inbound requirement. The outbound cost for a send
+  still comes from the peer's announce unless you pass `stamp_cost=`
+  to `bot.send()`.
+- `include_tickets` (default True) attaches a reply ticket to outbound
+  messages, so a peer that requires stamps can answer without paying.
+  Override per send with `include_ticket=`.
+- `request_unknown_identities=True` asks the network for a sender
+  identity when a message arrives from an unknown source, which helps
+  stamp and signature checks resolve instead of failing blind.
+
+Runtime control lives under [Router Controls](#router-controls):
+`set_inbound_stamp_cost`, `enforce_stamps`, `ignore_stamps`,
+`generate_ticket`, and the ticket inspection methods.
+
+### Running a Propagation Node
+
+A bot can double as an LXMF propagation node, storing messages for
+peers that are offline:
+
+``` python
+bot = LXMFBot(
+    enable_propagation_node=True,
+    message_storage_limit_mb=500,
+)
+
+bot.set_message_storage_limit(750)
+stats = bot.get_propagation_storage_stats()
+```
+
+`get_propagation_node_status()` works for both roles: it reports the
+outbound node this bot uses and whether it is serving as a node itself.
+Related controls: `announce_propagation_node()` advertises the node,
+`set_retain_on_node()` keeps delivered messages on it, and
+`allow_control_identity()` / `disallow_control_identity()` manage which
+identities may use the node's control channel.
 
 ### Delivery Events
 
@@ -778,6 +1075,44 @@ Announce metadata for destinations this node has heard:
 - `ingest_lxm_uri(uri)`: Import an `lxm://` URI message into the
   inbound queue
 
+## Diagnostics
+
+When messages do not flow, the debugger checks the whole path instead
+of guessing: Reticulum config, shared instance state, interfaces,
+identity, announce behavior, delivery config, and the send pipeline.
+
+``` bash
+lxmfy debug                          # full doctor report, saved to a file
+lxmfy debug probe <hash> --request-path --wait 30
+lxmfy debug send <hash>              # trace a test send
+lxmfy debug receive                  # check inbound readiness
+lxmfy debug compare <hash_a> <hash_b>
+lxmfy debug tips                     # common failure fixes
+```
+
+Reports are privacy-redacted by default: home paths and hashes are
+truncated. `--json` emits machine-readable output, `-o FILE` writes the
+report, `--no-save` skips the file, `--no-privacy` keeps full values
+for local use, and `--no-color` or `NO_COLOR` disables ANSI output.
+
+The same checks are callable from code:
+
+``` python
+report = bot.diagnose_connectivity()            # doctor report as dict
+probe = bot.diagnose_destination(               # identity and path probe
+    "<peer_hash>", request_path=True, wait=30,
+)
+
+debugger = bot.get_debugger()                   # full API
+checks = debugger.check_send_pipeline()
+verdict = debugger.run_doctor(destination)
+```
+
+`lxmfy/debugger.py` also exports a standalone
+`diagnose_destination(hash, ...)` helper plus the report types
+`CheckResult`, `DestinationProbe`, `DoctorReport`, and
+`MessageDebugger` for custom tooling.
+
 ## Message Handlers
 
 LXMFy provides decorators for handling different types of incoming
@@ -816,6 +1151,22 @@ Message handlers are called in this order: 1. First message handler (if
 this is the first message from this sender) 2. General message handlers
 (registered with `on_message()`) 3. Command processing (if message
 starts with command prefix)
+
+### Fallback Callback
+
+`bot.received(fn)` registers a callback that runs at the end of the
+pipeline for messages nothing else consumed: no first-message handler,
+no `on_message` handler that returned True, no matching command or NLP
+intent. The callback gets the same message context commands receive,
+with `msg.sender`, `msg.content`, `msg.reply()`, and friends.
+
+``` python
+@bot.received
+def fallback(msg):
+    msg.reply("Sorry, I did not understand that.")
+```
+
+Use it as a catch-all for free-text input.
 
 ## Reticulum Relay Chat (RRC)
 
@@ -875,6 +1226,10 @@ def on_rrc(event, client, payload):
 - `RRCMessage`: Room event payload (`kind`, `room`, `text`, `nick`,
   `src`, `mention`, ...)
 - `RRC_VERSION`: Wire protocol version constant
+- `DEFAULT_DEST_NAME`: Default hub destination name (`"rrc.hub"`)
+- `make_envelope`, `encode_envelope`, `decode_envelope`,
+  `validate_envelope`, `normalize_room`: Wire-format helpers for
+  tooling that talks to hubs directly
 
 Common events passed to `@bot.on_rrc` handlers include `status`,
 `welcome`, `joined`, `parted`, `msg`, `notice`, `action`, `motd`,
@@ -937,19 +1292,29 @@ bot.run()
 
 # CLI Tools
 
-The framework provides command-line tools for bot management:
+The framework provides command-line tools for bot management. Running
+`lxmfy` with no arguments opens an interactive menu.
 
 ``` bash
-# Create a new bot
-lxmfy create mybot
+# Scaffold a full project interactively
+lxmfy init mybot                 # project dir, bot.py, cogs/, README
+lxmfy init --here --yes          # current dir, accept all defaults
 
-# Create a bot from template
+# Create a single bot file
+lxmfy create mybot
 lxmfy create --template echo mybot
 lxmfy create --template rrc my_rrc_bot
+lxmfy create mybot --no-cogs     # skip the cogs package
+lxmfy create --output dir/bot.py --name MyBot
 
 # Run a template bot
 lxmfy run echo
 lxmfy run rrc
+lxmfy run reminder --name "MyReminder"
+
+# Diagnose connectivity (see the Diagnostics section)
+lxmfy debug
+lxmfy debug probe <hash> --request-path --wait 30
 
 # Test signature verification with a message
 lxmfy signatures test
@@ -960,6 +1325,15 @@ lxmfy signatures enable
 # Disable signature verification
 lxmfy signatures disable
 ```
+
+`lxmfy init` prompts for project name, template, storage backend,
+command prefix, and admin hashes. Every prompt accepts a flag instead:
+`--dir`, `--bot-name`, `--template`, `--storage`, `--prefix`,
+`--admins`, `--no-cogs`, `--force`, `--yes`. On a non-TTY stdin it
+takes the defaults.
+
+Templates for `create` and `run`: `basic`, `echo`, `reminder`, `note`,
+`cogtest`, `rrc`.
 
 # Error Handling
 
@@ -982,13 +1356,35 @@ Generated from source docstrings.
 
 ::: lxmfy.BotConfig
 
+::: lxmfy.Command
+
 ::: lxmfy.Attachment
 
 ::: lxmfy.AttachmentType
 
+::: lxmfy.IconAppearance
+
+::: lxmfy.Event
+
+::: lxmfy.EventManager
+
+::: lxmfy.EventPriority
+
+::: lxmfy.MiddlewareContext
+
+::: lxmfy.MiddlewareManager
+
+::: lxmfy.MiddlewareType
+
 ::: lxmfy.DefaultPerms
 
 ::: lxmfy.PermissionManager
+
+::: lxmfy.Role
+
+::: lxmfy.HelpFormatter
+
+::: lxmfy.HelpSystem
 
 ::: lxmfy.TaskScheduler
 
@@ -999,3 +1395,31 @@ Generated from source docstrings.
 ::: lxmfy.JSONStorage
 
 ::: lxmfy.SQLiteStorage
+
+::: lxmfy.storage.MemoryStorage
+
+::: lxmfy.ConversationManager
+
+::: lxmfy.Answer
+
+::: lxmfy.DeliveryTracker
+
+::: lxmfy.TestBot
+
+::: lxmfy.SentMessage
+
+::: lxmfy.Debugger
+
+::: lxmfy.MessageDebugger
+
+::: lxmfy.DoctorReport
+
+::: lxmfy.DestinationProbe
+
+::: lxmfy.CheckResult
+
+::: lxmfy.RRCClient
+
+::: lxmfy.RRCManager
+
+::: lxmfy.RRCMessage

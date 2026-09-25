@@ -24,7 +24,15 @@
 
 ## Criar o primeiro bot (usando a CLI)
 
-Use a CLI do LXMFy para gerar a estrutura de um projeto.
+Use a CLI do LXMFy para gerar a estrutura de um projeto. Duas
+formas:
+
+- `lxmfy init` faz algumas perguntas (nome, template, armazenamento,
+  prefixo, admins) e escreve um diretório de projeto pronto a correr.
+- `lxmfy create` escreve um único ficheiro de bot com defaults, sem
+  perguntas.
+
+Este guia usa `lxmfy create`.
 
 1.  **Abra o terminal** no diretório onde quer criar o projeto do bot.
 
@@ -121,6 +129,11 @@ Use a CLI do LXMFy para gerar a estrutura de um projeto.
     responder com "Hello `<o_seu_hash>`!". Se descomentou o exemplo do
     ícone acima, esta resposta também pode trazer um ícone.
 3.  **Experimente o comando de ajuda:** envie `/help`.
+
+Se nada chegar, execute `lxmfy debug` a partir do diretório do
+projeto. Ele verifica a configuração do Reticulum, as interfaces, a
+identidade e a pipeline de envio, e guarda um relatório redigido que
+pode partilhar ao pedir ajuda.
 
 ## O que configurar a seguir
 

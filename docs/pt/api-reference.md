@@ -10,41 +10,82 @@ from lxmfy import LXMFBot
 
 bot = LXMFBot(
     name="MyBot",
+    command_prefix="/",
+    admins=set(),
+    config_path=None,                 # "config" por padrão no diretório de trabalho
+    reticulum_config_dir=None,        # ou LXMFY_RETICULUM_CONFIG_DIR / "~/.reticulum"
+    test_mode=False,                  # salta a inicialização do RNS, para testes
+    log_level="INFO",                 # nível do logger do lxmfy, None não toca no logging
+    loglevel=None,                    # nível de log do RNS 0-7, None usa a config do reticulum
+
+    # Announces
     announce=600,
     announce_immediately=True,
-    admins=set(),
-    hot_reloading=False,
+    announce_enabled=True,
+    announce_display_name_file=None,  # arquivo sob config_path que sobrescreve o nome
+                                      # anunciado (arquivo padrão:
+                                      # bot_display_name.txt)
+
+    # Proteção anti-spam
     rate_limit=5,
     cooldown=60,
     max_warnings=3,
     warning_timeout=300,
-    command_prefix="/",
+
+    # Cogs
     cogs_dir="cogs",
     cogs_enabled=True,
-    permissions_enabled=False,
-    storage_type="json", # "json", "sqlite", or "memory"
-    storage_path="data",
-    first_message_enabled=True,
-    event_logging_enabled=True,
-    max_logged_events=1000,
-    event_middleware_enabled=True,
-    announce_enabled=True,
-    signature_verification_enabled=False,
-    require_message_signatures=False,
-    identity_pinning_enabled=False,
-    message_persistence_enabled=True,
     dynamic_cogs_enabled=True,
     external_cogs_enabled=True,
     external_cogs_sandbox_enabled=True,
     external_cogs_sandbox_type="auto",  # "auto", "landlock", "bwrap", "firejail", "none"
     external_cogs_timeout=30,
+    hot_reloading=False,
+
+    # Armazenamento, eventos, permissões
+    storage_type="json",              # "json", "sqlite" ou "memory"
+    storage_path="data",
+    permissions_enabled=False,
+    first_message_enabled=True,
+    event_logging_enabled=True,
+    max_logged_events=1000,
+    event_middleware_enabled=True,
+
+    # Segurança
+    signature_verification_enabled=False,
+    require_message_signatures=False,
+    require_stamps=False,             # rejeita mensagens com stamps inválidos
+    request_unknown_identities=False, # pede identidades de remetente à rede
+    stamp_cost=None,                  # custo de stamp de entrada, None desativa
+    include_tickets=True,             # anexa tickets de resposta às saídas
+    identity_pinning_enabled=False,
     landlock_enabled=True,
+
+    # Funcionalidades opcionais
     nlp_enabled=False,
     nlp_threshold=0.5,
     link_support_enabled=False,
     lxmf_commands_enabled=True,
+
+    # Entrega
+    message_persistence_enabled=True,
     message_queue_size=50,
-    reticulum_config_dir=None,  # ou LXMFY_RETICULUM_CONFIG_DIR / "~/.reticulum"
+    opportunistic_sending=True,
+    direct_delivery_retries=3,
+    propagation_fallback_enabled=True,
+    propagation_node=None,            # hash do nó de propagação de saída
+    autopeer_propagation=False,       # descobre nós de propagação por announces
+    autopeer_maxdepth=4,              # profundidade máxima de hops, None = sem limite
+    enable_propagation_node=False,    # executa este bot como nó de propagação
+    message_storage_limit_mb=500,     # limite de armazenamento do nó, só modo nó
+
+    # Envios diferidos
+    pending_sends_enabled=True,       # retém envios para destinos desconhecidos
+    pending_sends_max=200,
+    pending_sends_ttl=604800,         # 7 dias
+    pending_sends_retry=300,          # segundos entre varreduras de retry
+
+    # RRC
     rrc_enabled=False,
     rrc_hubs=[],
     rrc_rooms=[],
@@ -55,53 +96,116 @@ bot = LXMFBot(
 )
 ```
 
+Todas estas opções são campos de `BotConfig`. `LXMFBot(**kwargs)`
+encaminha cada argumento nomeado, por isso `bot.config` contém os
+valores resolvidos.
+
 ### Métodos principais
 
-- `get_landlock_status()`: devolve a disponibilidade e o estado de
-  ativação da sandbox Landlock LSM para o processo do bot
-- `run(delay=10)`: inicia o ciclo principal do bot
-- `send(destination, message, title="Reply", lxmf_fields=None, stamp_cost=None, opportunistic=None)`:
-  envia uma mensagem para um destino, opcionalmente com campos LXMF
-  personalizados, substituição do custo de stamp e envio oportunista
-  (tenta a entrega direta e recorre imediatamente à propagação, se
-  configurado).
+- `run(delay=10)`: Inicia o loop principal do bot
+- `cleanup()`: Persiste as filas, cancela conversações e desliga o
+  agendador, o router e o RNS. Chamado automaticamente ao sair de
+  `run()`.
+- `send(destination, message, title="Reply", lxmf_fields=None, stamp_cost=None, opportunistic=None, method=None, include_ticket=None, defer=None, reply_to=None, quote=None, thread=None)`:
+  Envia uma mensagem para um destino. `stamp_cost` sobrescreve o custo
+  de saída desta mensagem, `opportunistic` sobrescreve
+  `opportunistic_sending`, `include_ticket` sobrescreve
+  `include_tickets` e `defer` sobrescreve `pending_sends_enabled`.
+  `reply_to`, `quote` e `thread` definem os campos de threading de
+  resposta.
 - `send_with_attachment(destination, message, attachment, title="Reply", stamp_cost=None, opportunistic=None)`:
-  envia uma mensagem com um anexo
-- `command(name, description="No description provided", admin_only=False, threaded=False)`:
-  decorador para registar comandos. Defina `threaded=True` para executar
-  o callback do comando numa thread separada. Os comandos suportam
-  argumentos anotados por tipo para conversão automática.
-- `intent(name, examples)`: decorador para registar manipuladores de
+  Envia uma mensagem com anexo
+- `command(name, description="No description provided", admin_only=False, permissions=None, usage=None, examples=None, category=None, aliases=None, threaded=False, rate_limit=None)`:
+  Decorador para registar comandos. `permissions` sobrescreve a
+  barreira `DefaultPerms` (`ALL` com `admin_only`, senão
+  `USE_COMMANDS`), `threaded` executa o callback numa thread de
+  trabalho, `rate_limit` limita invocações por remetente e janela de
+  cooldown, e `usage`, `examples`, `category`, `aliases` alimentam o
+  sistema de ajuda. Os comandos suportam argumentos anotados por tipo
+  para conversão automática.
+- `intent(name, examples)`: Decorador para registar manipuladores de
   intents NLP.
-- `nlp.export_model()`: exporta os dados do modelo NLP treinado.
-- `nlp.import_model(model_data)`: importa dados de modelo NLP
-  previamente exportados.
+- `nlp.export_model()`: Exporta os dados do modelo NLP treinado.
+- `nlp.import_model(model_data)`: Importa dados de modelo NLP
+  exportados anteriormente.
 - `request_link(destination_hash, callback=None, app_name="lxmf", *aspects)`:
-  pede um link RNS para um destino. Permite `app_name` e `aspects`
-  personalizados (predefinição "lxmf" e "delivery").
-- `on_link(callback)`: regista um manipulador para links RNS recebidos.
-- `load_extension(name)`: carrega um módulo de extensão cog pelo nome
-  (ex.: "cogs.utility").
-- `reload_extension(name)`: recarrega um módulo de extensão cog.
-- `add_cog(cog_instance)`: adiciona uma instância de classe cog ao bot.
-- `remove_cog(cog_name)`: remove um cog do bot pelo nome da classe.
-- `on_first_message()`: decorador para tratar as primeiras mensagens dos
-  utilizadores
-- `on_message()`: decorador para tratar todas as mensagens (chamado
+  Pede um link RNS para um destino. Permite `app_name` e `aspects`
+  próprios ("lxmf" e "delivery" por padrão).
+- `on_link(callback)`: Regista um manipulador para links RNS de
+  entrada.
+- `load_extension(name)`: Carrega um módulo de extensão cog pelo nome
+  (ex. "cogs.utility").
+- `reload_extension(name)`: Recarrega um módulo de extensão cog.
+- `add_cog(cog_instance)`: Adiciona uma instância de classe cog ao bot.
+- `remove_cog(cog_name)`: Remove um cog pelo nome da classe.
+- `on_first_message()`: Decorador para tratar as primeiras mensagens
+  dos utilizadores
+- `on_message()`: Decorador para tratar todas as mensagens (chamado
   antes do processamento de comandos)
-- `on_reaction()`: decorador para tratar reações recebidas. Os
-  manipuladores recebem `(sender, reaction)`, onde reaction traz as
+- `received(function)`: Regista um callback invocado com o contexto da
+  mensagem para cada mensagem de entrada que atravessou a pipeline sem
+  ser consumida por um comando ou intent
+- `on_reaction()`: Decorador para tratar reações de entrada. Os
+  manipuladores recebem `(sender, reaction)`, onde reaction leva as
   chaves `reaction_to`, `reaction_emoji` e `reaction_sender`
-- `react(destination, message_hash, reaction)`: envia uma reação a uma
-  mensagem através do campo LXMF `FIELD_REACTION`
-- `validate()`: executa verificações de validação na configuração do bot
+- `react(destination, message_hash, reaction)`: Envia uma reação a uma
+  mensagem via o campo LXMF `FIELD_REACTION`
+- `validate()`: Executa verificações de validação na configuração do
+  bot
+- `get_landlock_status()`: Devolve a disponibilidade e o estado de
+  ativação da sandbox Landlock LSM do processo do bot
+- `diagnose_destination(destination, request_path=False, wait=0.0)`:
+  Sonda o estado de identidade e rota de um hash de destino
+- `diagnose_connectivity(destination=None, request_path=False, wait=0.0)`:
+  Executa o relatório doctor completo e devolve-o como dict
+- `get_debugger()`: Devolve um `Debugger` ligado a este bot
+- `set_propagation_node(node_hash)`: Fixa o nó de propagação de saída
+- `get_propagation_node_status()`: Estado dos nós de propagação de
+  saída configurados, descobertos e atualmente em uso
+- `set_message_storage_limit(megabytes)`: Limite de armazenamento ao
+  operar como nó de propagação
+- `get_propagation_storage_stats()`: Uso de armazenamento do nó, ou um
+  dict a explicar por que não está disponível
 - `connect_rrc(hub_hash, rooms=None, nick=None, dest_name=None, auto_reconnect=None)`:
-  liga a um hub RRC como cliente
-- `disconnect_rrc(hub_hash=None)`: desliga uma ou todas as sessões de
+  Liga a um hub RRC como cliente
+- `disconnect_rrc(hub_hash=None)`: Desliga uma ou todas as sessões de
   hub RRC
-- `on_rrc(callback=None)`: decorador ou registo de manipulador para
+- `on_rrc(callback=None)`: Decorador ou registo de manipulador para
   eventos RRC (`handler(event, client, payload)`)
-- `rrc`: instância `RRCManager` para sessões multi-hub
+- `on_delivery_event(callback=None)`: Subscreve o fluxo de eventos de
+  entrega de saída, como decorador ou chamada direta
+
+### Atributos
+
+- `config`: A `BotConfig` resolvida
+- `commands`, `cogs`: Registos de comandos e cogs
+- `storage`: O backend de armazenamento ativo
+- `scheduler`: `TaskScheduler` para tarefas tipo cron
+- `events`: `EventManager` para manipuladores de eventos e dispatch
+- `middleware`: `MiddlewareManager` para middleware de comandos
+- `permissions`: `PermissionManager` para papéis e flags
+- `spam_protection`: `SpamProtection` para limites de taxa, avisos e
+  banimentos
+- `signature_manager`: Camada de política de assinaturas
+- `nlp`: O classificador de intents (só corresponde com `nlp_enabled`)
+- `delivery`: `DeliveryTracker`, o fluxo de eventos de saída
+- `conversations`: `ConversationManager` para perguntas `msg.ask`
+- `rrc`: `RRCManager` para sessões multi-hub, `None` até o RRC ser
+  ativado ou `connect_rrc()` correr
+- `local`: A `RNS.Destination` do bot (o seu endereço LXMF é
+  `bot.local.hash`)
+
+## Nome anunciado
+
+O nome que os peers veem vem de `name`, mas existem duas
+sobrescrituras para announces. Se `announce_display_name_file` estiver
+definido e esse ficheiro existir sob `config_path`, o seu conteúdo
+vence. Caso contrário, `bot_display_name.txt` sob `config_path` é lido
+quando presente. Em qualquer caso, atribuir `bot.name = "Novo nome"`
+ressincroniza o nome anunciado em tempo de execução.
+
+Isto permite aos operadores renomear um bot sem tocar no código, e o
+nome anunciado pode diferir do nome interno da configuração.
 
 ## Comandos estruturados via campos LXMF
 
@@ -162,6 +266,106 @@ O texto da reação está limitado a 16 caracteres imprimíveis. O campo em
 bruto continua disponível em `ctx.fields` e `msg.fields` para
 compatibilidade.
 
+## Threading de respostas
+
+As respostas podem carregar os campos LXMF `FIELD_REPLY_TO` (`0x30`),
+`FIELD_REPLY_QUOTE` (`0x31`) e `FIELD_THREAD` (`0x08`). Clientes que
+renderizam threads, como MeshChatX e Sideband, mostram-nas como
+respostas citadas em vez de mensagens planas.
+
+`msg.reply()` faz threading automaticamente: define `FIELD_REPLY_TO`
+com o hash da mensagem de entrada e `FIELD_THREAD` com a raiz da
+conversação.
+
+``` python
+@bot.command("status")
+def status(msg):
+    msg.reply("all systems nominal")          # resposta em thread
+    msg.reply("flat", reply_to=None)          # sair do threading
+    msg.reply("noted", quote=True)            # cita o texto de entrada
+```
+
+Para envios que não são respostas, passa os campos explicitamente:
+
+``` python
+bot.send(dest, "see above", reply_to=msg_hash_hex, quote="earlier text")
+```
+
+As respostas de entrada são parseadas no contexto da mensagem:
+
+``` python
+@bot.command("ctx")
+def ctx_cmd(msg):
+    msg.reply_to      # hash hex a que esta mensagem responde, ou None
+    msg.reply_quote   # texto citado que a resposta carrega, ou None
+    msg.thread        # hash hex da raiz do thread, ou None
+```
+
+`pack_reply(message_hash, quote=..., thread=...)` e
+`unpack_reply(fields)` são exportados para manuseamento manual de
+campos.
+
+## Conversações
+
+Os comandos podem fazer uma pergunta ao remetente e tratar a sua
+mensagem seguinte como a resposta, em vez de a despachar como comando:
+
+``` python
+@bot.command("report")
+def report(msg):
+    title = msg.ask("Report title?", timeout=300)
+    if title is None:
+        msg.reply("Timed out.")
+        return
+    body = msg.ask("Describe the issue.", timeout=600)
+    if body is None:
+        msg.reply("Timed out.")
+        return
+    msg.reply(f"Filed: {title.content}")
+```
+
+`msg.ask(prompt, timeout=..., validator=...)` bloqueia o manipulador
+até a resposta chegar, o timeout disparar ou a conversação ser
+cancelada. Devolve um `Answer` com `content`, `fields`, `hash`,
+`sender` e um atalho `reply(text)`.
+
+Um validador rejeita respostas más e volta a perguntar:
+
+``` python
+num = msg.ask(
+    "Pick a number",
+    validator=lambda a: None if a.content.isdigit() else "Digits only",
+)
+```
+
+Em manipuladores async usa `await msg.ask_async(...)`. Para esperas
+longas, ou quando podem existir muitas conversações abertas, usa o
+estilo de callbacks para não deixar uma thread parada:
+
+``` python
+msg.ask(
+    "Send the log file",
+    on_answer=lambda ans: ans.reply("received"),
+    on_timeout=lambda sender: bot.send(sender, "Too slow."),
+    timeout=3600,
+)
+```
+
+Notas:
+
+- Enviar um comando registado enquanto uma pergunta está pendente
+  cancela a pergunta e executa o comando. Os utilizadores têm sempre
+  uma saída.
+- `bot.conversations.pending_count()` e
+  `bot.conversations.cancel(sender)` expõem o registo para
+  diagnóstico e ferramentas de administração.
+- O registo está limitado a 1024 perguntas pendentes. `ask` devolve
+  `None` quando está cheio.
+- Um `ask` bloqueante estaciona a thread de entrega que trata essa
+  mensagem. É seguro para entregas diretas, mas bots que sincronizam
+  grandes lotes de um nó de propagação devem preferir callbacks
+  `on_answer`.
+
 ## Armazenamento
 
 O framework fornece três backends de armazenamento:
@@ -200,6 +404,33 @@ def hello(ctx):
     ctx.reply(f"Hello {ctx.sender}!")
 ```
 
+Os metadados de ajuda e o controlo de acesso vêm de kwargs extra
+do decorador:
+
+``` python
+from lxmfy import DefaultPerms
+
+@bot.command(
+    name="purge",
+    description="Clear stored data",
+    permissions=DefaultPerms.MANAGE_MESSAGES,
+    usage="/purge <key>",
+    examples=["/purge cache"],
+    category="Admin",
+    aliases=["clear"],
+)
+def purge(ctx, key: str):
+    bot.storage.delete(key)
+    ctx.reply(f"Deleted {key}")
+```
+
+`permissions` sobrescreve a barreira por defeito: `USE_COMMANDS` para
+comandos normais, `ALL` para os `admin_only`. `category` agrupa o
+comando na saída do `/help`. `aliases` é apenas metadado de ajuda: os
+alias são mostrados aos utilizadores mas não são registados para
+dispatch, por isso `/clear` não executa `purge` a menos que o registes
+como segundo comando.
+
 ### Argumentos anotados por tipo
 
 Os comandos analisam e convertem automaticamente os argumentos com base
@@ -212,6 +443,52 @@ def add(ctx, a: int, b: int):
     ctx.reply(f"The result is {result}")
 ```
 
+### Limites de taxa por comando
+
+Limita quantas vezes um mesmo remetente pode invocar um comando dentro
+da janela global de `cooldown`. Ao atingir, apenas a invocação é
+rejeitada, nunca adiciona avisos nem banimentos.
+
+``` python
+@bot.command(name="report", rate_limit=3)
+def report(ctx):
+    # cada remetente pode chamar isto 3 vezes por período de cooldown
+    ...
+```
+
+Requer `permissions_enabled=True`, como o limite global. Utilizadores
+com papel admin ou `BYPASS_SPAM` saltam a verificação.
+
+## Proteção anti-spam
+
+`bot.spam_protection` aplica o limite global: um remetente pode enviar
+`rate_limit` mensagens por janela de `cooldown`. Exceder adiciona um
+aviso e rejeita a mensagem. A `max_warnings` o remetente é banido. Os
+avisos caducam após `warning_timeout` segundos sem infrações.
+
+As verificações de spam correm dentro do evento `message_received` e
+requerem `permissions_enabled=True`.
+
+``` python
+bot = LXMFBot(
+    name="GuardedBot",
+    permissions_enabled=True,
+    rate_limit=5,        # mensagens por janela de cooldown
+    cooldown=60,         # duração da janela em segundos
+    max_warnings=3,      # avisos antes do banimento
+    warning_timeout=300, # segundos até os avisos reiniciarem
+)
+
+# Levantar um banimento manualmente
+bot.spam_protection.unban(sender_hash)
+```
+
+Avisos, banimentos e contadores persistem no backend de armazenamento
+configurado, por isso os banimentos sobrevivem a reinícios. Remetentes
+com `BYPASS_SPAM` nunca são limitados nem banidos. O `rate_limit` por
+comando de `@bot.command` é mais suave: só rejeita a invocação e nunca
+avisa nem bane.
+
 ## Sistema de ajuda
 
 O framework inclui um gerador de ajuda interativo que produz menus de
@@ -222,7 +499,7 @@ ajuda categorizados com base nos metadados de Cog e Command.
 # Os utilizadores podem usar '/help' ou '/help <command>'
 ```
 
-### Comandos em thread
+## Comandos em thread
 
 Para operações demoradas ou bloqueantes que não interagem diretamente
 com a Reticulum Network Stack, pode executar comandos numa thread
@@ -253,15 +530,70 @@ Sistema de eventos para tratar vários eventos do bot:
 ``` python
 @bot.events.on("message_received", EventPriority.HIGHEST)
 def handle_message(event):
-    # Tratar o evento de mensagem
-    pass
+    # event.data carrega o payload, ex. sender e message
+    event.cancel()  # para manipuladores posteriores e o resto do processamento
 ```
+
+Os manipuladores correm por ordem `EventPriority`: `HIGHEST`, `HIGH`,
+`NORMAL`, `LOW`. A própria verificação de spam é um manipulador de
+`message_received` com `HIGHEST`, por isso cancelar esse evento é como
+o limitador descarta mensagens.
+
+Despacha eventos teus:
+
+``` python
+from lxmfy import Event
+
+bot.events.dispatch(Event("order_placed", data={"user": ctx.sender}))
+```
+
+`event_logging_enabled`, `max_logged_events` e
+`event_middleware_enabled` existem em `BotConfig` mas não estão
+ligados: os eventos não são escritos no armazenamento e
+`bot.events.use()` é um stub. Trata-os como reservados.
 
 ## Testes
 
-Os testes do projeto incluem cenários de fiabilidade e de stress na
-suite de testes do repositório. Use o runner de testes do repositório
-para os executar.
+`lxmfy.testing.TestBot` é um `LXMFBot` pré-configurado para testes.
+Não arranca nenhuma instância Reticulum. As mensagens de entrada
+passam pela pipeline real de receção (middleware, verificações de
+spam, permissões, dispatch) e os envios de saída são capturados para
+asserções.
+
+``` python
+from lxmfy import TestBot
+
+def test_ping():
+    with TestBot() as bot:
+        @bot.command("ping")
+        def ping(msg):
+            msg.reply("pong")
+
+        sent = bot.receive("/ping", sender="alice")
+        assert sent[0].content == "pong"
+        assert sent[0].destination == bot.sender_hex("alice")
+```
+
+- `bot.receive(content, sender=..., fields=..., message_hash=...)`
+  injeta uma mensagem e devolve os objetos `SentMessage` que produziu.
+  Os remetentes são nomeados: `"alice"` mapeia para um hash falso
+  estável, ou passa diretamente um hash de destino hex.
+- `bot.drain()` esvazia as mensagens de saída em fila. `bot.outbox`
+  acumula tudo o que foi enviado. `bot.last_sent(sender=...)` obtém o
+  mais recente.
+- `bot.wait_sent(n, timeout=...)` espera por comandos em thread.
+- `bot.receive_later(content, sender=..., delay=...)` responde a
+  chamadas `msg.ask` bloqueantes a partir de uma thread daemon.
+- `fake_message(content, source_hash=..., ...)` constrói uma mensagem
+  de entrada para conduzir `bot._message_received` diretamente.
+
+`SentMessage` embrulha cada mensagem de saída capturada: `destination`
+(hex), `content`, `title`, `fields`, `method`, `include_ticket`,
+`stamp_cost` e `raw` para o objeto subjacente.
+
+A suite de testes do repositório também inclui cenários de
+fiabilidade e stress. Usa o executor de testes do repositório para os
+correr.
 
 ### Suite avançada de fiabilidade
 
@@ -290,16 +622,54 @@ def admin_command(ctx):
         ctx.reply("Admin command executed")
 ```
 
+Ativa com `permissions_enabled=True`. Flags de
+`DefaultPerms`:
+
+- `USE_BOT`, `SEND_MESSAGES`, `USE_COMMANDS`: acesso básico
+- `MANAGE_MESSAGES`, `MANAGE_COMMANDS`, `MANAGE_USERS`: elevado
+- `BYPASS_RATELIMIT`, `BYPASS_SPAM`, `VIEW_ADMIN_COMMANDS`: especial
+- `VIEW_EVENTS`, `MANAGE_EVENTS`, `BYPASS_EVENT_CHECKS`: sistema de
+  eventos
+- `NONE`, `ALL`: atalhos
+
+`bot.permissions` gere papéis e atribuições:
+
+``` python
+bot.permissions.create_role("moderator", DefaultPerms.MANAGE_MESSAGES | DefaultPerms.BYPASS_SPAM)
+bot.permissions.assign_role(user_hash, "moderator")
+bot.permissions.remove_role(user_hash, "moderator")
+bot.permissions.has_permission(user_hash, DefaultPerms.USE_COMMANDS)
+```
+
+Papéis e atribuições persistem no backend configurado. Existem dois
+papéis integrados que não podem ser apagados: `user` (padrão) e
+`admin`, que é concedido automaticamente a cada hash em `admins`.
+
 ## Middleware
 
 Sistema de middleware para processar mensagens e eventos:
 
 ``` python
+from lxmfy import MiddlewareType
+
 @bot.middleware.register(MiddlewareType.PRE_COMMAND)
 def pre_command_middleware(ctx):
-    # Processar antes da execução do comando
-    pass
+    # ctx embrulha o contexto da mensagem, ctx.cancelled descarta-o
+    if "spamword" in ctx.data.content:
+        ctx.cancel()
 ```
+
+Três pontos da pipeline executam middleware:
+
+- `PRE_COMMAND`: antes do dispatch de comandos, depois das
+  verificações de spam. Se a cadeia devolver `None`, a mensagem é
+  abortada por completo.
+- `POST_COMMAND`: depois do callback de um comando (incluindo comandos
+  em thread, que o disparam na thread de trabalho).
+- `PRE_EVENT`: antes do dispatch do evento `message_received`.
+
+`POST_EVENT`, `REQUEST` e `RESPONSE` existem em `MiddlewareType`, mas
+nada na pipeline os executa ainda.
 
 ## Anexos
 
@@ -492,6 +862,20 @@ bot.send(
 # na rede Reticulum
 ```
 
+Também podes fixar o nó na construção com
+`propagation_node="<hash>"`, ou deixar o bot descobrir nós sozinho:
+
+``` python
+bot = LXMFBot(
+    name="AutoBot",
+    autopeer_propagation=True, # aprende nós a partir de announces
+    autopeer_maxdepth=4,       # ignora nós a mais de 4 hops
+)
+```
+
+`bot.get_propagation_node_status()` reporta o nó manual, os nós
+descobertos e o nó de saída atualmente em uso.
+
 ### Repetições automáticas
 
 Configure tentativas automáticas de repetição para entregas diretas
@@ -514,6 +898,29 @@ O sistema de repetição acompanha as tentativas de entrega por destino e
 repete automaticamente as entregas falhadas. Entregas bem-sucedidas
 repõem o contador de repetições desse destino.
 
+### Envios diferidos
+
+Enviar para um destino cuja identidade o nó ainda não ouviu falha
+normalmente de imediato. Com `pending_sends_enabled` (padrão) a
+mensagem fica retida em armazenamento e é despejada automaticamente
+quando o destino anuncia ou numa varredura periódica.
+
+``` python
+bot = LXMFBot(
+    pending_sends_enabled=True,
+    pending_sends_max=200,     # as mensagens retidas mais antigas caem além disto
+    pending_sends_ttl=604800,  # as mensagens retidas expiram após 7 dias
+    pending_sends_retry=300,   # segundos entre varreduras em run()
+)
+
+# Sobrescritura por envio
+bot.send(dest, "hold this", defer=True)
+bot.send(dest, "send or drop", defer=False)
+```
+
+Os envios retidos aparecem como `held (unknown peers)` no comando
+admin `/queue` e produzem eventos `deferred` no tracker de entrega.
+
 ### Persistência de mensagens
 
 As mensagens de saída podem ser persistidas em disco para garantir a
@@ -528,6 +935,223 @@ bot = LXMFBot(
     message_queue_size=50,
 )
 ```
+
+### Stamps e tickets
+
+Os custos de stamp fazem os remetentes pagar proof-of-work antes da
+mensagem ser aceite, o que trava tráfego não solicitado. O LXMFy
+expõe os dois lados do mecanismo.
+
+``` python
+bot = LXMFBot(
+    stamp_cost=16,          # exige este custo de stamp de entrada
+    require_stamps=True,    # rejeita mensagens com stamps inválidos
+    include_tickets=True,   # deixa os peers responderem sem gerar um stamp
+)
+```
+
+- `stamp_cost` é o requisito de entrada. O custo de saída de um envio
+  continua a vir do announce do peer salvo se passares `stamp_cost=`
+  a `bot.send()`.
+- `include_tickets` (True por padrão) anexa um ticket de resposta às
+  mensagens de saída, para que um peer que exige stamps possa
+  responder sem pagar. Sobrescreve por envio com `include_ticket=`.
+- `request_unknown_identities=True` pede à rede uma identidade de
+  remetente quando uma mensagem chega de origem desconhecida, o que
+  ajuda as verificações de stamps e assinaturas a resolver em vez de
+  falharem às cegas.
+
+O controlo em tempo de execução está em [Controlos do
+router](#controlos-do-router): `set_inbound_stamp_cost`,
+`enforce_stamps`, `ignore_stamps`, `generate_ticket` e os métodos de
+inspeção de tickets.
+
+### Operar como nó de propagação
+
+Um bot pode também servir de nó de propagação LXMF, armazenando
+mensagens para peers offline:
+
+``` python
+bot = LXMFBot(
+    enable_propagation_node=True,
+    message_storage_limit_mb=500,
+)
+
+bot.set_message_storage_limit(750)
+stats = bot.get_propagation_storage_stats()
+```
+
+`get_propagation_node_status()` serve para ambos os papéis: reporta o
+nó de saída que este bot usa e se ele próprio atua como nó. Controlos
+relacionados: `announce_propagation_node()` anuncia o nó,
+`set_retain_on_node()` mantém as mensagens entregues nele, e
+`allow_control_identity()` / `disallow_control_identity()` gerem que
+identidades podem usar o canal de controlo do nó.
+
+### Eventos de entrega
+
+`bot.delivery` regista um fluxo limitado de eventos do ciclo de vida
+de saída para observar o fluxo de mensagens sem ler logs. Fases:
+`queued`, `deferred`, `dispatched`, `delivered`, `failed`,
+`cancelled`, `dropped`. A cauda recente é persistida em armazenamento
+e restaurada no arranque.
+
+``` python
+@bot.on_delivery_event()
+def watch(event):
+    print(event["stage"], event.get("destination"), event.get("reason"))
+
+# Ou inspeção direta
+recent = bot.delivery.recent(20)
+failures = bot.delivery.recent(stage="failed")
+to_peer = bot.delivery.recent(destination="aa11bb...")
+```
+
+Cada evento é um dict com `ts`, `stage` e, opcionalmente,
+`destination`, `message_id`, `hash`, `method`, `attempts`, `reason`,
+`title`.
+
+Os admins têm um comando `/delivery [limit]` que renderiza a mesma
+linha temporal no chat, e `lxmfy debug` mostra um resumo da linha
+temporal de entregas nas verificações da pipeline de envio.
+
+### Comandos de administração integrados
+
+Estes comandos são registados automaticamente e exigem que o remetente
+esteja em `admins` quando as permissões estão ativas:
+
+| Comando | Ação |
+| --- | --- |
+| `/queue` | Mostra a fila de saída do router, a fila interna e os envios retidos |
+| `/cancel <id|all>` | Cancela mensagens de saída pendentes |
+| `/inbox [cancel <hash|all>]` | Lista ou cancela transferências de entrada ativas |
+| `/delivery [n]` | Mostra os últimos n eventos de entrega (padrão 15, máx. 50) |
+| `/loadext <name>` | Carrega uma extensão cog |
+| `/reloadext <name>` | Recarrega uma extensão cog carregada |
+
+### Controlos do router
+
+Wrappers finos sobre o `LXMRouter` subjacente para controlo de
+remetentes, tickets, gestão da fila de saída e sincronização do nó de
+propagação. Todos aceitam hashes de destino como strings hex e
+devolvem `False` quando o router não está a correr (por exemplo em
+`test_mode`).
+
+**Controlo de remetentes (entrada)**
+
+- `ignore_destination(destination)` / `unignore_destination(destination)` / `is_ignored(destination)`:
+  Descarta mensagens de entrada de um remetente
+- `allow_destination(destination)` / `disallow_destination(destination)`:
+  Gestão de whitelist quando o router corre em modo allow-list
+- `prioritise_destination(destination)` / `unprioritise_destination(destination)`:
+  Lista de remetentes priorizados
+- `set_inbound_stamp_cost(stamp_cost)`: Exige um custo de stamp em
+  mensagens de entrada (`None` limpa)
+- `enforce_stamps()` / `ignore_stamps()`: Comutadores de exigência de
+  stamps de entrada
+
+**Tickets**
+
+- `generate_ticket(destination, expiry=None)`: Emite um ticket de
+  stamp de entrada para um remetente
+- `get_inbound_tickets(destination)`: Tickets detidos para um
+  remetente
+- `get_outbound_ticket(destination)` / `get_outbound_ticket_expiry(destination)` /
+  `get_outbound_stamp_cost(destination)`: Estado do ticket de saída
+  aprendido da rede
+
+**Fila de saída**
+
+- `outbound_queue()`: Snapshot das mensagens de saída pendentes
+- `get_outbound_progress(lxm_hash)`: Progresso de entrega de um hash
+  de mensagem, ou `None`
+- `cancel_outbound(message_id)`: Remove uma mensagem em fila antes da
+  entrega
+- `delivery_link_available(destination)`: Se existe um link RNS ativo
+  para o destino
+
+**Fila de entrada**
+
+- `has_message(message_hash)`: Se um hash LXM de entrada já foi
+  entregue
+- `inbound_count()`: Transferências de entrada de recursos ativas em
+  curso
+- `inbound_transfers()`: Snapshot de cada transferência com hash,
+  tamanho, progresso e estado
+- `cancel_inbound(resource_hash)`: Aborta uma transferência de entrada
+  ativa
+- `cancel_all_inbound()`: Aborta todas as transferências de entrada
+  ativas, devolve a contagem cancelada
+
+**Descoberta de peers**
+
+Metadados de announce de destinos que este nó ouviu:
+
+- `get_peer_app_data(destination)`: Bytes app_data anunciados em bruto
+- `get_peer_lxmf_data(destination)`: Metadados de announce LXMF
+  descodificados (`display_name`, `stamp_cost`, `capabilities`), ou
+  `None` quando o peer não anunciou dados LXMF válidos
+- `get_peer_announce(destination)`: Registo de announce completo com
+  hops, received_at, interface e app_data
+- `list_peer_announces(limit=100)`: Todos os announces ouvidos, o mais
+  recente primeiro
+
+**Propagação**
+
+- `sync_propagation_node(max_messages=None)`: Puxa mensagens do nó de
+  propagação configurado
+- `cancel_propagation_sync()`: Para uma sincronização em curso
+- `get_propagation_stats()`: Estado de transferência e limites do nó,
+  ou `None`
+- `set_retain_on_node(retain)`: Mantém as mensagens entregues no nó
+- `announce_propagation_node()`: Anuncia este nó como nó de propagação
+- `allow_control_identity(destination)` / `disallow_control_identity(destination)`:
+  Whitelist do canal de controlo de propagação
+
+**Ingestão**
+
+- `ingest_lxm_uri(uri)`: Importa uma mensagem URI `lxm://` para a fila
+  de entrada
+
+## Diagnóstico
+
+Quando as mensagens não fluem, o depurador verifica todo o caminho em
+vez de adivinhar: configuração do Reticulum, estado da instância
+partilhada, interfaces, identidade, comportamento de announce,
+configuração de entrega e a pipeline de envio.
+
+``` bash
+lxmfy debug                          # relatório doctor completo, guardado em ficheiro
+lxmfy debug probe <hash> --request-path --wait 30
+lxmfy debug send <hash>              # segue um envio de teste
+lxmfy debug receive                  # verifica a prontidão de receção
+lxmfy debug compare <hash_a> <hash_b>
+lxmfy debug tips                     # correções de falhas comuns
+```
+
+Os relatórios são redigidos por privacidade por padrão: caminhos home
+e hashes são truncados. `--json` emite saída legível por máquina,
+`-o FICHEIRO` escreve o relatório, `--no-save` salta o ficheiro,
+`--no-privacy` mantém os valores completos para uso local, e
+`--no-color` ou `NO_COLOR` desativa a saída ANSI.
+
+As mesmas verificações são chamáveis a partir de código:
+
+``` python
+report = bot.diagnose_connectivity()            # relatório doctor como dict
+probe = bot.diagnose_destination(               # sonda de identidade e rota
+    "<peer_hash>", request_path=True, wait=30,
+)
+
+debugger = bot.get_debugger()                   # API completa
+checks = debugger.check_send_pipeline()
+verdict = debugger.run_doctor(destination)
+```
+
+`lxmfy/debugger.py` também exporta um helper autónomo
+`diagnose_destination(hash, ...)` mais os tipos de relatório
+`CheckResult`, `DestinationProbe`, `DoctorReport` e `MessageDebugger`
+para ferramentas próprias.
 
 ## Manipuladores de mensagens
 
@@ -568,6 +1192,23 @@ da primeira mensagem (se for a primeira mensagem deste remetente)
 2. Manipuladores gerais de mensagens (registados com `on_message()`)
 3. Processamento de comandos (se a mensagem começar com o prefixo de
 comando)
+
+### Callback de recurso
+
+`bot.received(fn)` regista um callback que corre no fim da pipeline
+para mensagens que mais nada consumiu: nenhum manipulador de primeira
+mensagem, nenhum manipulador `on_message` que devolvesse True, nenhum
+comando ou intent NLP correspondente. O callback recebe o mesmo
+contexto de mensagem que os comandos, com `msg.sender`, `msg.content`,
+`msg.reply()` e o resto.
+
+``` python
+@bot.received
+def fallback(msg):
+    msg.reply("Sorry, I did not understand that.")
+```
+
+Usa-o como apanha-geral para entrada de texto livre.
 
 ## Reticulum Relay Chat (RRC)
 
@@ -630,6 +1271,11 @@ def on_rrc(event, client, payload):
 - `RRCMessage`: payload de evento de sala (`kind`, `room`, `text`,
   `nick`, `src`, `mention`, ...)
 - `RRC_VERSION`: constante da versão do protocolo de rede
+- `DEFAULT_DEST_NAME`: Nome de destino de hub por padrão
+  (`"rrc.hub"`)
+- `make_envelope`, `encode_envelope`, `decode_envelope`,
+  `validate_envelope`, `normalize_room`: Helpers de formato wire para
+  ferramentas que falam diretamente com hubs
 
 Os eventos comuns passados aos manipuladores `@bot.on_rrc` incluem
 `status`, `welcome`, `joined`, `parted`, `msg`, `notice`, `action`,
@@ -693,19 +1339,29 @@ bot.run()
 
 # Ferramentas CLI
 
-O framework fornece ferramentas de linha de comandos para gestão do bot:
+O framework fornece ferramentas de linha de comandos para a gestão de
+bots. Executar `lxmfy` sem argumentos abre um menu interativo.
 
 ``` bash
-# Criar um novo bot
-lxmfy create mybot
+# Scaffold interativo de um projeto completo
+lxmfy init mybot                 # diretório do projeto, bot.py, cogs/, README
+lxmfy init --here --yes          # diretório atual, aceita todos os defaults
 
-# Criar um bot a partir de um template
+# Criar um único ficheiro de bot
+lxmfy create mybot
 lxmfy create --template echo mybot
 lxmfy create --template rrc my_rrc_bot
+lxmfy create mybot --no-cogs     # salta o pacote cogs
+lxmfy create --output dir/bot.py --name MyBot
 
 # Executar um bot de template
 lxmfy run echo
 lxmfy run rrc
+lxmfy run reminder --name "MyReminder"
+
+# Diagnosticar conectividade (ver a secção Diagnóstico)
+lxmfy debug
+lxmfy debug probe <hash> --request-path --wait 30
 
 # Testar a verificação de assinaturas com uma mensagem
 lxmfy signatures test
@@ -716,6 +1372,15 @@ lxmfy signatures enable
 # Desativar a verificação de assinaturas
 lxmfy signatures disable
 ```
+
+`lxmfy init` pergunta pelo nome do projeto, template, backend de
+armazenamento, prefixo de comandos e hashes de admin. Cada pergunta
+aceita um flag em seu lugar: `--dir`, `--bot-name`, `--template`,
+`--storage`, `--prefix`, `--admins`, `--no-cogs`, `--force`, `--yes`.
+Com stdin não-TTY toma os defaults.
+
+Templates para `create` e `run`: `basic`, `echo`, `reminder`, `note`,
+`cogtest`, `rrc`.
 
 # Tratamento de erros
 
@@ -738,13 +1403,35 @@ Gerado a partir das docstrings do código-fonte.
 
 ::: lxmfy.BotConfig
 
+::: lxmfy.Command
+
 ::: lxmfy.Attachment
 
 ::: lxmfy.AttachmentType
 
+::: lxmfy.IconAppearance
+
+::: lxmfy.Event
+
+::: lxmfy.EventManager
+
+::: lxmfy.EventPriority
+
+::: lxmfy.MiddlewareContext
+
+::: lxmfy.MiddlewareManager
+
+::: lxmfy.MiddlewareType
+
 ::: lxmfy.DefaultPerms
 
 ::: lxmfy.PermissionManager
+
+::: lxmfy.Role
+
+::: lxmfy.HelpFormatter
+
+::: lxmfy.HelpSystem
 
 ::: lxmfy.TaskScheduler
 
@@ -755,3 +1442,31 @@ Gerado a partir das docstrings do código-fonte.
 ::: lxmfy.JSONStorage
 
 ::: lxmfy.SQLiteStorage
+
+::: lxmfy.storage.MemoryStorage
+
+::: lxmfy.ConversationManager
+
+::: lxmfy.Answer
+
+::: lxmfy.DeliveryTracker
+
+::: lxmfy.TestBot
+
+::: lxmfy.SentMessage
+
+::: lxmfy.Debugger
+
+::: lxmfy.MessageDebugger
+
+::: lxmfy.DoctorReport
+
+::: lxmfy.DestinationProbe
+
+::: lxmfy.CheckResult
+
+::: lxmfy.RRCClient
+
+::: lxmfy.RRCManager
+
+::: lxmfy.RRCMessage
