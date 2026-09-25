@@ -2452,10 +2452,13 @@
 </span></code></pre></div>
 <p>Подробности о структуре <code>Event</code> и приоритетах — в <code>lxmfy/events.py</code>.</p>
 <h2 id="_11">Хранилище<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
-<p>LXMFy предоставляет бэкенды хранилища JSON, SQLite и In-Memory.</p>
+<p>LXMFy предоставляет бэкенды хранилища JSON, SQLite, MsgPack и In-Memory.</p>
 <ul>
 <li><strong>JSON:</strong> простой, читаемый человеком. Подходит для небольших данных. Настройка: <code>storage_type="json"</code> и <code>storage_path="your_data_dir"</code>.</li>
 <li><strong>SQLite:</strong> эффективнее для больших данных или частых записей. Настройка: <code>storage_type="sqlite"</code> и <code>storage_path="your_db_file.db"</code>.</li>
+<li><strong>MsgPack:</strong> компактный бинарный формат с той же раскладкой
+  файл-на-ключ, что и JSON. Настройка: <code>storage_type="msgpack"</code> и
+  <code>storage_path="your_data_dir"</code>.</li>
 <li><strong>Memory:</strong> хранилище полностью в ОЗУ. Состояние теряется при остановке. Настройка: <code>storage_type="memory"</code>.</li>
 </ul>
 <p>Доступ к хранилищу — через <code>bot.storage</code>:</p>

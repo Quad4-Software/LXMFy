@@ -2496,7 +2496,7 @@ decorador <code>@bot.events.on()</code>.</p>
 <p>Consulte <code>lxmfy/events.py</code> para mais detalhes sobre a estrutura <code>Event</code>
 e as prioridades.</p>
 <h2 id="armazenamento">Armazenamento<a class="headerlink" href="#armazenamento" title="Permanent link">&para;</a></h2>
-<p>O LXMFy fornece backends de armazenamento JSON, SQLite e em memória.</p>
+<p>O LXMFy fornece backends de armazenamento JSON, SQLite, MsgPack e em memória.</p>
 <ul>
 <li><strong>JSON:</strong> simples, legível por humanos. Bom para conjuntos de dados
   pequenos. Configure com <code>storage_type="json"</code> e
@@ -2504,6 +2504,9 @@ e as prioridades.</p>
 <li><strong>SQLite:</strong> mais eficiente para conjuntos de dados maiores ou escritas
   frequentes. Configure com <code>storage_type="sqlite"</code> e
   <code>storage_path="your_db_file.db"</code>.</li>
+<li><strong>MsgPack:</strong> formato binário compacto com o mesmo layout de um
+  ficheiro por chave do JSON. Configure com <code>storage_type="msgpack"</code> e
+  <code>storage_path="your_data_dir"</code>.</li>
 <li><strong>Memory:</strong> armazenamento inteiramente em RAM. O estado perde-se no
   encerramento. Configure com <code>storage_type="memory"</code>.</li>
 </ul>

@@ -2494,13 +2494,16 @@ LXMF 数据包更高带宽的流量。</p>
 </span></code></pre></div>
 <p><code>Event</code> 结构和优先级的更多细节见 <code>lxmfy/events.py</code>。</p>
 <h2 id="_9">存储<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
-<p>LXMFy 提供 JSON、SQLite 和内存三种存储后端。</p>
+<p>LXMFy 提供 JSON、SQLite、MsgPack 和内存四种存储后端。</p>
 <ul>
 <li><strong>JSON：</strong> 简单、可读，适合小数据集。用
   <code>storage_type="json"</code> 和 <code>storage_path="your_data_dir"</code> 配置。</li>
 <li><strong>SQLite：</strong> 对更大数据集或频繁写入更高效。用
   <code>storage_type="sqlite"</code> 和 <code>storage_path="your_db_file.db"</code>
   配置。</li>
+<li><strong>MsgPack：</strong> 紧凑的二进制格式，与 JSON 同样采用每键一个文件的
+  布局。用 <code>storage_type="msgpack"</code> 和
+  <code>storage_path="your_data_dir"</code> 配置。</li>
 <li><strong>内存：</strong> 完全在 RAM 中存储，关闭后状态丢失。用
   <code>storage_type="memory"</code> 配置。</li>
 </ul>

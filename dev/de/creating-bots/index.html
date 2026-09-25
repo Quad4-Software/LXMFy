@@ -2529,7 +2529,7 @@ stoppen, oder <code>False</code>, um mit der nächsten Stufe fortzufahren.</p>
 <p>Weitere Details zur <code>Event</code>-Struktur und zu Prioritäten finden Sie in
 <code>lxmfy/events.py</code>.</p>
 <h2 id="speicher">Speicher<a class="headerlink" href="#speicher" title="Permanent link">&para;</a></h2>
-<p>LXMFy bietet JSON-, SQLite- und In-Memory-Speicher-Backends.</p>
+<p>LXMFy bietet JSON-, SQLite-, MsgPack- und In-Memory-Speicher-Backends.</p>
 <ul>
 <li><strong>JSON:</strong> Einfach, menschenlesbar. Gut für kleine Datenmengen.
   Konfiguration mit <code>storage_type="json"</code> und
@@ -2537,6 +2537,9 @@ stoppen, oder <code>False</code>, um mit der nächsten Stufe fortzufahren.</p>
 <li><strong>SQLite:</strong> Effizienter bei größeren Datenmengen oder häufigen
   Schreibvorgängen. Konfiguration mit <code>storage_type="sqlite"</code> und
   <code>storage_path="your_db_file.db"</code>.</li>
+<li><strong>MsgPack:</strong> Kompaktes Binärformat mit demselben
+  Datei-pro-Schlüssel-Layout wie JSON. Konfiguration mit
+  <code>storage_type="msgpack"</code> und <code>storage_path="your_data_dir"</code>.</li>
 <li><strong>Memory:</strong> Speicher vollständig im RAM. Zustand geht beim
   Herunterfahren verloren. Konfiguration mit <code>storage_type="memory"</code>.</li>
 </ul>

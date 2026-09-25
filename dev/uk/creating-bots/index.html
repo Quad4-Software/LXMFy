@@ -2513,7 +2513,7 @@ API</a> або в <a href="../quick-start/">посібнику швидкого
 </span></code></pre></div>
 <p>Докладніше про структуру <code>Event</code> і пріоритети див. <code>lxmfy/events.py</code>.</p>
 <h2 id="_11">Сховище<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
-<p>LXMFy надає бекенди сховища JSON, SQLite та In-Memory.</p>
+<p>LXMFy надає бекенди сховища JSON, SQLite, MsgPack та In-Memory.</p>
 <ul>
 <li><strong>JSON:</strong> простий, читабельний для людини. Підходить для невеликих
   наборів даних. Налаштовується через <code>storage_type="json"</code> і
@@ -2521,6 +2521,9 @@ API</a> або в <a href="../quick-start/">посібнику швидкого
 <li><strong>SQLite:</strong> ефективніший для більших наборів даних або частих записів.
   Налаштовується через <code>storage_type="sqlite"</code> і
   <code>storage_path="your_db_file.db"</code>.</li>
+<li><strong>MsgPack:</strong> компактний бінарний формат із тим самим розкладом
+  файл-на-ключ, що й JSON. Налаштовується через
+  <code>storage_type="msgpack"</code> і <code>storage_path="your_data_dir"</code>.</li>
 <li><strong>Memory:</strong> сховище повністю в оперативній пам'яті. Стан втрачається
   після вимкнення. Налаштовується через <code>storage_type="memory"</code>.</li>
 </ul>
