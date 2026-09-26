@@ -834,15 +834,15 @@ type = ["pygobject-stubs", "pytest-mypy (>=1.0.1)", "shtab", "types-pywin32"]
 
 [[package]]
 name = "landlockpy"
-version = "0.1.1"
+version = "0.2.0"
 description = "Python bindings for the Landlock Linux security module"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "sys_platform == \"linux\""
 files = [
-    {file = "landlockpy-0.1.1-py3-none-any.whl", hash = "sha256:0e39be3c21fbc4875adccd1a775de921720807cc61471b12426f679999d33e5f"},
-    {file = "landlockpy-0.1.1.tar.gz", hash = "sha256:3fa0664a17170b1ae0aa6a2d980503b7230aa51c9e6edfb25e58db0f71aed34b"},
+    {file = "landlockpy-0.2.0-py3-none-any.whl", hash = "sha256:c61b7fe84ead14ff6b091baa2e5f52c7b81e509571ebe5e707e92f1aaf90f2c9"},
+    {file = "landlockpy-0.2.0.tar.gz", hash = "sha256:2a915db59a2c1970d181f9c2bff786d6040d8f9105380da64390f5fe61b4148d"},
 ]
 
 [[package]]
@@ -1437,4 +1437,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "b7ff04a34885c1806ccdf83b0d4fcf933e87c3ed7f5a340f879ea68f5d07b6c3"
+content-hash = "bef0262600a7984febb8e299d001fa485df703ca281a49402cf221e436b24c8e"
