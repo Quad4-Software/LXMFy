@@ -17,7 +17,7 @@ classifiers = [
 dependencies = [
     "lxmf>=1.1.1",
     "rns>=1.5.4",
-    "cbor2>=6.1.0",
+    "cborx>=0.2.5",
     "landlockpy (>=0.2.0,<0.3.0) ; sys_platform == 'linux'",
 ]
 

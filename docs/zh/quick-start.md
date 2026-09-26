@@ -5,7 +5,7 @@
 - Python 3.11+
 - Reticulum Network Stack（`pip install rns`，版本 1.5.4+）
 - LXMF（`pip install lxmf`，版本 1.1.1+；随 LXMFy 自动安装）
-- CBOR（`cbor2`，自动安装，RRC 需要）
+- CBOR（`cborx`，自动安装，RRC 需要）
 
 === "PyPI"
 

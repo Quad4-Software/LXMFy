@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import cbor2
+import cborx
 import pytest
 import RNS
 from hypothesis import given, settings
@@ -96,7 +96,7 @@ def test_envelope_rejects_bad_src():
 
 def test_decode_malformed_returns_none():
     assert decode_envelope(b"not-cbor") is None
-    assert decode_envelope(cbor2.dumps(["list"])) is None
+    assert decode_envelope(cborx.dumps(["list"])) is None
 
 
 def test_unknown_keys_preserved():

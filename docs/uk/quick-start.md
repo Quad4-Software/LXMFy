@@ -6,7 +6,7 @@
 - Reticulum Network Stack (`pip install rns`, версія 1.5.4+)
 - LXMF (`pip install lxmf`, версія 1.1.1+; встановлюється автоматично разом із
   LXMFy)
-- CBOR (`cbor2`, встановлюється автоматично, потрібен для RRC)
+- CBOR (`cborx`, встановлюється автоматично, потрібен для RRC)
 
 === "PyPI"
 
