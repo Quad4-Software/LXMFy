@@ -238,9 +238,9 @@ jinja2==3.1.6 \
     #   mkdocs
     #   mkdocstrings
     #   zensical
-landlockpy==0.1.1 ; sys_platform == 'linux' \
-    --hash=sha256:0e39be3c21fbc4875adccd1a775de921720807cc61471b12426f679999d33e5f \
-    --hash=sha256:3fa0664a17170b1ae0aa6a2d980503b7230aa51c9e6edfb25e58db0f71aed34b
+landlockpy==0.2.0 ; sys_platform == 'linux' \
+    --hash=sha256:2a915db59a2c1970d181f9c2bff786d6040d8f9105380da64390f5fe61b4148d \
+    --hash=sha256:c61b7fe84ead14ff6b091baa2e5f52c7b81e509571ebe5e707e92f1aaf90f2c9
 lxmf==1.1.1 \
     --hash=sha256:3cdb4c5b3a4ec091ed538050228d8bd15db3ca4dfe7d69be3350ebc6c6d7e696 \
     --hash=sha256:f2f7ea17d793fcc32cab826e81e8e9824404d025d1fc71b143be3242d45e6a5e
