@@ -68,7 +68,8 @@ cborx==0.2.5 \
     --hash=sha256:f7a4ef2adf6122b2fe0e21fc5632375ea5cd90f008dd008d3bba785698cc8b7c \
     --hash=sha256:f7e431722575dfe28ca434bc32a5d94409521e92cb02265cd7807a21c6b8b970 \
     --hash=sha256:fef7f26a86331793c4239caa7095a2950a4981bce02cc8dde73be0da73f5fe05
-cffi==2.1.1 ; platform_python_implementation != 'PyPy' \
+    # via -r docs/requirements-docs.in
+cffi==2.1.1 \
     --hash=sha256:046bfc24911b37851ee1b51aab8bffe713d89c68c6a057b09484ce9fd5f69b4e \
     --hash=sha256:06c72bb76605a4b0cd0aad6930b69d4baf7dd5d806cfc409b824191099700e66 \
     --hash=sha256:0beceaabe56af686895136a2de78db54ecd8e4046b236b8fd6d6cb61389e9bf2 \
@@ -176,10 +177,6 @@ click==8.5.0 \
     # via
     #   mkdocs
     #   zensical
-colorama==0.4.6 ; sys_platform == 'win32' \
-    --hash=sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44 \
-    --hash=sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
-    # via mkdocs
 cryptography==50.0.1 \
     --hash=sha256:01f41478cf33fc605a6a089cd56d28b45c6c0b45a1928b61797f2621a04bac71 \
     --hash=sha256:05ba322c4da95b262a212c345af888ef2c37c88c0509756ea00a0e6d68850f23 \
@@ -239,6 +236,7 @@ ghp-import==2.1.0 \
 griffe2md==1.5.0 \
     --hash=sha256:1becaff032cb02ffedd46057a83c218400bb586579c37010ec8504377108591d \
     --hash=sha256:58e184dffcd506ca97f54516dc07dd41f98ddc76eb17ba30518cf3dda18f6a51
+    # via -r docs/requirements-docs.in
 griffelib==2.3.0 \
     --hash=sha256:1b8f9cd525681c26b1d6d574faa1371651e8459ca51d209684f50b8096ae06e0 \
     --hash=sha256:7b0952caf5bca6afa4bb5ee8c6a2d183fe3f21b62efc5f6c7243cb2b26d2d115
@@ -249,16 +247,19 @@ jinja2==3.1.6 \
     --hash=sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d \
     --hash=sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67
     # via
+    #   -r docs/requirements-docs.in
     #   griffe2md
     #   mkdocs
     #   mkdocstrings
     #   zensical
-landlockpy==0.2.0 ; sys_platform == 'linux' \
+landlockpy==0.2.0 ; sys_platform == "linux" \
     --hash=sha256:2a915db59a2c1970d181f9c2bff786d6040d8f9105380da64390f5fe61b4148d \
     --hash=sha256:c61b7fe84ead14ff6b091baa2e5f52c7b81e509571ebe5e707e92f1aaf90f2c9
+    # via -r docs/requirements-docs.in
 lxmf==1.1.1 \
     --hash=sha256:3cdb4c5b3a4ec091ed538050228d8bd15db3ca4dfe7d69be3350ebc6c6d7e696 \
     --hash=sha256:f2f7ea17d793fcc32cab826e81e8e9824404d025d1fc71b143be3242d45e6a5e
+    # via -r docs/requirements-docs.in
 markdown==3.10.3 \
     --hash=sha256:3589362618f743188b4d955b874402bc814f4f83f544dc207719f4baa7d9c45f \
     --hash=sha256:fa6c92a00a4a3c98b22728c64a935ae1928250ae65058a6ded814d2cc29a4cea
@@ -404,6 +405,7 @@ mkdocstrings==1.0.6 \
 mkdocstrings-python==2.0.8 \
     --hash=sha256:34545b54681cf0b212aab95394d37b0f5326a93b102f6ad1df3d965c79384c9d \
     --hash=sha256:e555d9ef53b0febdeae4dd603144d4f86ec90fef672276645ea3bb61232c3d24
+    # via -r docs/requirements-docs.in
 packaging==26.3 \
     --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
     --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
@@ -416,7 +418,7 @@ platformdirs==4.11.12 \
     --hash=sha256:b1ba966ac76153d9985a0787ffab951e7c18416189873d4e4ddb2c8a04a0a254 \
     --hash=sha256:e8dc1cb58f1153fd7f61db1374317770baababec2480b37b8f01c6cc25b45267
     # via mkdocs-get-deps
-pycparser==3.0 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy' \
+pycparser==3.0 \
     --hash=sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29 \
     --hash=sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992
     # via cffi
@@ -433,6 +435,7 @@ pymdown-extensions==12.0.1 \
 pyparsing==3.3.3 \
     --hash=sha256:928ae7e20211f3b6f3915a72f06a0cfd29ab9d24279dd6346b6b1a7146397d36 \
     --hash=sha256:ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4
+    # via -r docs/requirements-docs.in
 pyserial==3.5 \
     --hash=sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb \
     --hash=sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0
@@ -528,7 +531,9 @@ pyyaml-env-tag==1.1 \
 rns==1.5.4 \
     --hash=sha256:578508ef08dedf7c109f73a445065ca89c50a63c6a69ced7b147ed20391ceb15 \
     --hash=sha256:862615b12d449750c0b3c451dfc2cb189fd6da1c573c477a29f36f97d2a66a19
-    # via lxmf
+    # via
+    #   -r docs/requirements-docs.in
+    #   lxmf
 six==1.17.0 \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
@@ -585,6 +590,7 @@ tomli==2.4.1 \
 verspec==0.1.0 \
     --hash=sha256:741877d5633cc9464c45a469ae2a31e801e6dbbaa85b9675d481cda100f11c31 \
     --hash=sha256:c4504ca697b2056cdb4bfa7121461f5a0e81809255b41c03dda4ba823637c01e
+    # via -r docs/requirements-docs.in
 watchdog==6.0.0 \
     --hash=sha256:07df1fdd701c5d4c8e55ef6cf55b8f0120fe1aef7ef39a1c6fc6bc2e606d517a \
     --hash=sha256:20ffe5b202af80ab4266dcd3e91aae72bf2da48c0d33bdb15c66658e685e94e2 \
@@ -617,16 +623,15 @@ watchdog==6.0.0 \
     --hash=sha256:e7631a77ffb1f7d2eefa4445ebbee491c720a5661ddf6df3498ebecae5ed375c \
     --hash=sha256:ef810fbf7b781a5a593894e4f439773830bdecb885e6880d957d5b9382a960d2
     # via mkdocs
-zensical==0.0.63 \
-    --hash=sha256:069af2ee0254eaa7099faad908f0ae0017c151ef0160b21a039d08efaa61b38a \
-    --hash=sha256:43e223b8d6ad1f08a772232926c123a000abd30ffe98d9db63a2731ec6275329 \
-    --hash=sha256:6365bce465a7f6755533eaa80aa20c8a48d1b39fa7b12cd394eece3921e2c530 \
-    --hash=sha256:63706419125f4c46461b322c8aaed1bbc3b917dd389ecf29601d713fc962bfb6 \
-    --hash=sha256:6ec02283d946569f68fdd1ab4a1dd2de560c0ad540874d5ecd4a4f1e96bdbe1d \
-    --hash=sha256:73c29ca1cd00243384fdc69414fac1c4367814203116acc9d198121b7a91012a \
-    --hash=sha256:925b3dd8bb6812b780f5e00828c42bd1eebd675b1eb6b4a58135926bb716bdde \
-    --hash=sha256:95f68b494fa6a11a59065f7965d27acfca404dd867f81d31295b5ab7172f2f8a \
-    --hash=sha256:af2711ff1397338c730cc9232f687066da7181751257f317877501b1b77a44ea \
-    --hash=sha256:f1afb0e2819a588d956c1684c90e23fc0c7efc89e1ec141403a9fb41b75b1993
-mike @ https://codeload.github.com/squidfunk/mike/tar.gz/2d4ad799442f4592db8ad53b179bfb33db8c69ac \
-    --hash=sha256:346dddd4bd7128338e91a9c426a4a44109d8fc47e7dbd1b7d0cefdb03d43d219
+zensical==0.0.64 \
+    --hash=sha256:2efc9bccbc05fc9244b1923fae0c9f6783a3a77f74f76b04e92ee163e8f8e628 \
+    --hash=sha256:40d426572f9a0fec8c126b7c89b55ae3f78f64a31cc051efea70facac7dc0885 \
+    --hash=sha256:668604ea16bf084146040ca9878019530e2e0d7378bb7fa05c3a8a3f0aa42dfe \
+    --hash=sha256:9f6122d7dd844fb399903d8598c6286faae59c4ce9a3226b1203ccf22ce1693f \
+    --hash=sha256:befd496a3c2887427976366401ae51dc872918971907c898e0c7418820dac27e \
+    --hash=sha256:c0453be88a880f55a6c7b64e99c20101e1e7a7c29c3fee8a369fd2b33bcf598b \
+    --hash=sha256:c47af647f2cef53801e006b6bdfb6401323da8cd991d8ddf3773473a98b9962a \
+    --hash=sha256:cec0ad5b26493b271d2428b95519f92e11495e3045e34f83d00af7b651bf5467 \
+    --hash=sha256:df76e63bbe25794c41ad99c9e48d4e5ad9827f5f98535cceae9190c46d1a7e31 \
+    --hash=sha256:f11894f12cf7e2e0475b4045b7fc5c753f9782ec84812d5d65bcb85b6ba13f0e
+    # via -r docs/requirements-docs.in
